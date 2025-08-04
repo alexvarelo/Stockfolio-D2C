@@ -31,6 +31,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Plus, Search, X, ArrowLeft, ArrowRight } from "lucide-react";
+import { useSearchInstrumentsApiV1SearchGet } from "@/api/search/search";
 
 const portfolioSchema = z.object({
   name: z.string().min(1, "Portfolio name is required"),
@@ -66,17 +67,35 @@ interface CreatePortfolioWizardProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export const CreatePortfolioWizard = ({ open, onOpenChange }: CreatePortfolioWizardProps) => {
+export const CreatePortfolioWizard = ({
+  open,
+  onOpenChange,
+}: CreatePortfolioWizardProps) => {
   const [step, setStep] = useState(1);
-  const [portfolioData, setPortfolioData] = useState<z.infer<typeof portfolioSchema> | null>(null);
+  const [portfolioData, setPortfolioData] = useState<z.infer<
+    typeof portfolioSchema
+  > | null>(null);
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
-  
+
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const { data: instrumentsFromSearch, isLoading: isLoadingInstrumentSearch } =
+    useSearchInstrumentsApiV1SearchGet(
+      {
+        query: searchQuery,
+        limit: 5,
+      },
+      {
+        query: {
+          enabled: searchQuery.length > 3,
+        },
+      }
+    );
+
+  console.log("instrumentsFromSearch", instrumentsFromSearch);
 
   const portfolioForm = useForm<z.infer<typeof portfolioSchema>>({
     resolver: zodResolver(portfolioSchema),
@@ -98,40 +117,10 @@ export const CreatePortfolioWizard = ({ open, onOpenChange }: CreatePortfolioWiz
     },
   });
 
-  const searchInstruments = async (query: string) => {
-    if (query.length < 2) return;
-    
-    setIsSearching(true);
-    try {
-      // TODO: Replace with actual API call using your financial API
-      // For now, mock search results
-      const mockResults: SearchResult[] = [
-        { symbol: "AAPL", name: "Apple Inc.", exchange: "NASDAQ", type: "Stock" },
-        { symbol: "MSFT", name: "Microsoft Corporation", exchange: "NASDAQ", type: "Stock" },
-        { symbol: "GOOGL", name: "Alphabet Inc.", exchange: "NASDAQ", type: "Stock" },
-      ].filter(stock => 
-        stock.name.toLowerCase().includes(query.toLowerCase()) ||
-        stock.symbol.toLowerCase().includes(query.toLowerCase())
-      );
-      
-      setSearchResults(mockResults);
-    } catch (error) {
-      console.error("Search error:", error);
-      toast({
-        title: "Search Error",
-        description: "Failed to search instruments",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
   const selectInstrument = (result: SearchResult) => {
     holdingForm.setValue("ticker", result.symbol);
     holdingForm.setValue("company_name", result.name);
     setSearchQuery("");
-    setSearchResults([]);
   };
 
   const addHolding = (data: z.infer<typeof holdingSchema>) => {
@@ -171,17 +160,15 @@ export const CreatePortfolioWizard = ({ open, onOpenChange }: CreatePortfolioWiz
 
       // Create holdings
       if (holdings.length > 0) {
-        const { error: holdingsError } = await supabase
-          .from("holdings")
-          .insert(
-            holdings.map(holding => ({
-              portfolio_id: portfolio.id,
-              ticker: holding.ticker,
-              quantity: holding.quantity,
-              average_price: holding.average_price,
-              notes: holding.notes,
-            }))
-          );
+        const { error: holdingsError } = await supabase.from("holdings").insert(
+          holdings.map((holding) => ({
+            portfolio_id: portfolio.id,
+            ticker: holding.ticker,
+            quantity: holding.quantity,
+            average_price: holding.average_price,
+            notes: holding.notes,
+          }))
+        );
 
         if (holdingsError) throw holdingsError;
       }
@@ -214,7 +201,6 @@ export const CreatePortfolioWizard = ({ open, onOpenChange }: CreatePortfolioWiz
     portfolioForm.reset();
     holdingForm.reset();
     setSearchQuery("");
-    setSearchResults([]);
   };
 
   const onPortfolioSubmit = (data: z.infer<typeof portfolioSchema>) => {
@@ -234,16 +220,18 @@ export const CreatePortfolioWizard = ({ open, onOpenChange }: CreatePortfolioWiz
             {step === 1 ? "Create New Portfolio" : "Add Holdings"}
           </DialogTitle>
           <DialogDescription>
-            {step === 1 
+            {step === 1
               ? "Set up your portfolio details"
-              : "Import your current holdings to this portfolio"
-            }
+              : "Import your current holdings to this portfolio"}
           </DialogDescription>
         </DialogHeader>
 
         {step === 1 && (
           <Form {...portfolioForm}>
-            <form onSubmit={portfolioForm.handleSubmit(onPortfolioSubmit)} className="space-y-4">
+            <form
+              onSubmit={portfolioForm.handleSubmit(onPortfolioSubmit)}
+              className="space-y-4"
+            >
               <FormField
                 control={portfolioForm.control}
                 name="name"
@@ -265,7 +253,7 @@ export const CreatePortfolioWizard = ({ open, onOpenChange }: CreatePortfolioWiz
                   <FormItem>
                     <FormLabel>Description</FormLabel>
                     <FormControl>
-                      <Textarea 
+                      <Textarea
                         placeholder="Describe your investment strategy or goals..."
                         className="resize-none"
                         {...field}
@@ -285,7 +273,9 @@ export const CreatePortfolioWizard = ({ open, onOpenChange }: CreatePortfolioWiz
                 render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
-                      <FormLabel className="text-base">Public Portfolio</FormLabel>
+                      <FormLabel className="text-base">
+                        Public Portfolio
+                      </FormLabel>
                       <FormDescription>
                         Make this portfolio visible to other users
                       </FormDescription>
@@ -326,79 +316,167 @@ export const CreatePortfolioWizard = ({ open, onOpenChange }: CreatePortfolioWiz
                       value={searchQuery}
                       onChange={(e) => {
                         setSearchQuery(e.target.value);
-                        searchInstruments(e.target.value);
                       }}
                       className="pl-10"
                     />
                   </div>
-                  
-                  {searchResults.length > 0 && (
+
+                  {isLoadingInstrumentSearch && (
+                    <div className="flex items-center space-x-2 mt-2">
+                      <span className="animate-spin h-4 w-4 border-2 border-t-transparent border-gray-400 rounded-full" />
+                      <span className="text-sm text-muted-foreground">
+                        Searching…
+                      </span>
+                    </div>
+                  )}
+                  {instrumentsFromSearch?.data?.results?.length > 0 && (
                     <div className="border rounded-md p-2 space-y-1 max-h-32 overflow-y-auto">
-                      {searchResults.map((result, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between p-2 hover:bg-muted rounded cursor-pointer"
-                          onClick={() => selectInstrument(result)}
-                        >
-                          <div>
-                            <span className="font-medium">{result.symbol}</span>
-                            <span className="text-sm text-muted-foreground ml-2">
-                              {result.name}
-                            </span>
+                      {instrumentsFromSearch?.data?.results?.map(
+                        (result, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between p-2 hover:bg-muted rounded cursor-pointer"
+                            onClick={() => selectInstrument(result)}
+                          >
+                            <div>
+                              <span className="font-medium">
+                                {result.symbol}
+                              </span>
+                              <span className="text-sm text-muted-foreground ml-2">
+                                {result.name}
+                              </span>
+                            </div>
+                            <Badge variant="outline">{result.exchange}</Badge>
                           </div>
-                          <Badge variant="outline">{result.exchange}</Badge>
-                        </div>
-                      ))}
+                        )
+                      )}
                     </div>
                   )}
                 </div>
 
-                <Form {...holdingForm}>
-                  <form onSubmit={holdingForm.handleSubmit(addHolding)} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={holdingForm.control}
-                        name="ticker"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Ticker</FormLabel>
-                            <FormControl>
-                              <Input placeholder="AAPL" {...field} readOnly />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                {/* Only show ticker/company fields if an instrument is selected */}
+                {(holdingForm.getValues("ticker") ||
+                  holdingForm.getValues("company_name")) && (
+                  <Form {...holdingForm}>
+                    <form
+                      onSubmit={holdingForm.handleSubmit(addHolding)}
+                      className="space-y-4"
+                    >
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={holdingForm.control}
+                          name="ticker"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Ticker</FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder={
+                                    holdingForm.getValues("ticker") || "AAPL"
+                                  }
+                                  {...field}
+                                  readOnly
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={holdingForm.control}
+                          name="company_name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Company Name</FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder={
+                                    holdingForm.getValues("company_name") ||
+                                    "Apple Inc."
+                                  }
+                                  {...field}
+                                  readOnly
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                          control={holdingForm.control}
+                          name="quantity"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Quantity</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  step="0.000001"
+                                  placeholder="10"
+                                  {...field}
+                                  onFocus={e => {
+                                    if (field.value === 0) {
+                                      e.target.value = '';
+                                      field.onChange('');
+                                    }
+                                  }}
+                                  onChange={e =>
+                                    field.onChange(
+                                      parseFloat(e.target.value) || 0
+                                    )
+                                  }
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={holdingForm.control}
+                          name="average_price"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Average Price ($)</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  placeholder="150.00"
+                                  {...field}
+                                  onFocus={e => {
+                                    if (field.value === 0) {
+                                      e.target.value = '';
+                                      field.onChange('');
+                                    }
+                                  }}
+                                  onChange={e =>
+                                    field.onChange(
+                                      parseFloat(e.target.value) || 0
+                                    )
+                                  }
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
 
                       <FormField
                         control={holdingForm.control}
-                        name="company_name"
+                        name="notes"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Company Name</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Apple Inc." {...field} readOnly />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={holdingForm.control}
-                        name="quantity"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Quantity</FormLabel>
+                            <FormLabel>Notes (Optional)</FormLabel>
                             <FormControl>
                               <Input
-                                type="number"
-                                step="0.000001"
-                                placeholder="10"
+                                placeholder="Investment notes..."
                                 {...field}
-                                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                               />
                             </FormControl>
                             <FormMessage />
@@ -406,47 +484,17 @@ export const CreatePortfolioWizard = ({ open, onOpenChange }: CreatePortfolioWiz
                         )}
                       />
 
-                      <FormField
-                        control={holdingForm.control}
-                        name="average_price"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Average Price ($)</FormLabel>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                step="0.01"
-                                placeholder="150.00"
-                                {...field}
-                                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <FormField
-                      control={holdingForm.control}
-                      name="notes"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Notes (Optional)</FormLabel>
-                          <FormControl>
-                            <Input placeholder="Investment notes..." {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <Button type="submit" variant="outline" className="w-full">
-                      <Plus className="mr-2 h-4 w-4" />
-                      Add Holding
-                    </Button>
-                  </form>
-                </Form>
+                      <Button
+                        type="submit"
+                        variant="outline"
+                        className="w-full"
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add Holding
+                      </Button>
+                    </form>
+                  </Form>
+                )}
               </CardContent>
             </Card>
 
@@ -459,10 +507,15 @@ export const CreatePortfolioWizard = ({ open, onOpenChange }: CreatePortfolioWiz
                 <CardContent>
                   <div className="space-y-2">
                     {holdings.map((holding, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 border rounded">
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-3 border rounded"
+                      >
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium">{holding.ticker}</span>
+                            <span className="font-medium">
+                              {holding.ticker}
+                            </span>
                             <span className="text-sm text-muted-foreground">
                               {holding.company_name}
                             </span>
@@ -497,11 +550,13 @@ export const CreatePortfolioWizard = ({ open, onOpenChange }: CreatePortfolioWiz
                 <Button variant="outline" onClick={onFinalSubmit}>
                   Create Portfolio
                 </Button>
-                <Button 
+                <Button
                   onClick={onFinalSubmit}
                   disabled={createPortfolioMutation.isPending}
                 >
-                  {createPortfolioMutation.isPending ? "Creating..." : "Create & Add Holdings"}
+                  {createPortfolioMutation.isPending
+                    ? "Creating..."
+                    : "Create & Add Holdings"}
                 </Button>
               </div>
             </DialogFooter>

@@ -1,0 +1,932 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Stockfolio Financial Data API",
+    "description": "A comprehensive financial data API powered by yfinance",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/api/v1/token": {
+      "post": {
+        "tags": ["authentication"],
+        "summary": "Get access token",
+        "description": "Authenticate with client credentials and get JWT access token",
+        "operationId": "get_token_api_v1_token_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TokenRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Token generated successfully",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TokenResponse" }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clients": {
+      "post": {
+        "tags": ["authentication"],
+        "summary": "Create new client",
+        "description": "Create a new client with generated credentials",
+        "operationId": "create_client_api_v1_clients_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateClientRequest" }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateClientResponse"
+                }
+              }
+            }
+          },
+          "201": { "description": "Client created successfully" },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clients/me": {
+      "get": {
+        "tags": ["authentication"],
+        "summary": "Get current client info",
+        "description": "Get information about the authenticated client",
+        "operationId": "get_current_client_api_v1_clients_me_get",
+        "responses": {
+          "200": {
+            "description": "Client information",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "401": {
+            "description": "Invalid token",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
+    "/api/v1/search": {
+      "get": {
+        "tags": ["search"],
+        "summary": "Search for financial instruments",
+        "description": "Search for stocks, ETFs, and other financial instruments by name, ISIN, or ticker symbol",
+        "operationId": "search_instruments_api_v1_search_get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 2,
+              "description": "Search query (name, ISIN, or ticker symbol)",
+              "title": "Query"
+            },
+            "description": "Search query (name, ISIN, or ticker symbol)"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Maximum number of results to return",
+              "default": 20,
+              "title": "Limit"
+            },
+            "description": "Maximum number of results to return"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SearchResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid search query",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "500": {
+            "description": "Search service error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/search/popular": {
+      "get": {
+        "tags": ["search"],
+        "summary": "Get popular stocks",
+        "description": "Get a list of popular and widely traded stocks",
+        "operationId": "get_popular_stocks_api_v1_search_popular_get",
+        "responses": {
+          "200": {
+            "description": "List of popular stocks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": { "$ref": "#/components/schemas/SearchResult" },
+                  "type": "array",
+                  "title": "Response Get Popular Stocks Api V1 Search Popular Get"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Service error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          }
+        },
+        "security": [{ "HTTPBearer": [] }]
+      }
+    },
+    "/api/v1/search/isin/{isin}": {
+      "get": {
+        "tags": ["search"],
+        "summary": "Search by ISIN",
+        "description": "Search for a specific financial instrument by ISIN code",
+        "operationId": "search_by_isin_api_v1_search_isin__isin__get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "isin",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Isin" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Instrument found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SearchResult" }
+              }
+            }
+          },
+          "404": {
+            "description": "ISIN not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "500": {
+            "description": "Search service error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stock/{ticker}": {
+      "get": {
+        "tags": ["stock"],
+        "summary": "Get comprehensive stock information",
+        "description": "Get detailed information about a stock including price data and company information",
+        "operationId": "get_stock_info_api_v1_stock__ticker__get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "ticker",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Stock ticker symbol (e.g., AAPL, MSFT)",
+              "title": "Ticker"
+            },
+            "description": "Stock ticker symbol (e.g., AAPL, MSFT)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stock information",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/StockInfo" }
+              }
+            }
+          },
+          "404": {
+            "description": "Ticker not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "503": {
+            "description": "YFinance service unavailable",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stock/{ticker}/price": {
+      "get": {
+        "tags": ["stock"],
+        "summary": "Get stock price data",
+        "description": "Get current price information for a stock",
+        "operationId": "get_stock_price_api_v1_stock__ticker__price_get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "ticker",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Stock ticker symbol",
+              "title": "Ticker"
+            },
+            "description": "Stock ticker symbol"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Price data",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PriceData" }
+              }
+            }
+          },
+          "404": {
+            "description": "Ticker not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "503": {
+            "description": "YFinance service unavailable",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stock/{ticker}/info": {
+      "get": {
+        "tags": ["stock"],
+        "summary": "Get company information",
+        "description": "Get detailed company information for a stock",
+        "operationId": "get_company_info_api_v1_stock__ticker__info_get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "ticker",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Stock ticker symbol",
+              "title": "Ticker"
+            },
+            "description": "Stock ticker symbol"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Company information",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/CompanyInfo" }
+              }
+            }
+          },
+          "404": {
+            "description": "Ticker not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "503": {
+            "description": "YFinance service unavailable",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/stock/{ticker}/history": {
+      "get": {
+        "tags": ["stock"],
+        "summary": "Get historical price data",
+        "description": "Get historical price data for a stock",
+        "operationId": "get_historical_data_api_v1_stock__ticker__history_get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "ticker",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Stock ticker symbol",
+              "title": "Ticker"
+            },
+            "description": "Stock ticker symbol"
+          },
+          {
+            "name": "period",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Time period (1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max)",
+              "default": "1y",
+              "title": "Period"
+            },
+            "description": "Time period (1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Historical data",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "404": {
+            "description": "Ticker not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "503": {
+            "description": "YFinance service unavailable",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health check",
+        "description": "Check if the API is running and healthy",
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HealthCheck" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CompanyInfo": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "title": "Symbol",
+            "description": "Stock ticker symbol"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Company name"
+          },
+          "sector": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Sector",
+            "description": "Business sector"
+          },
+          "industry": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Industry",
+            "description": "Industry"
+          },
+          "country": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Country",
+            "description": "Country of incorporation"
+          },
+          "website": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Website",
+            "description": "Company website"
+          },
+          "description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Description",
+            "description": "Company description"
+          },
+          "employees": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Employees",
+            "description": "Number of employees"
+          },
+          "founded": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Founded",
+            "description": "Year founded"
+          }
+        },
+        "type": "object",
+        "required": ["symbol", "name"],
+        "title": "CompanyInfo",
+        "description": "Schema for company information"
+      },
+      "CreateClientRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Client name"
+          },
+          "description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Description",
+            "description": "Client description"
+          }
+        },
+        "type": "object",
+        "required": ["name"],
+        "title": "CreateClientRequest",
+        "description": "Schema for creating a new client"
+      },
+      "CreateClientResponse": {
+        "properties": {
+          "client_id": {
+            "type": "string",
+            "title": "Client Id",
+            "description": "Generated client ID"
+          },
+          "client_secret": {
+            "type": "string",
+            "title": "Client Secret",
+            "description": "Generated client secret"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Client name"
+          },
+          "description": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Description",
+            "description": "Client description"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "Creation timestamp"
+          }
+        },
+        "type": "object",
+        "required": ["client_id", "client_secret", "name", "created_at"],
+        "title": "CreateClientResponse",
+        "description": "Schema for client creation response"
+      },
+      "ErrorResponse": {
+        "properties": {
+          "error": {
+            "type": "string",
+            "title": "Error",
+            "description": "Error message"
+          },
+          "detail": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Detail",
+            "description": "Detailed error information"
+          },
+          "status_code": {
+            "type": "integer",
+            "title": "Status Code",
+            "description": "HTTP status code"
+          }
+        },
+        "type": "object",
+        "required": ["error", "status_code"],
+        "title": "ErrorResponse",
+        "description": "Schema for error responses"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": { "$ref": "#/components/schemas/ValidationError" },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthCheck": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Service status"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "description": "API version"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "description": "Current timestamp"
+          }
+        },
+        "type": "object",
+        "required": ["status", "version", "timestamp"],
+        "title": "HealthCheck",
+        "description": "Schema for health check response"
+      },
+      "PriceData": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "title": "Symbol",
+            "description": "Stock ticker symbol"
+          },
+          "current_price": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Current Price",
+            "description": "Current stock price"
+          },
+          "previous_close": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Previous Close",
+            "description": "Previous closing price"
+          },
+          "open": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Open",
+            "description": "Opening price"
+          },
+          "high": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "High",
+            "description": "Day's high"
+          },
+          "low": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Low",
+            "description": "Day's low"
+          },
+          "volume": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Volume",
+            "description": "Trading volume"
+          },
+          "market_cap": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Market Cap",
+            "description": "Market capitalization"
+          },
+          "pe_ratio": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Pe Ratio",
+            "description": "Price-to-earnings ratio"
+          },
+          "dividend_yield": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Dividend Yield",
+            "description": "Dividend yield"
+          },
+          "change": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Change",
+            "description": "Price change"
+          },
+          "change_percent": {
+            "anyOf": [{ "type": "number" }, { "type": "null" }],
+            "title": "Change Percent",
+            "description": "Price change percentage"
+          },
+          "last_updated": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Last Updated",
+            "description": "Last update timestamp"
+          }
+        },
+        "type": "object",
+        "required": ["symbol"],
+        "title": "PriceData",
+        "description": "Schema for stock price data"
+      },
+      "SearchResponse": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "title": "Query",
+            "description": "Search query"
+          },
+          "results": {
+            "items": { "$ref": "#/components/schemas/SearchResult" },
+            "type": "array",
+            "title": "Results",
+            "description": "Search results"
+          },
+          "total_count": {
+            "type": "integer",
+            "title": "Total Count",
+            "description": "Total number of results"
+          }
+        },
+        "type": "object",
+        "required": ["query", "results", "total_count"],
+        "title": "SearchResponse",
+        "description": "Schema for search API response"
+      },
+      "SearchResult": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "title": "Symbol",
+            "description": "Stock ticker symbol"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Company name"
+          },
+          "exchange": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Exchange",
+            "description": "Stock exchange"
+          },
+          "type": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Type",
+            "description": "Instrument type"
+          },
+          "isin": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Isin",
+            "description": "ISIN code"
+          },
+          "country": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Country",
+            "description": "Country of listing"
+          }
+        },
+        "type": "object",
+        "required": ["symbol", "name"],
+        "title": "SearchResult",
+        "description": "Schema for search results"
+      },
+      "StockInfo": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "title": "Symbol",
+            "description": "Stock ticker symbol"
+          },
+          "price_data": {
+            "allOf": [{ "$ref": "#/components/schemas/PriceData" }],
+            "description": "Current price information"
+          },
+          "company_info": {
+            "allOf": [{ "$ref": "#/components/schemas/CompanyInfo" }],
+            "description": "Company information"
+          },
+          "additional_data": {
+            "anyOf": [{ "type": "object" }, { "type": "null" }],
+            "title": "Additional Data",
+            "description": "Additional financial data"
+          }
+        },
+        "type": "object",
+        "required": ["symbol", "price_data", "company_info"],
+        "title": "StockInfo",
+        "description": "Schema for comprehensive stock information"
+      },
+      "TokenRequest": {
+        "properties": {
+          "client_id": {
+            "type": "string",
+            "title": "Client Id",
+            "description": "Client ID"
+          },
+          "client_secret": {
+            "type": "string",
+            "title": "Client Secret",
+            "description": "Client Secret"
+          }
+        },
+        "type": "object",
+        "required": ["client_id", "client_secret"],
+        "title": "TokenRequest",
+        "description": "Schema for token request"
+      },
+      "TokenResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token",
+            "description": "JWT access token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "description": "Token type",
+            "default": "bearer"
+          },
+          "expires_in": {
+            "type": "integer",
+            "title": "Expires In",
+            "description": "Token expiration time in seconds"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At",
+            "description": "Token expiration timestamp"
+          }
+        },
+        "type": "object",
+        "required": ["access_token", "expires_in", "expires_at"],
+        "title": "TokenResponse",
+        "description": "Schema for token response"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": { "anyOf": [{ "type": "string" }, { "type": "integer" }] },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": { "type": "string", "title": "Message" },
+          "type": { "type": "string", "title": "Error Type" }
+        },
+        "type": "object",
+        "required": ["loc", "msg", "type"],
+        "title": "ValidationError"
+      }
+    },
+    "securitySchemes": { "HTTPBearer": { "type": "http", "scheme": "bearer" } }
+  }
+}
