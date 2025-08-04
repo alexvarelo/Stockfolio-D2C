@@ -6,9 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Briefcase, TrendingUp, Eye, Lock } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { CreatePortfolioWizard } from "@/components/portfolio/CreatePortfolioWizard";
 
 const Portfolios = () => {
   const { user } = useAuth();
+  const [showCreateWizard, setShowCreateWizard] = useState(false);
 
   const { data: portfolios, isLoading } = useQuery({
     queryKey: ['portfolios-detailed'],
@@ -63,7 +65,7 @@ const Portfolios = () => {
             Manage and track your investment portfolios
           </p>
         </div>
-        <Button variant="gradient" size="lg">
+        <Button variant="gradient" size="lg" onClick={() => setShowCreateWizard(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Create Portfolio
         </Button>
@@ -167,12 +169,17 @@ const Portfolios = () => {
           <p className="text-muted-foreground mb-6 max-w-md mx-auto">
             Start building your investment tracking by creating your first portfolio.
           </p>
-          <Button variant="gradient" size="lg">
+          <Button variant="gradient" size="lg" onClick={() => setShowCreateWizard(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Create Your First Portfolio
           </Button>
         </Card>
       )}
+
+      <CreatePortfolioWizard 
+        open={showCreateWizard} 
+        onOpenChange={setShowCreateWizard} 
+      />
     </div>
   );
 };
