@@ -397,6 +397,61 @@
         }
       }
     },
+    "/api/v1/stock/{tickers}/prices": {
+      "get": {
+        "tags": ["stock"],
+        "summary": "Get stock price data for multiple tickers",
+        "description": "Get current price information for multiple stocks. Returns a list of price data objects. If a ticker is invalid or fails, it will be omitted from the result.",
+        "operationId": "get_multiple_stock_prices_api_v1_stock__tickers__prices_get",
+        "security": [{ "HTTPBearer": [] }],
+        "parameters": [
+          {
+            "name": "tickers",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "title": "Tickers" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of price data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/PriceData" },
+                  "title": "Response Get Multiple Stock Prices Api V1 Stock  Tickers  Prices Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "503": {
+            "description": "YFinance service unavailable",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ErrorResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/stock/{ticker}/info": {
       "get": {
         "tags": ["stock"],

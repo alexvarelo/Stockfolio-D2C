@@ -211,6 +211,94 @@ export function useGetStockPriceApiV1StockTickerPriceGet<TData = Awaited<ReturnT
 
 
 /**
+ * Get current price information for multiple stocks. Returns a list of price data objects. If a ticker is invalid or fails, it will be omitted from the result.
+ * @summary Get stock price data for multiple tickers
+ */
+export const getMultipleStockPricesApiV1StockTickersPricesGet = (
+    tickers: string,
+ signal?: AbortSignal
+) => {
+      
+      
+      return useSendRequest<PriceData[]>(
+      {url: `/api/v1/stock/${tickers}/prices`, method: 'GET', signal
+    },
+      );
+    }
+  
+
+export const getGetMultipleStockPricesApiV1StockTickersPricesGetQueryKey = (tickers?: string,) => {
+    return [`/api/v1/stock/${tickers}/prices`] as const;
+    }
+
+    
+export const getGetMultipleStockPricesApiV1StockTickersPricesGetQueryOptions = <TData = Awaited<ReturnType<typeof getMultipleStockPricesApiV1StockTickersPricesGet>>, TError = ErrorResponse | HTTPValidationError | ErrorResponse>(tickers: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMultipleStockPricesApiV1StockTickersPricesGet>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMultipleStockPricesApiV1StockTickersPricesGetQueryKey(tickers);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMultipleStockPricesApiV1StockTickersPricesGet>>> = ({ signal }) => getMultipleStockPricesApiV1StockTickersPricesGet(tickers, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(tickers), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMultipleStockPricesApiV1StockTickersPricesGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+}
+
+export type GetMultipleStockPricesApiV1StockTickersPricesGetQueryResult = NonNullable<Awaited<ReturnType<typeof getMultipleStockPricesApiV1StockTickersPricesGet>>>
+export type GetMultipleStockPricesApiV1StockTickersPricesGetQueryError = ErrorResponse | HTTPValidationError | ErrorResponse
+
+
+export function useGetMultipleStockPricesApiV1StockTickersPricesGet<TData = Awaited<ReturnType<typeof getMultipleStockPricesApiV1StockTickersPricesGet>>, TError = ErrorResponse | HTTPValidationError | ErrorResponse>(
+ tickers: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMultipleStockPricesApiV1StockTickersPricesGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMultipleStockPricesApiV1StockTickersPricesGet>>,
+          TError,
+          Awaited<ReturnType<typeof getMultipleStockPricesApiV1StockTickersPricesGet>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useGetMultipleStockPricesApiV1StockTickersPricesGet<TData = Awaited<ReturnType<typeof getMultipleStockPricesApiV1StockTickersPricesGet>>, TError = ErrorResponse | HTTPValidationError | ErrorResponse>(
+ tickers: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMultipleStockPricesApiV1StockTickersPricesGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMultipleStockPricesApiV1StockTickersPricesGet>>,
+          TError,
+          Awaited<ReturnType<typeof getMultipleStockPricesApiV1StockTickersPricesGet>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useGetMultipleStockPricesApiV1StockTickersPricesGet<TData = Awaited<ReturnType<typeof getMultipleStockPricesApiV1StockTickersPricesGet>>, TError = ErrorResponse | HTTPValidationError | ErrorResponse>(
+ tickers: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMultipleStockPricesApiV1StockTickersPricesGet>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+/**
+ * @summary Get stock price data for multiple tickers
+ */
+
+export function useGetMultipleStockPricesApiV1StockTickersPricesGet<TData = Awaited<ReturnType<typeof getMultipleStockPricesApiV1StockTickersPricesGet>>, TError = ErrorResponse | HTTPValidationError | ErrorResponse>(
+ tickers: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMultipleStockPricesApiV1StockTickersPricesGet>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
+
+  const queryOptions = getGetMultipleStockPricesApiV1StockTickersPricesGetQueryOptions(tickers,options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+/**
  * Get detailed company information for a stock
  * @summary Get company information
  */
