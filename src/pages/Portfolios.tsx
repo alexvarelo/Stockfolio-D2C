@@ -12,8 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Briefcase, TrendingUp, Eye, Lock } from "lucide-react";
 import { useAuth } from "@/lib/auth";
-import { CreatePortfolioWizard } from "@/components/portfolio/CreatePortfolioWizard";
 import { FormProvider, useForm } from "react-hook-form";
+import { PortfolioWizard } from "@/components/portfolio/portfolioWizard/PortfolioWizard";
 
 const Portfolios = () => {
   const { user } = useAuth();
@@ -226,7 +226,7 @@ const Portfolios = () => {
       )}
 
       <FormProvider {...methods}>
-        <CreatePortfolioWizard
+        <PortfolioWizard
           open={showCreateWizard}
           onOpenChange={setShowCreateWizard}
         />
