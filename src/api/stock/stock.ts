@@ -25,6 +25,7 @@ import type {
   ErrorResponse,
   GetHistoricalDataApiV1StockTickerHistoryGetParams,
   HTTPValidationError,
+  HistoricalDataResponse,
   PriceData,
   StockInfo
 } from '../financialDataApi.schemas';
@@ -397,7 +398,7 @@ export const getHistoricalDataApiV1StockTickerHistoryGet = (
 ) => {
       
       
-      return useSendRequest<unknown>(
+      return useSendRequest<HistoricalDataResponse>(
       {url: `/api/v1/stock/${ticker}/history`, method: 'GET',
         params, signal
     },
@@ -411,7 +412,7 @@ export const getGetHistoricalDataApiV1StockTickerHistoryGetQueryKey = (ticker?: 
     }
 
     
-export const getGetHistoricalDataApiV1StockTickerHistoryGetQueryOptions = <TData = Awaited<ReturnType<typeof getHistoricalDataApiV1StockTickerHistoryGet>>, TError = ErrorResponse | HTTPValidationError | ErrorResponse>(ticker: string,
+export const getGetHistoricalDataApiV1StockTickerHistoryGetQueryOptions = <TData = Awaited<ReturnType<typeof getHistoricalDataApiV1StockTickerHistoryGet>>, TError = ErrorResponse | ErrorResponse | HTTPValidationError | ErrorResponse>(ticker: string,
     params?: GetHistoricalDataApiV1StockTickerHistoryGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHistoricalDataApiV1StockTickerHistoryGet>>, TError, TData>>, }
 ) => {
 
@@ -431,10 +432,10 @@ const {query: queryOptions} = options ?? {};
 }
 
 export type GetHistoricalDataApiV1StockTickerHistoryGetQueryResult = NonNullable<Awaited<ReturnType<typeof getHistoricalDataApiV1StockTickerHistoryGet>>>
-export type GetHistoricalDataApiV1StockTickerHistoryGetQueryError = ErrorResponse | HTTPValidationError | ErrorResponse
+export type GetHistoricalDataApiV1StockTickerHistoryGetQueryError = ErrorResponse | ErrorResponse | HTTPValidationError | ErrorResponse
 
 
-export function useGetHistoricalDataApiV1StockTickerHistoryGet<TData = Awaited<ReturnType<typeof getHistoricalDataApiV1StockTickerHistoryGet>>, TError = ErrorResponse | HTTPValidationError | ErrorResponse>(
+export function useGetHistoricalDataApiV1StockTickerHistoryGet<TData = Awaited<ReturnType<typeof getHistoricalDataApiV1StockTickerHistoryGet>>, TError = ErrorResponse | ErrorResponse | HTTPValidationError | ErrorResponse>(
  ticker: string,
     params: undefined |  GetHistoricalDataApiV1StockTickerHistoryGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHistoricalDataApiV1StockTickerHistoryGet>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
@@ -445,7 +446,7 @@ export function useGetHistoricalDataApiV1StockTickerHistoryGet<TData = Awaited<R
       >, }
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useGetHistoricalDataApiV1StockTickerHistoryGet<TData = Awaited<ReturnType<typeof getHistoricalDataApiV1StockTickerHistoryGet>>, TError = ErrorResponse | HTTPValidationError | ErrorResponse>(
+export function useGetHistoricalDataApiV1StockTickerHistoryGet<TData = Awaited<ReturnType<typeof getHistoricalDataApiV1StockTickerHistoryGet>>, TError = ErrorResponse | ErrorResponse | HTTPValidationError | ErrorResponse>(
  ticker: string,
     params?: GetHistoricalDataApiV1StockTickerHistoryGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHistoricalDataApiV1StockTickerHistoryGet>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
@@ -456,7 +457,7 @@ export function useGetHistoricalDataApiV1StockTickerHistoryGet<TData = Awaited<R
       >, }
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
-export function useGetHistoricalDataApiV1StockTickerHistoryGet<TData = Awaited<ReturnType<typeof getHistoricalDataApiV1StockTickerHistoryGet>>, TError = ErrorResponse | HTTPValidationError | ErrorResponse>(
+export function useGetHistoricalDataApiV1StockTickerHistoryGet<TData = Awaited<ReturnType<typeof getHistoricalDataApiV1StockTickerHistoryGet>>, TError = ErrorResponse | ErrorResponse | HTTPValidationError | ErrorResponse>(
  ticker: string,
     params?: GetHistoricalDataApiV1StockTickerHistoryGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHistoricalDataApiV1StockTickerHistoryGet>>, TError, TData>>, }
  , queryClient?: QueryClient
@@ -465,7 +466,7 @@ export function useGetHistoricalDataApiV1StockTickerHistoryGet<TData = Awaited<R
  * @summary Get historical price data
  */
 
-export function useGetHistoricalDataApiV1StockTickerHistoryGet<TData = Awaited<ReturnType<typeof getHistoricalDataApiV1StockTickerHistoryGet>>, TError = ErrorResponse | HTTPValidationError | ErrorResponse>(
+export function useGetHistoricalDataApiV1StockTickerHistoryGet<TData = Awaited<ReturnType<typeof getHistoricalDataApiV1StockTickerHistoryGet>>, TError = ErrorResponse | ErrorResponse | HTTPValidationError | ErrorResponse>(
  ticker: string,
     params?: GetHistoricalDataApiV1StockTickerHistoryGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getHistoricalDataApiV1StockTickerHistoryGet>>, TError, TData>>, }
  , queryClient?: QueryClient 

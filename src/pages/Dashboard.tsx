@@ -1,4 +1,17 @@
 import { useEffect, useState } from "react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  CommandDialog,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandSeparator,
+} from "@/components/ui/command";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useAuth } from "@/lib/auth";
+import { cn } from "@/lib/utils";
+import { SearchButtonWithDialog } from "@/components/search/SearchButtonWithDialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -20,7 +33,6 @@ import {
   ArrowUpRight,
   ArrowDownRight,
 } from "lucide-react";
-import { useAuth } from "@/lib/auth";
 import { useNeedsOnboarding } from "@/lib/onboarding";
 import { UserOnboardingWizard } from "@/components/onboarding/UserOnboardingWizard";
 
@@ -33,6 +45,20 @@ interface PortfolioSummary {
 }
 
 const Dashboard = () => {
+  const [commandOpen, setCommandOpen] = useState(false);
+  const { userProfile } = useAuth();
+
+  // Keyboard shortcut: Cmd+K or Ctrl+K
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setCommandOpen(true);
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
   const { user } = useAuth();
 
   const { needsOnboarding, loading } = useNeedsOnboarding(user?.id);
@@ -122,194 +148,258 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Welcome back! Here's your portfolio overview.
-          </p>
-        </div>
-        <Button variant="gradient" size="lg">
-          <Plus className="mr-2 h-4 w-4" />
-          Add Portfolio
-        </Button>
-      </div>
-
-      {/* Overview Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Value</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              $
-              {totalPortfolioValue.toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-              })}
+    <Tabs defaultValue="overview" className="space-y-8">
+      <TabsContent value="overview">
+        <div className="space-y-8">
+          {/* Header */}
+          <div className="flex justify-between items-start">
+            <div className="flex items-center gap-6">
+              <Avatar className="h-16 w-16">
+                {userProfile?.avatar_url ? (
+                  <AvatarImage
+                    src={userProfile.avatar_url}
+                    alt={userProfile.full_name || userProfile.email || "User"}
+                  />
+                ) : null}
+                <AvatarFallback>
+                  {userProfile?.full_name
+                    ? userProfile.full_name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .toUpperCase()
+                    : userProfile?.email?.[0]?.toUpperCase() || "U"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col">
+                <span className="font-bold text-2xl">
+                  {userProfile?.full_name || userProfile?.email || "User"}
+                </span>
+                {userProfile?.email && userProfile?.full_name && (
+                  <span className="text-muted-foreground ">
+                    {/* {userProfile.email} */}Welcome back!
+                  </span>
+                )}
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Across {portfolios?.length || 0} portfolios
-            </p>
-          </CardContent>
-        </Card>
+          </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Holdings</CardTitle>
-            <Briefcase className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalHoldings}</div>
-            <p className="text-xs text-muted-foreground">Active investments</p>
-          </CardContent>
-        </Card>
+          {/* Overview Cards */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Value
+                </CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  $
+                  {totalPortfolioValue.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Across {portfolios?.length || 0} portfolios
+                </p>
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Today's Change
-            </CardTitle>
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-success">+$2,350.00</div>
-            <p className="text-xs text-success flex items-center">
-              <ArrowUpRight className="mr-1 h-3 w-3" />
-              +2.4% from yesterday
-            </p>
-          </CardContent>
-        </Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Holdings</CardTitle>
+                <Briefcase className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{totalHoldings}</div>
+                <p className="text-xs text-muted-foreground">
+                  Active investments
+                </p>
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Performance</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-success">+12.3%</div>
-            <p className="text-xs text-muted-foreground">30-day return</p>
-          </CardContent>
-        </Card>
-      </div>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Today's Change
+                </CardTitle>
+                <BarChart3 className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-success">
+                  +$2,350.00
+                </div>
+                <p className="text-xs text-success flex items-center">
+                  <ArrowUpRight className="mr-1 h-3 w-3" />
+                  +2.4% from yesterday
+                </p>
+              </CardContent>
+            </Card>
 
-      {/* Portfolio Grid */}
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Portfolios */}
-        <Card>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Performance
+                </CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-success">+12.3%</div>
+                <p className="text-xs text-muted-foreground">30-day return</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Portfolio Grid */}
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Portfolios */}
+            <Card>
+              <CardHeader>
+                <CardTitle>My Portfolios</CardTitle>
+                <CardDescription>
+                  Manage and track your investment portfolios
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {portfolios?.map((portfolio) => (
+                  <div
+                    key={portfolio.id}
+                    className="flex items-center justify-between p-4 border rounded-lg"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium">{portfolio.name}</p>
+                        {portfolio.is_default && (
+                          <Badge variant="secondary">Default</Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {portfolio.total_holdings} holdings
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold">
+                        $
+                        {portfolio.total_invested.toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                        })}
+                      </p>
+                      <p className="text-sm text-success">+5.2%</p>
+                    </div>
+                  </div>
+                ))}
+                {portfolios?.length === 0 && (
+                  <div className="text-center py-8">
+                    <Briefcase className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground mb-4">
+                      No portfolios yet
+                    </p>
+                    <Button variant="outline">
+                      Create Your First Portfolio
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Recent Activity */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Recent Transactions</CardTitle>
+                <CardDescription>
+                  Your latest investment activity
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {recentTransactions?.map((transaction) => (
+                  <div
+                    key={transaction.id}
+                    className="flex items-center justify-between p-4 border rounded-lg"
+                  >
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium">{transaction.ticker}</p>
+                        <Badge
+                          variant={
+                            transaction.transaction_type === "BUY"
+                              ? "default"
+                              : "destructive"
+                          }
+                        >
+                          {transaction.transaction_type}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {transaction.quantity} shares @ $
+                        {transaction.price_per_share}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold">
+                        $
+                        {(
+                          transaction.quantity * transaction.price_per_share
+                        ).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(
+                          transaction.transaction_date
+                        ).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+                {recentTransactions?.length === 0 && (
+                  <div className="text-center py-8">
+                    <TrendingUp className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                    <p className="text-muted-foreground mb-4">
+                      No transactions yet
+                    </p>
+                    <Button variant="outline">
+                      Add Your First Transaction
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+          {user && needsOnboarding && !loading && (
+            <UserOnboardingWizard
+              open={onboardingOpen}
+              onComplete={() => setOnboardingOpen(false)}
+              userId={user.id}
+              email={user.email}
+            />
+          )}
+        </div>
+      </TabsContent>
+      <TabsContent value="search">
+        <Card className="max-w-2xl mx-auto">
           <CardHeader>
-            <CardTitle>My Portfolios</CardTitle>
+            <CardTitle>Search</CardTitle>
             <CardDescription>
-              Manage and track your investment portfolios
+              Search for instruments, portfolios, and more.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {portfolios?.map((portfolio) => (
-              <div
-                key={portfolio.id}
-                className="flex items-center justify-between p-4 border rounded-lg"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium">{portfolio.name}</p>
-                    {portfolio.is_default && (
-                      <Badge variant="secondary">Default</Badge>
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {portfolio.total_holdings} holdings
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="font-semibold">
-                    $
-                    {portfolio.total_invested.toLocaleString("en-US", {
-                      minimumFractionDigits: 2,
-                    })}
-                  </p>
-                  <p className="text-sm text-success">+5.2%</p>
-                </div>
-              </div>
-            ))}
-            {portfolios?.length === 0 && (
-              <div className="text-center py-8">
-                <Briefcase className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                <p className="text-muted-foreground mb-4">No portfolios yet</p>
-                <Button variant="outline">Create Your First Portfolio</Button>
-              </div>
-            )}
+          <CardContent>
+            <CommandDialog open={true} onOpenChange={() => {}}>
+              <CommandInput placeholder="Type to search..." />
+              <CommandList>
+                <CommandEmpty>No results found.</CommandEmpty>
+                <CommandGroup heading="Instruments">
+                  {/* Instrument search results go here */}
+                </CommandGroup>
+                <CommandSeparator />
+                <CommandGroup heading="Portfolios">
+                  {/* Portfolio search results go here */}
+                </CommandGroup>
+              </CommandList>
+            </CommandDialog>
           </CardContent>
         </Card>
-
-        {/* Recent Activity */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Transactions</CardTitle>
-            <CardDescription>Your latest investment activity</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {recentTransactions?.map((transaction) => (
-              <div
-                key={transaction.id}
-                className="flex items-center justify-between p-4 border rounded-lg"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium">{transaction.ticker}</p>
-                    <Badge
-                      variant={
-                        transaction.transaction_type === "BUY"
-                          ? "default"
-                          : "destructive"
-                      }
-                    >
-                      {transaction.transaction_type}
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    {transaction.quantity} shares @ $
-                    {transaction.price_per_share}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="font-semibold">
-                    $
-                    {(
-                      transaction.quantity * transaction.price_per_share
-                    ).toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {new Date(
-                      transaction.transaction_date
-                    ).toLocaleDateString()}
-                  </p>
-                </div>
-              </div>
-            ))}
-            {recentTransactions?.length === 0 && (
-              <div className="text-center py-8">
-                <TrendingUp className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                <p className="text-muted-foreground mb-4">
-                  No transactions yet
-                </p>
-                <Button variant="outline">Add Your First Transaction</Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-      {user && needsOnboarding && !loading && (
-        <UserOnboardingWizard
-          open={onboardingOpen}
-          onComplete={() => setOnboardingOpen(false)}
-          userId={user.id}
-          email={user.email}
-        />
-      )}
-    </div>
+      </TabsContent>
+    </Tabs>
   );
 };
 

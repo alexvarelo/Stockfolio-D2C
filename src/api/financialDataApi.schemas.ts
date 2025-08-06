@@ -134,6 +134,75 @@ export interface HealthCheck {
 }
 
 /**
+ * Opening price
+ */
+export type HistoricalDataPointOpen = number | null;
+
+/**
+ * Highest price
+ */
+export type HistoricalDataPointHigh = number | null;
+
+/**
+ * Lowest price
+ */
+export type HistoricalDataPointLow = number | null;
+
+/**
+ * Closing price
+ */
+export type HistoricalDataPointClose = number | null;
+
+/**
+ * Trading volume
+ */
+export type HistoricalDataPointVolume = number | null;
+
+/**
+ * Dividends paid
+ */
+export type HistoricalDataPointDividends = number | null;
+
+/**
+ * Stock splits
+ */
+export type HistoricalDataPointStockSplits = number | null;
+
+/**
+ * Schema for a single point of historical price data
+ */
+export interface HistoricalDataPoint {
+  /** Date and time of the data point */
+  date: string;
+  /** Opening price */
+  open?: HistoricalDataPointOpen;
+  /** Highest price */
+  high?: HistoricalDataPointHigh;
+  /** Lowest price */
+  low?: HistoricalDataPointLow;
+  /** Closing price */
+  close?: HistoricalDataPointClose;
+  /** Trading volume */
+  volume?: HistoricalDataPointVolume;
+  /** Dividends paid */
+  dividends?: HistoricalDataPointDividends;
+  /** Stock splits */
+  stock_splits?: HistoricalDataPointStockSplits;
+}
+
+/**
+ * Schema for historical price data response
+ */
+export interface HistoricalDataResponse {
+  /** Stock ticker symbol */
+  symbol: string;
+  /** Time period of the data */
+  period: string;
+  /** List of historical data points */
+  data: HistoricalDataPoint[];
+}
+
+/**
  * Current stock price
  */
 export type PriceDataCurrentPrice = number | null;
