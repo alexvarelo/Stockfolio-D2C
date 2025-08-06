@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from "@/lib/auth";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import Dashboard from "./pages/Dashboard";
 import Portfolios from "./pages/Portfolios";
+import { PortfolioDetail } from "./pages/PortfolioDetail";
 import { InstrumentPage } from "./pages/InstrumentPage";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
@@ -145,6 +146,16 @@ const App = () => (
                   <ProtectedRoute>
                     <MainLayout>
                       <Portfolios />
+                    </MainLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/portfolios/:portfolioId"
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <PortfolioDetail />
                     </MainLayout>
                   </ProtectedRoute>
                 }

@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import {
   Card,
   CardHeader,
@@ -7,7 +8,7 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Eye, Lock, Briefcase } from "lucide-react";
+import { TrendingUp, Eye, Lock, Briefcase, ArrowRight } from "lucide-react";
 import { useGetMultipleStockPricesApiV1StockTickersPricesGet } from "@/api/stock/stock";
 
 interface Holding {
@@ -26,14 +27,9 @@ export interface PortfolioCardProps {
   holdings?: Holding[];
 }
 
-export const PortfolioCard: React.FC<PortfolioCardProps> = ({
-  name,
-  description,
-  is_public,
-  is_default,
-  created_at,
-  holdings = [],
-}) => {
+export const PortfolioCard: React.FC<PortfolioCardProps> = (props) => {
+  const { id, name, description, is_public, is_default, created_at, holdings = [] } = props;
+
   const { data: instrumentPrices, isLoading: isLoadingPrices } =
     useGetMultipleStockPricesApiV1StockTickersPricesGet(
       holdings.map((h) => h.ticker).join(",")
@@ -80,129 +76,134 @@ export const PortfolioCard: React.FC<PortfolioCardProps> = ({
   const totalHoldings = holdings?.length || 0;
 
   return (
-    <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="space-y-1">
-            <CardTitle className="text-lg">{name}</CardTitle>
-            <div className="flex items-center gap-2">
-              {is_default && <Badge variant="secondary">Default</Badge>}
-              <Badge variant={is_public ? "default" : "outline"}>
-                {is_public ? (
-                  <>
-                    <Eye className="mr-1 h-3 w-3" /> Public
-                  </>
-                ) : (
-                  <>
-                    <Lock className="mr-1 h-3 w-3" /> Private
-                  </>
-                )}
-              </Badge>
-            </div>
-          </div>
-          <Briefcase className="h-5 w-5 text-muted-foreground" />
-        </div>
-        {description && (
-          <CardDescription className="text-sm">{description}</CardDescription>
-        )}
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">
-              Current Portfolio Value
-            </span>
-            <span className="font-semibold">
-              $
-              {totalCurrentValue.toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-              })}
-            </span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">
-              Total Value (Invested)
-            </span>
-            <span className="font-semibold">
-              $
-              {totalValue.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-            </span>
-          </div>
-
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">Holdings</span>
-            <span className="font-medium">{totalHoldings}</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">
-              Total Earned/Lost
-            </span>
-            <span
-              className={
-                totalEarnedLost >= 0 ? "text-success" : "text-destructive"
-              }
-            >
-              $
-              {totalEarnedLost.toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-              })}
-            </span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">
-              Portfolio Performance
-            </span>
-            <span
-              className={
-                portfolioPerformance >= 0 ? "text-success" : "text-destructive"
-              }
-            >
-              {(portfolioPerformance * 100).toFixed(2)}%
-            </span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">
-              Today's Change
-            </span>
-            <span
-              className={
-                totalTodayChange >= 0 ? "text-success" : "text-destructive"
-              }
-            >
-              $
-              {totalTodayChange.toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-              })}{" "}
-              ({(todayPerformance * 100).toFixed(2)}%)
-            </span>
-          </div>
-        </div>
-        {totalHoldings > 0 && (
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Top Holdings</p>
+    <Card className="hover:shadow-lg transition-shadow group">
+      <Link to={`/portfolios/${id}`} className="block h-full">
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between">
             <div className="space-y-1">
-              {holdings.slice(0, 3).map((holding, index) => (
-                <div key={index} className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">
-                    {holding.ticker}
-                  </span>
-                  <span>{holding.quantity} shares</span>
-                </div>
-              ))}
-              {holdings.length > 3 && (
-                <p className="text-xs text-muted-foreground">
-                  +{holdings.length - 3} more
-                </p>
-              )}
+              <CardTitle className="text-lg">{name}</CardTitle>
+              <div className="flex items-center gap-2">
+                {is_default && <Badge variant="secondary">Default</Badge>}
+                <Badge variant={is_public ? "default" : "outline"}>
+                  {is_public ? (
+                    <>
+                      <Eye className="mr-1 h-3 w-3" /> Public
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="mr-1 h-3 w-3" /> Private
+                    </>
+                  )}
+                </Badge>
+              </div>
+            </div>
+            <Briefcase className="h-5 w-5 text-muted-foreground" />
+          </div>
+          {description && (
+            <CardDescription className="text-sm">{description}</CardDescription>
+          )}
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">
+                Current Portfolio Value
+              </span>
+              <span className="font-semibold">
+                $
+                {totalCurrentValue.toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                })}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">
+                Total Value (Invested)
+              </span>
+              <span className="font-semibold">
+                $
+                {totalValue.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+              </span>
+            </div>
+
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">Holdings</span>
+              <span className="font-medium">{totalHoldings}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">
+                Total Earned/Lost
+              </span>
+              <span
+                className={
+                  totalEarnedLost >= 0 ? "text-success" : "text-destructive"
+                }
+              >
+                $
+                {totalEarnedLost.toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                })}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">
+                Portfolio Performance
+              </span>
+              <span
+                className={
+                  portfolioPerformance >= 0 ? "text-success" : "text-destructive"
+                }
+              >
+                {(portfolioPerformance * 100).toFixed(2)}%
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-muted-foreground">
+                Today's Change
+              </span>
+              <span
+                className={
+                  totalTodayChange >= 0 ? "text-success" : "text-destructive"
+                }
+              >
+                $
+                {totalTodayChange.toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                })}{" "}
+                ({(todayPerformance * 100).toFixed(2)}%)
+              </span>
             </div>
           </div>
-        )}
-        <div className="pt-2 border-t">
-          <p className="text-xs text-muted-foreground">
-            Created {new Date(created_at).toLocaleDateString()}
-          </p>
-        </div>
-      </CardContent>
+          {totalHoldings > 0 && (
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Top Holdings</p>
+              <div className="space-y-1">
+                {holdings.slice(0, 3).map((holding, index) => (
+                  <div key={index} className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">
+                      {holding.ticker}
+                    </span>
+                    <span>{holding.quantity} shares</span>
+                  </div>
+                ))}
+                {holdings.length > 3 && (
+                  <p className="text-xs text-muted-foreground">
+                    +{holdings.length - 3} more
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+          <div className="pt-2 border-t">
+            <p className="text-xs text-muted-foreground">
+              Created {new Date(created_at).toLocaleDateString()}
+            </p>
+          </div>
+          <div className="pt-2 flex items-center justify-end text-sm text-primary font-medium">
+            View details <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </div>
+        </CardContent>
+      </Link>
     </Card>
   );
 };
