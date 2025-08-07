@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getMultipleStockPricesApiV1StockTickersPricesGet } from "../stock/stock";
+import { useToast } from "@/components/ui/use-toast";
 
 export interface PortfolioHolding {
   ticker: string;
@@ -112,6 +113,171 @@ export const useDeletePortfolio = () => {
       // Invalidate both the portfolio list and the specific portfolio
       queryClient.invalidateQueries({ queryKey: ['portfolios'] });
       queryClient.invalidateQueries({ queryKey: ['portfolio', portfolioId] });
+    },
+  });
+};
+
+// Helper function to update portfolio holdings
+const updatePortfolioHoldings = async (portfolioId: string, updates: Omit<PortfolioHolding,'current_price' |'change_percent' |'created_at' | 'updated_at' | 'id' >) => {
+  const { data: existingHolding, error: fetchError } = await supabase
+    .from('holdings')
+    .select('*')
+    .eq('portfolio_id', portfolioId)
+    .eq('ticker', updates.ticker)
+    .maybeSingle();
+
+  if (fetchError) {
+    throw fetchError;
+  }
+
+  if (existingHolding) {
+    // Update existing holding
+    const { data, error } = await supabase
+      .from('holdings')
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', existingHolding.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  } else {
+    // Add new holding
+    const newHolding = {
+      portfolio_id: portfolioId,
+      ticker: updates.ticker,
+      quantity: updates.quantity || 0,
+      total_invested: updates.total_invested || 0,
+      average_price: updates.average_price || 0,
+      notes: '',
+    };
+
+    const { data, error } = await supabase
+      .from('holdings')
+      .insert(newHolding)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+};
+
+export const useUpdatePortfolio = () => {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({
+      portfolioId,
+      portfolioData,
+    }: {
+      portfolioId: string;
+      portfolioData: Partial<Portfolio>;
+    }) => {
+      const { data, error } = await supabase
+        .from('portfolios')
+        .update({
+          name: portfolioData.name,
+          description: portfolioData.description,
+          is_public: portfolioData.is_public,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', portfolioId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (data, variables) => {
+      // Invalidate and refetch the portfolio query
+      queryClient.invalidateQueries({ queryKey: ['portfolio', variables.portfolioId] });
+      // Also invalidate the portfolios list
+      queryClient.invalidateQueries({ queryKey: ['portfolios'] });
+    },
+  });
+};
+
+export const useUpdatePortfolioHoldings = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  
+  return useMutation({
+    mutationFn: async ({
+      portfolioId,
+      holding,
+    }: {
+      portfolioId: string;
+      holding: Omit<PortfolioHolding, 'id' | 'created_at' | 'updated_at'>;
+    }) => {
+      const data = await updatePortfolioHoldings(portfolioId, holding);
+      return data;
+    },
+    onSuccess: (_, { portfolioId }) => {
+      queryClient.invalidateQueries({ queryKey: ['portfolio', portfolioId] });
+      toast({
+        title: 'Holding updated',
+        description: 'Your portfolio holding has been updated.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update holding',
+        variant: 'destructive',
+      });
+    },
+  });
+};
+
+export const useDeletePortfolioHolding = () => {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  
+  return useMutation({
+    mutationFn: async ({
+      portfolioId,
+      ticker,
+    }: {
+      portfolioId: string;
+      ticker: string;
+    }) => {
+      // First get the holding ID
+      const { data: holding, error: fetchError } = await supabase
+        .from('holdings')
+        .select('id')
+        .eq('portfolio_id', portfolioId)
+        .eq('ticker', ticker)
+        .single();
+
+      if (fetchError) throw fetchError;
+      if (!holding) throw new Error('Holding not found');
+
+      // Then delete it
+      const { error } = await supabase
+        .from('holdings')
+        .delete()
+        .eq('id', holding.id);
+
+      if (error) throw error;
+      return { success: true };
+    },
+    onSuccess: (_, { portfolioId }) => {
+      queryClient.invalidateQueries({ queryKey: ['portfolio', portfolioId] });
+      toast({
+        title: 'Holding removed',
+        description: 'The holding has been removed from your portfolio.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to remove holding',
+        variant: 'destructive',
+      });
     },
   });
 };

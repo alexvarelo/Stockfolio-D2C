@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { usePortfolio, useDeletePortfolio } from "@/api/portfolio/portfolio";
+import { useQueryClient } from '@tanstack/react-query';
+import { usePortfolio, useDeletePortfolio, Portfolio } from "@/api/portfolio/portfolio";
 import { usePortfolioPerformance } from "@/api/portfolio/usePortfolioPerformance";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,12 +25,17 @@ import { PortfolioHeader } from "@/components/portfolio/PortfolioHeader";
 import { PortfolioHoldings } from "@/components/portfolio/PortfolioHoldings";
 import { PortfolioStats } from "@/components/portfolio/PortfolioStats";
 import { PortfolioPerformanceChart } from "@/components/portfolio/PortfolioPerformanceChart";
+import { PortfolioEditDialog } from "@/components/portfolio/edit/PortfolioEditDialog";
+import { TransactionDrawer } from "@/components/transactions";
+import { useState } from "react";
 
 export const PortfolioDetail = () => {
   const { portfolioId } = useParams<{ portfolioId: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const { data: portfolio, isLoading, error } = usePortfolio(portfolioId || "");
   const { mutateAsync: deletePortfolio } = useDeletePortfolio();
@@ -60,7 +66,13 @@ export const PortfolioDetail = () => {
     }
   };
 
-  if (isLoading) {
+  const handlePortfolioSaved = () => {
+    // Invalidate queries to refresh the data
+    queryClient.invalidateQueries({ queryKey: ['portfolio', portfolioId] });
+    queryClient.invalidateQueries({ queryKey: ['portfolios'] });
+  };
+
+  if (isLoading || !portfolio) {
     return <PortfolioDetailSkeleton />;
   }
 
@@ -105,22 +117,33 @@ export const PortfolioDetail = () => {
           Back
         </Button>
 
-        {isOwner && (
-          <div className="space-x-2">
-            <Button variant="outline" size="sm">
-              <Edit className="mr-2 h-4 w-4" />
-              Edit
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDelete}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </Button>
-          </div>
-        )}
+        <div className="space-x-2 flex items-center">
+          <TransactionDrawer 
+            portfolioId={portfolioId || ""} 
+            onTransactionAdded={() => {
+              queryClient.invalidateQueries({ queryKey: ['portfolio', portfolioId] });
+            }} 
+          />
+          
+          {isOwner && (
+            <>
+              <PortfolioEditDialog
+                portfolio={portfolio}
+                isOpen={isEditDialogOpen}
+                onOpenChange={setIsEditDialogOpen}
+                onSaved={handlePortfolioSaved}
+              />
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleDelete}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       <PortfolioHeader

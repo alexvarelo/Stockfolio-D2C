@@ -43,6 +43,8 @@ export const PortfolioPerformanceChart = ({
     }));
   }, [dates, values]);
 
+  console.log(chartData);
+
   if (dates.length === 0 || values.length === 0) {
     return (
       <div className="flex items-center justify-center h-full text-muted-foreground">

@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { NavLinks } from './NavLinks';
-import { SearchButtonWithDialog } from '@/components/search/SearchButtonWithDialog';
 
 interface MobileNavProps {
   isOpen: boolean;
@@ -37,10 +36,7 @@ export const MobileNav = ({ isOpen, links, currentPath, onClose }: MobileNavProp
       <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40" onClick={onClose} />
       <div className="fixed top-14 right-0 w-64 h-[calc(100vh-3.5rem)] bg-background border-l z-50 overflow-y-auto">
         <div className="p-4 space-y-2">
-          <div className="mb-4">
-            <SearchButtonWithDialog />
-          </div>
-          <nav className="flex flex-col space-y-1">
+          <nav className="flex flex-col space-y-1 pt-2">
             <NavLinks 
               links={links} 
               currentPath={currentPath} 

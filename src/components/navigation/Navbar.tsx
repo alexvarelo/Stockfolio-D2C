@@ -32,9 +32,12 @@ export const Navbar = () => {
         <div className="flex-1" />
 
         <div className="flex items-center gap-2">
-          <div className="hidden md:block">
+          {/* Search button - visible on all screen sizes */}
+          <div className="block">
             <SearchButtonWithDialog />
           </div>
+          
+          {/* Theme toggle */}
           <ThemeToggle />
           
           {/* Mobile menu button */}
@@ -68,9 +71,6 @@ export const Navbar = () => {
       {mobileMenuOpen && (
         <div className="md:hidden absolute right-4 top-14 z-50">
           <div className="bg-background border border-border rounded-md shadow-lg w-48 py-1">
-            <div className="px-4 py-2 border-b border-border">
-              <SearchButtonWithDialog />
-            </div>
             <nav className="py-1">
               <NavLinks 
                 links={navLinks} 
