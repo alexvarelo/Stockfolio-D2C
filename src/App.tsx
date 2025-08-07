@@ -12,6 +12,9 @@ import { PortfolioDetail } from "./pages/PortfolioDetail";
 import { InstrumentPage } from "./pages/InstrumentPage";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import { Navbar } from "@/components/navigation/Navbar";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { SearchButtonWithDialog } from "@/components/search/SearchButtonWithDialog";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -46,69 +49,10 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 // Main Layout Component
-import {
-  NavigationMenu,
-  NavigationMenuList,
-  NavigationMenuItem,
-  NavigationMenuLink,
-} from "@/components/ui/navigation-menu";
-import { useLocation } from "react-router-dom";
-import { SearchButtonWithDialog } from "@/components/search/SearchButtonWithDialog";
-import { ThemeProvider } from "@/components/theme/ThemeProvider";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
-
 function MainLayout({ children }: { children: React.ReactNode }) {
-  const location = useLocation();
-
-  // Define nav links
-  const navLinks = [
-    { href: "/", label: "Dashboard" },
-    { href: "/portfolios", label: "My Portfolios" },
-    { href: "/transactions", label: "Transactions" },
-    { href: "/following", label: "Following" },
-  ];
-
   return (
     <div className="min-h-screen flex flex-col w-full">
-      <header className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-30">
-        <div className="flex h-14 items-center px-4 gap-4">
-          {/* Logo */}
-          <a href="/" className="flex items-center gap-2">
-            <img src="shark.png" alt="Logo" className="h-7 w-7" />
-            {/* <span className="font-bold text-lg">Stockfolio</span> */}
-          </a>
-          {/* Navigation */}
-          <nav className="hidden md:flex items-center gap-1">
-            {navLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                  location.pathname === link.href ||
-                  (link.href !== "/" && location.pathname.startsWith(link.href))
-                    ? "bg-accent text-accent-foreground"
-                    : "hover:bg-accent/50"
-                }`}
-              >
-                {link.label}
-              </a>
-            ))}
-          </nav>
-
-          <div className="flex-1" />
-
-          <div className="flex items-center gap-2">
-            <SearchButtonWithDialog />
-            <ThemeToggle />
-          </div>
-        </div>
-
-        {/* Mobile: Search bar below top bar */}
-        <div className="block md:hidden px-4 py-2">
-          <SearchButtonWithDialog />
-        </div>
-      </header>
-
+      <Navbar />
       <main className="flex-1 p-4 md:p-6">{children}</main>
     </div>
   );

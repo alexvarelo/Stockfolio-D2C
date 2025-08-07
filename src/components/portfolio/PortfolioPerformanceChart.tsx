@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo } from "react";
 import {
   LineChart,
   Line,
@@ -9,9 +9,9 @@ import {
   ResponsiveContainer,
   Area,
   AreaChart,
-} from 'recharts';
-import { format } from 'date-fns';
-import { formatCurrency } from '@/lib/formatters';
+} from "recharts";
+import { format } from "date-fns";
+import { formatCurrency } from "@/lib/formatters";
 
 interface PortfolioPerformanceChartProps {
   dates: string[];
@@ -23,7 +23,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     return (
       <div className="bg-background border rounded-lg p-4 shadow-lg">
         <p className="text-sm text-muted-foreground">
-          {format(new Date(label), 'MMM d, yyyy')}
+          {format(new Date(label), "MMM d, yyyy")}
         </p>
         <p className="font-semibold">{formatCurrency(payload[0].value)}</p>
       </div>
@@ -32,7 +32,10 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-export const PortfolioPerformanceChart = ({ dates, values }: PortfolioPerformanceChartProps) => {
+export const PortfolioPerformanceChart = ({
+  dates,
+  values,
+}: PortfolioPerformanceChartProps) => {
   const chartData = useMemo(() => {
     return dates.map((date, index) => ({
       date,
@@ -54,7 +57,7 @@ export const PortfolioPerformanceChart = ({ dates, values }: PortfolioPerformanc
 
   // Format X-axis tick to show month and year
   const formatXAxis = (date: string) => {
-    return format(new Date(date), 'MMM yyyy');
+    return format(new Date(date), "MMM yyyy");
   };
 
   // Format Y-axis tick to show abbreviated currency values (e.g., 1K, 1M)
@@ -81,12 +84,20 @@ export const PortfolioPerformanceChart = ({ dates, values }: PortfolioPerformanc
       >
         <defs>
           <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.2} />
-            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+            <stop
+              offset="5%"
+              stopColor="hsl(var(--primary))"
+              stopOpacity={0.2}
+            />
+            <stop
+              offset="95%"
+              stopColor="hsl(var(--primary))"
+              stopOpacity={0}
+            />
           </linearGradient>
         </defs>
-        <CartesianGrid 
-          strokeDasharray="3 3" 
+        <CartesianGrid
+          strokeDasharray="3 3"
           vertical={false}
           stroke="hsl(var(--muted))"
         />
@@ -95,7 +106,11 @@ export const PortfolioPerformanceChart = ({ dates, values }: PortfolioPerformanc
           axisLine={false}
           tickLine={false}
           tickFormatter={formatXAxis}
-          tick={{ fill: 'hsl(var(--muted-foreground))' }}
+          tick={{
+            fill: "hsl(var(--muted-foreground))",
+            fontSize: "0.75rem",
+            fontFamily: "var(--font-sans)",
+          }}
           tickMargin={10}
         />
         <YAxis
@@ -103,12 +118,16 @@ export const PortfolioPerformanceChart = ({ dates, values }: PortfolioPerformanc
           axisLine={false}
           tickLine={false}
           tickFormatter={formatYAxis}
-          tick={{ fill: 'hsl(var(--muted-foreground))' }}
+          tick={{
+            fill: "hsl(var(--muted-foreground))",
+            fontSize: "0.75rem",
+            fontFamily: "var(--font-sans)",
+          }}
           width={60}
         />
-        <Tooltip 
+        <Tooltip
           content={<CustomTooltip />}
-          cursor={{ stroke: 'hsl(var(--primary))', strokeWidth: 1 }}
+          cursor={{ stroke: "hsl(var(--primary))", strokeWidth: 1 }}
         />
         <Area
           type="monotone"
