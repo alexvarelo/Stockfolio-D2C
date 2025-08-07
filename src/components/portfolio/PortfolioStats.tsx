@@ -53,7 +53,7 @@ export const PortfolioStats = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Portfolio Overview</CardTitle>
+        <CardTitle>Overview</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         {stats.map((stat) => (

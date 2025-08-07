@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from "@tanstack/react-query";
 import { usePortfolio, useDeletePortfolio } from "@/api/portfolio/portfolio";
 import { usePortfolioPerformance } from "@/api/portfolio/usePortfolioPerformance";
 import { usePortfolioTransactions } from "@/api/transaction/usePortfolioTransactions";
@@ -38,6 +38,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { DeleteConfirmationDialog } from "@/components/portfolio/delete/DeleteConfirmationDialog";
 
 export const PortfolioDetail = () => {
   const { portfolioId } = useParams<{ portfolioId: string }>();
@@ -46,41 +47,38 @@ export const PortfolioDetail = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const { data: portfolio, isLoading, error } = usePortfolio(portfolioId || "");
   const { mutateAsync: deletePortfolio } = useDeletePortfolio();
-  const { data: performanceData } = usePortfolioPerformance(portfolio?.holdings);
+  const { data: performanceData } = usePortfolioPerformance(
+    portfolio?.holdings
+  );
   const { data: transactions } = usePortfolioTransactions(portfolioId);
 
   const handleDelete = async () => {
     if (!portfolioId) return;
-
-    if (
-      window.confirm(
-        "Are you sure you want to delete this portfolio? This action cannot be undone."
-      )
-    ) {
-      try {
-        await deletePortfolio(portfolioId);
-        toast({
-          title: "Portfolio deleted",
-          description: "Your portfolio has been successfully deleted.",
-        });
-        navigate("/portfolios");
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to delete portfolio. Please try again.",
-          variant: "destructive",
-        });
-      }
+    
+    try {
+      await deletePortfolio(portfolioId);
+      toast({
+        title: "Portfolio deleted",
+        description: "Your portfolio has been successfully deleted.",
+      });
+      navigate("/portfolios");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete portfolio. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
   const handlePortfolioSaved = () => {
     // Invalidate queries to refresh the data
-    queryClient.invalidateQueries({ queryKey: ['portfolio', portfolioId] });
-    queryClient.invalidateQueries({ queryKey: ['portfolios'] });
+    queryClient.invalidateQueries({ queryKey: ["portfolio", portfolioId] });
+    queryClient.invalidateQueries({ queryKey: ["portfolios"] });
   };
 
   if (isLoading || !portfolio) {
@@ -127,13 +125,17 @@ export const PortfolioDetail = () => {
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Portfolios
         </Button>
-        
+
         <div className="flex items-center gap-2">
-          <TransactionDrawer 
-            portfolioId={portfolioId || ""} 
+          <TransactionDrawer
+            portfolioId={portfolioId || ""}
             onTransactionAdded={() => {
-              queryClient.invalidateQueries({ queryKey: ['portfolio', portfolioId] });
-              queryClient.invalidateQueries({ queryKey: ['portfolioTransactions', portfolioId] });
+              queryClient.invalidateQueries({
+                queryKey: ["portfolio", portfolioId],
+              });
+              queryClient.invalidateQueries({
+                queryKey: ["portfolioTransactions", portfolioId],
+              });
             }}
           >
             <Button size="sm" className="gap-2">
@@ -141,14 +143,14 @@ export const PortfolioDetail = () => {
               New Transaction
             </Button>
           </TransactionDrawer>
-          
+
           <PortfolioEditDialog
             portfolio={portfolio}
             isOpen={isEditDialogOpen}
             onOpenChange={setIsEditDialogOpen}
             onSaved={handlePortfolioSaved}
           />
-          
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="icon">
@@ -156,21 +158,6 @@ export const PortfolioDetail = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              {isOwner && (
-                <>
-                  <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
-                    <Edit className="mr-2 h-4 w-4" />
-                    <span>Edit Portfolio</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    className="text-destructive focus:text-destructive"
-                    onClick={handleDelete}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    <span>Delete Portfolio</span>
-                  </DropdownMenuItem>
-                </>
-              )}
               <DropdownMenuItem>
                 <Share2 className="mr-2 h-4 w-4" />
                 <span>Share</span>
@@ -184,6 +171,21 @@ export const PortfolioDetail = () => {
                   <Users className="mr-2 h-4 w-4" />
                   <span>{portfolio.followers_count || 0} Followers</span>
                 </DropdownMenuItem>
+              )}
+              {isOwner && (
+                <>
+                  <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    <span>Edit Portfolio</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive"
+                    onClick={() => setIsDeleteDialogOpen(true)}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    <span>Delete Portfolio</span>
+                  </DropdownMenuItem>
+                </>
               )}
             </DropdownMenuContent>
           </DropdownMenu>
@@ -208,13 +210,15 @@ export const PortfolioDetail = () => {
             <CardContent>
               <div className="h-80">
                 {performanceData ? (
-                  <PortfolioPerformanceChart 
-                    dates={performanceData.dates} 
-                    values={performanceData.values} 
+                  <PortfolioPerformanceChart
+                    dates={performanceData.dates}
+                    values={performanceData.values}
                   />
                 ) : (
                   <div className="flex items-center justify-center h-full">
-                    <p className="text-muted-foreground">Loading performance data...</p>
+                    <p className="text-muted-foreground">
+                      Loading performance data...
+                    </p>
                   </div>
                 )}
               </div>
@@ -222,7 +226,10 @@ export const PortfolioDetail = () => {
           </Card>
 
           <PortfolioHoldings holdings={portfolio.holdings} />
-          <TransactionsCard transactions={transactions || []} className="lg:hidden" />
+          <TransactionsCard
+            transactions={transactions || []}
+            className="lg:hidden"
+          />
         </div>
 
         <div className="space-y-6">
@@ -237,6 +244,15 @@ export const PortfolioDetail = () => {
           <TransactionsCard transactions={transactions || []} />
         </div>
       </div>
+
+      <DeleteConfirmationDialog
+        isOpen={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={handleDelete}
+        title="Delete Portfolio"
+        description="Are you sure you want to delete this portfolio? This action cannot be undone."
+        confirmText="Delete Portfolio"
+      />
     </div>
   );
 };
