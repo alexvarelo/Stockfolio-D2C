@@ -1,5 +1,4 @@
 import { useQuery, useQueries } from '@tanstack/react-query';
-import { format, subDays } from 'date-fns';
 import { getHistoricalDataApiV1StockTickerHistoryGet } from '../stock/stock';
 
 interface HistoricalPrice {

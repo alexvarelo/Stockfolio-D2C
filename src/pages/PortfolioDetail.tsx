@@ -1,7 +1,8 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQueryClient } from '@tanstack/react-query';
-import { usePortfolio, useDeletePortfolio, Portfolio } from "@/api/portfolio/portfolio";
+import { usePortfolio, useDeletePortfolio } from "@/api/portfolio/portfolio";
 import { usePortfolioPerformance } from "@/api/portfolio/usePortfolioPerformance";
+import { usePortfolioTransactions } from "@/api/transaction/usePortfolioTransactions";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,6 +19,8 @@ import {
   Share2,
   Users,
   BarChart2,
+  MoreVertical,
+  Plus,
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/auth";
@@ -27,7 +30,14 @@ import { PortfolioStats } from "@/components/portfolio/PortfolioStats";
 import { PortfolioPerformanceChart } from "@/components/portfolio/PortfolioPerformanceChart";
 import { PortfolioEditDialog } from "@/components/portfolio/edit/PortfolioEditDialog";
 import { TransactionDrawer } from "@/components/transactions";
+import { TransactionsCard } from "@/components/transactions/TransactionsCard";
 import { useState } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const PortfolioDetail = () => {
   const { portfolioId } = useParams<{ portfolioId: string }>();
@@ -40,6 +50,7 @@ export const PortfolioDetail = () => {
   const { data: portfolio, isLoading, error } = usePortfolio(portfolioId || "");
   const { mutateAsync: deletePortfolio } = useDeletePortfolio();
   const { data: performanceData } = usePortfolioPerformance(portfolio?.holdings);
+  const { data: transactions } = usePortfolioTransactions(portfolioId);
 
   const handleDelete = async () => {
     if (!portfolioId) return;
@@ -111,38 +122,71 @@ export const PortfolioDetail = () => {
 
   return (
     <div className="container mx-auto p-4 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-4">
         <Button variant="outline" onClick={() => navigate(-1)}>
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back
+          Back to Portfolios
         </Button>
-
-        <div className="space-x-2 flex items-center">
+        
+        <div className="flex items-center gap-2">
           <TransactionDrawer 
             portfolioId={portfolioId || ""} 
             onTransactionAdded={() => {
               queryClient.invalidateQueries({ queryKey: ['portfolio', portfolioId] });
-            }} 
+              queryClient.invalidateQueries({ queryKey: ['portfolioTransactions', portfolioId] });
+            }}
+          >
+            <Button size="sm" className="gap-2">
+              <Plus className="h-4 w-4" />
+              New Transaction
+            </Button>
+          </TransactionDrawer>
+          
+          <PortfolioEditDialog
+            portfolio={portfolio}
+            isOpen={isEditDialogOpen}
+            onOpenChange={setIsEditDialogOpen}
+            onSaved={handlePortfolioSaved}
           />
           
-          {isOwner && (
-            <>
-              <PortfolioEditDialog
-                portfolio={portfolio}
-                isOpen={isEditDialogOpen}
-                onOpenChange={setIsEditDialogOpen}
-                onSaved={handlePortfolioSaved}
-              />
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleDelete}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon">
+                <MoreVertical className="h-4 w-4" />
               </Button>
-            </>
-          )}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {isOwner && (
+                <>
+                  <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    <span>Edit Portfolio</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    className="text-destructive focus:text-destructive"
+                    onClick={handleDelete}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    <span>Delete Portfolio</span>
+                  </DropdownMenuItem>
+                </>
+              )}
+              <DropdownMenuItem>
+                <Share2 className="mr-2 h-4 w-4" />
+                <span>Share</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <BarChart2 className="mr-2 h-4 w-4" />
+                <span>Analytics</span>
+              </DropdownMenuItem>
+              {portfolio.is_public && (
+                <DropdownMenuItem>
+                  <Users className="mr-2 h-4 w-4" />
+                  <span>{portfolio.followers_count || 0} Followers</span>
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
@@ -178,6 +222,7 @@ export const PortfolioDetail = () => {
           </Card>
 
           <PortfolioHoldings holdings={portfolio.holdings} />
+          <TransactionsCard transactions={transactions || []} className="lg:hidden" />
         </div>
 
         <div className="space-y-6">
@@ -189,27 +234,7 @@ export const PortfolioDetail = () => {
             holdingsCount={portfolio.holdings.length}
           />
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <Button variant="outline" className="w-full justify-start">
-                <Share2 className="mr-2 h-4 w-4" />
-                Share Portfolio
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <BarChart2 className="mr-2 h-4 w-4" />
-                View Advanced Analytics
-              </Button>
-              {portfolio.is_public && (
-                <Button variant="outline" className="w-full justify-start">
-                  <Users className="mr-2 h-4 w-4" />
-                  {portfolio.followers_count || 0} Followers
-                </Button>
-              )}
-            </CardContent>
-          </Card>
+          <TransactionsCard transactions={transactions || []} />
         </div>
       </div>
     </div>
