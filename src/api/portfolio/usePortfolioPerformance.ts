@@ -5,6 +5,7 @@ import { getHistoricalDataApiV1StockTickerHistoryGet } from '../stock/stock';
 interface HistoricalPrice {
   date: string;
   close: number;
+  normalizedDate?: string; // For internal use
 }
 
 interface PortfolioPerformance {
@@ -61,36 +62,79 @@ export const usePortfolioPerformance = (holdings: Holding[] | undefined) => {
       }
 
       try {
-        // Create a map of ticker to its price data
+        // Helper function to normalize dates to YYYY-MM-DD format to handle timezone differences
+        const normalizeDate = (dateStr: string): string => {
+          try {
+            // Extract just the date part (YYYY-MM-DD) from ISO string
+            return new Date(dateStr).toISOString().split('T')[0];
+          } catch (e) {
+            // Fallback: Just take the date part before 'T' if it exists
+            return dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+          }
+        };
+
+        // Process each ticker's data to add normalized dates
+        const processedTickerData = tickerQueries.map(query => ({
+          ...query,
+          data: (query.data || []).map(price => ({
+            ...price,
+            normalizedDate: normalizeDate(price.date)
+          }))
+        }));
+
+        // Create a map of ticker to its price data with normalized dates
         const tickerToPrices = new Map(
-          uniqueTickers.map((ticker, index) => [ticker, tickerQueries[index].data || []])
+          uniqueTickers.map((ticker, index) => [ticker, processedTickerData[index].data || []])
         );
 
-        // Get all unique dates across all tickers
+        // Get all unique normalized dates
         const allDates = new Set<string>();
-        tickerQueries.forEach(query => {
-          (query.data || []).forEach(price => allDates.add(price.date));
+        processedTickerData.forEach(query => {
+          query.data.forEach(price => {
+            allDates.add(price.normalizedDate);
+          });
         });
 
         // Sort dates in ascending order
-        const sortedDates = Array.from(allDates).sort((a, b) => 
-          new Date(a).getTime() - new Date(b).getTime()
-        );
+        const sortedUniqueDates = Array.from(allDates)
+          .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+        
+        // For each date, keep track of the first original date string we see
+        const dateDisplayMap = new Map<string, string>();
+        processedTickerData.forEach(query => {
+          query.data.forEach(price => {
+            if (!dateDisplayMap.has(price.normalizedDate)) {
+              dateDisplayMap.set(price.normalizedDate, price.date);
+            }
+          });
+        });
 
-        // Calculate portfolio value for each date
-        const values = sortedDates.map(date => {
+        // Calculate portfolio value for each unique date
+        const values = sortedUniqueDates.map(normalizedDate => {
           return holdings.reduce((total, holding) => {
             const prices = tickerToPrices.get(holding.ticker) || [];
-            const priceData = prices.find(p => p.date === date);
-            if (priceData) {
-              return total + (priceData.close * holding.quantity);
+            // Find the most recent price on or before this date
+            let priceEntry = prices.find(p => p.normalizedDate === normalizedDate);
+            
+            if (!priceEntry) {
+              // If no exact match, find the most recent price before this date
+              const earlierPrices = prices
+                .filter(p => p.normalizedDate <= normalizedDate)
+                .sort((a, b) => b.normalizedDate.localeCompare(a.normalizedDate));
+              priceEntry = earlierPrices[0];
             }
-            return total;
+            
+            return priceEntry 
+              ? total + (priceEntry.close * holding.quantity)
+              : total;
           }, 0);
         });
 
+        // Use the display dates in the final output
+        const displayDates = sortedUniqueDates.map(date => dateDisplayMap.get(date) || date);
+
         return {
-          dates: sortedDates,
+          dates: displayDates,
           values
         };
       } catch (error) {
