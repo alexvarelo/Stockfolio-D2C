@@ -8,6 +8,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+interface DeleteConfirmationDialogProps {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  onConfirm: () => void;
+  title?: string;
+  description?: string | React.ReactNode;
+  confirmText?: string;
+  cancelText?: string;
+  children?: React.ReactNode;
+}
+
 export function DeleteConfirmationDialog({
   isOpen,
   onOpenChange,
@@ -16,24 +27,20 @@ export function DeleteConfirmationDialog({
   description = "Are you sure you want to delete this portfolio? This action cannot be undone.",
   confirmText = "Delete",
   cancelText = "Cancel",
-}: {
-  isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
-  onConfirm: () => void;
-  title?: string;
-  description?: string;
-  confirmText?: string;
-  cancelText?: string;
-}) {
+  children,
+}: DeleteConfirmationDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          <DialogDescription className="pt-2">
-            {description}
-          </DialogDescription>
+          {description && (
+            <DialogDescription className="pt-2">
+              {description}
+            </DialogDescription>
+          )}
         </DialogHeader>
+        {children && <div className="py-4">{children}</div>}
         <DialogFooter className="sm:justify-start pt-4">
           <Button
             type="button"

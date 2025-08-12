@@ -15,6 +15,9 @@ import NotFound from "./pages/NotFound";
 import { Navbar } from "@/components/navigation/Navbar";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { SearchButtonWithDialog } from "@/components/search/SearchButtonWithDialog";
+import Watchlists from "./pages/Watchlists";
+import WatchlistDetail from "./pages/WatchlistDetail";
+import { CreateEditWatchlist } from "./pages/CreateEditWatchlist";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -121,14 +124,41 @@ const App = () => (
                 }
               />
               <Route
-                path="/watchlist"
+                path="/watchlists"
                 element={
                   <ProtectedRoute>
                     <MainLayout>
-                      <div className="text-center py-12">
-                        <h2 className="text-2xl font-bold mb-4">Watchlist</h2>
-                        <p className="text-muted-foreground">Coming soon...</p>
-                      </div>
+                      <Watchlists />
+                    </MainLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/watchlists/new"
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <CreateEditWatchlist />
+                    </MainLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/watchlists/:id"
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <WatchlistDetail />
+                    </MainLayout>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/watchlists/:id/edit"
+                element={
+                  <ProtectedRoute>
+                    <MainLayout>
+                      <CreateEditWatchlist />
                     </MainLayout>
                   </ProtectedRoute>
                 }

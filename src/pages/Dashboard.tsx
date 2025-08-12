@@ -35,6 +35,9 @@ import {
 } from "lucide-react";
 import { useNeedsOnboarding } from "@/lib/onboarding";
 import { UserOnboardingWizard } from "@/components/onboarding/UserOnboardingWizard";
+import { PostList } from "@/components/social/PostList";
+import { CreatePost } from "@/components/social/CreatePost";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface PortfolioSummary {
   id: string;
@@ -63,6 +66,7 @@ const Dashboard = () => {
 
   const { needsOnboarding, loading } = useNeedsOnboarding(user?.id);
   const [onboardingOpen, setOnboardingOpen] = useState(true);
+  const queryClient = useQueryClient();
 
   const { data: portfolios, isLoading } = useQuery({
     queryKey: ["portfolios"],
@@ -148,9 +152,65 @@ const Dashboard = () => {
   }
 
   return (
-    <Tabs defaultValue="overview" className="space-y-8">
-      <TabsContent value="overview">
-        <div className="space-y-8">
+    <div className="container py-6 space-y-8">
+      <Tabs defaultValue="feed" className="space-y-8">
+        <TabsList className="grid w-full grid-cols-2 max-w-md mb-8">
+          <TabsTrigger value="feed">Social Feed</TabsTrigger>
+          <TabsTrigger value="overview">Portfolio Overview</TabsTrigger>
+        </TabsList>
+
+        {/* Social Feed Tab */}
+        <TabsContent value="feed" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Main Feed */}
+            <div className="lg:col-span-2 space-y-6">
+              <CreatePost 
+                onPostCreated={() => {
+                  queryClient.invalidateQueries({ queryKey: ['posts'] });
+                }} 
+              />
+              <PostList />
+            </div>
+
+            {/* Sidebar */}
+            <div className="space-y-6">
+              {/* Portfolio Summary Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Portfolio Summary</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total Value</p>
+                    <p className="text-2xl font-semibold">
+                      ${totalPortfolioValue.toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total Holdings</p>
+                    <p className="text-2xl font-semibold">{totalHoldings}</p>
+                  </div>
+                  <Button 
+                    className="w-full" 
+                    variant="outline"
+                    onClick={() => {
+                      const tabs = document.querySelector('button[data-value="overview"]') as HTMLButtonElement;
+                      tabs?.click();
+                    }}
+                  >
+                    View All Portfolios
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* Portfolio Overview Tab */}
+        <TabsContent value="overview" className="space-y-8">
           {/* Header */}
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-6">
@@ -176,8 +236,8 @@ const Dashboard = () => {
                   {userProfile?.full_name || userProfile?.email || "User"}
                 </span>
                 {userProfile?.email && userProfile?.full_name && (
-                  <span className="text-muted-foreground ">
-                    {/* {userProfile.email} */}Welcome back!
+                  <span className="text-muted-foreground">
+                    Welcome back!
                   </span>
                 )}
               </div>
@@ -265,7 +325,7 @@ const Dashboard = () => {
                 {portfolios?.map((portfolio) => (
                   <div
                     key={portfolio.id}
-                    className="flex items-center justify-between p-4 border rounded-lg"
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors cursor-pointer"
                   >
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
@@ -315,7 +375,7 @@ const Dashboard = () => {
                 {recentTransactions?.map((transaction) => (
                   <div
                     key={transaction.id}
-                    className="flex items-center justify-between p-4 border rounded-lg"
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
                   >
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
@@ -364,42 +424,19 @@ const Dashboard = () => {
               </CardContent>
             </Card>
           </div>
-          {user && needsOnboarding && !loading && (
-            <UserOnboardingWizard
-              open={onboardingOpen}
-              onComplete={() => setOnboardingOpen(false)}
-              userId={user.id}
-              email={user.email}
-            />
-          )}
-        </div>
-      </TabsContent>
-      <TabsContent value="search">
-        <Card className="max-w-2xl mx-auto">
-          <CardHeader>
-            <CardTitle>Search</CardTitle>
-            <CardDescription>
-              Search for instruments, portfolios, and more.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <CommandDialog open={true} onOpenChange={() => {}}>
-              <CommandInput placeholder="Type to search..." />
-              <CommandList>
-                <CommandEmpty>No results found.</CommandEmpty>
-                <CommandGroup heading="Instruments">
-                  {/* Instrument search results go here */}
-                </CommandGroup>
-                <CommandSeparator />
-                <CommandGroup heading="Portfolios">
-                  {/* Portfolio search results go here */}
-                </CommandGroup>
-              </CommandList>
-            </CommandDialog>
-          </CardContent>
-        </Card>
-      </TabsContent>
-    </Tabs>
+        </TabsContent>
+      </Tabs>
+
+      {/* Onboarding Wizard */}
+      {user && needsOnboarding && !loading && (
+        <UserOnboardingWizard
+          open={onboardingOpen}
+          onComplete={() => setOnboardingOpen(false)}
+          userId={user.id}
+          email={user.email}
+        />
+      )}
+    </div>
   );
 };
 

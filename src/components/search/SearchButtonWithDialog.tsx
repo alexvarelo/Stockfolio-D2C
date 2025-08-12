@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Search, ArrowRight } from "lucide-react";
+import { Search, ArrowRight, Plus } from "lucide-react";
 import {
   CommandDialog,
   CommandInput,
@@ -11,8 +11,10 @@ import {
   CommandItem,
   CommandSeparator,
 } from "@/components/ui/command";
-import { useSearchInstrumentsApiV1SearchGet } from "@/api/search/search";
+import { useSearchInstruments } from "@/api/instruments/useSearchInstruments";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AddToWatchlist } from "@/components/watchlist/AddToWatchlist";
+import { Button } from "@/components/ui/button";
 
 /**
  * SearchButtonWithDialog
@@ -37,18 +39,13 @@ export function SearchButtonWithDialog() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Fetch search results
-  const { data: searchResponse, isLoading } = useSearchInstrumentsApiV1SearchGet(
-    { query: debouncedQuery },
+  // Fetch search results using our custom hook
+  const { data: searchResults = [], isLoading } = useSearchInstruments(
+    debouncedQuery,
     { 
-      query: { 
-        enabled: debouncedQuery.length >= 2, // Only fetch if query is 2+ characters
-        staleTime: 5 * 60 * 1000, // Cache results for 5 minutes
-      } 
+      enabled: debouncedQuery.length >= 2 // Only fetch if query is 2+ characters
     }
   );
-  
-  const searchResults = searchResponse?.data;
 
   // Handle result selection
   const handleSelectResult = useCallback((ticker: string) => {
@@ -124,32 +121,44 @@ export function SearchButtonWithDialog() {
                 <Skeleton key={i} className="h-10 w-full" />
               ))}
             </div>
-          ) : searchResults.results.length === 0 ? (
+          ) : searchResults.length === 0 ? (
             <CommandEmpty>No results found for "{searchQuery}"</CommandEmpty>
           ) : (
             <CommandGroup heading="Instruments">
-              {searchResults.results.map((result) => (
-                <CommandItem
-                  key={result.symbol}
-                  value={`${result.symbol} ${result.name}`}
-                  onSelect={() => handleSelectResult(result.symbol)}
-                  className="flex items-center justify-between"
-                >
-                  <div className="flex flex-col">
-                    <span className="font-medium">{result.symbol}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {result.name}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {result.exchange && (
-                      <span className="text-xs text-muted-foreground">
-                        {result.exchange}
-                      </span>
-                    )}
-                    <ArrowRight className="h-4 w-4 opacity-50" />
-                  </div>
-                </CommandItem>
+              {searchResults.map((result) => (
+                <div key={result.ticker} className="relative group">
+                  <CommandItem
+                    value={`${result.ticker} ${result.name}`}
+                    onSelect={() => handleSelectResult(result.ticker)}
+                    className="flex items-center justify-between pr-16"
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">
+                          {result.name} <span className="text-muted-foreground">({result.ticker})</span>
+                        </p>
+                        {result.exchange && (
+                          <p className="text-xs text-muted-foreground truncate">
+                            {result.exchange}
+                            {result.country && ` • ${result.country}`}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex-shrink-0 ml-2">
+                        <AddToWatchlist 
+                          ticker={result.ticker}
+                          buttonVariant="outline"
+                          buttonSize="sm"
+                          className="ml-2"
+                          onAdded={() => {
+                            setSearchQuery('');
+                            setCommandOpen(false);
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </CommandItem>
+                </div>
               ))}
             </CommandGroup>
           )}

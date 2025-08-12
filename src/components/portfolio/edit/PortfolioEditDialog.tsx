@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PortfolioDetailsForm } from './PortfolioDetailsForm';
 import { HoldingsList } from './HoldingsList';
 import { AddHoldingForm } from './AddHoldingForm';
+import { ImportHoldingsFromCSV } from './ImportHoldingsFromCSV';
 
 interface PortfolioEditDialogProps {
   portfolio: Portfolio;
@@ -26,7 +27,7 @@ export const PortfolioEditDialog = ({
 }: PortfolioEditDialogProps) => {
   const { toast } = useToast();
   const { mutateAsync: updatePortfolio } = useUpdatePortfolio();
-  const [activeTab, setActiveTab] = useState<'details' | 'holdings'>('details');
+  const [activeTab, setActiveTab] = useState<'details' | 'holdings' | 'import'>('details');
   const [holdings, setHoldings] = useState<PortfolioHolding[]>([]);
   const [isAddingHolding, setIsAddingHolding] = useState(false);
   
@@ -65,18 +66,107 @@ export const PortfolioEditDialog = ({
     }
   };
 
-  const handleAddHolding = async (newHolding: Omit<PortfolioHolding, 'id' | 'created_at' | 'updated_at'>) => {
+  const handleAddHolding = async (holding: Omit<PortfolioHolding, 'current_price' | 'change_percent'>) => {
     try {
+      // Create a temporary holding for optimistic UI update
+      const tempHoldingId = `temp-${Date.now()}`;
+      const newHolding: PortfolioHolding = {
+        ...holding,
+        current_price: holding.average_price, // Set current price to average price initially
+        change_percent: 0, // No change initially
+      };
+      
+      // Update local state optimistically
+      setHoldings(prev => [...prev, newHolding]);
+      
+      // Call the API to add the holding
       await updateHolding({
         portfolioId: portfolio.id,
-        holding: newHolding
+        holding: {
+          ticker: holding.ticker,
+          quantity: holding.quantity,
+          average_price: holding.average_price,
+          total_invested: holding.total_invested || (holding.quantity * holding.average_price),
+        }
       });
-      // Invalidate the portfolio query to refresh the data
-      queryClient.invalidateQueries({ queryKey: ['portfolio', portfolio.id] });
+      
+      // Invalidate the portfolio query to refetch data
+      await queryClient.invalidateQueries({ queryKey: ['portfolio', portfolio.id] });
+      
+      // Update local state with the actual data from the server
+      const updatedPortfolio = queryClient.getQueryData(['portfolio', portfolio.id]) as Portfolio | undefined;
+      if (updatedPortfolio?.holdings) {
+        setHoldings(updatedPortfolio.holdings);
+      }
+      
       setIsAddingHolding(false);
+      
+      toast({
+        title: 'Holding added',
+        description: `${holding.ticker} has been added to your portfolio.`,
+      });
     } catch (error) {
-      // Error is handled by the mutation
-      throw error;
+      console.error('Error adding holding:', error);
+      
+      // Revert optimistic update on error
+      setHoldings(prev => prev.filter(h => h.ticker !== holding.ticker));
+      
+      toast({
+        title: 'Error',
+        description: 'Failed to add holding. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleImportHoldings = async (importedHoldings: Array<{
+    ticker: string;
+    quantity: number;
+    average_price: number;
+    total_invested: number;
+  }>) => {
+    try {
+      // Process each holding sequentially to avoid rate limiting
+      for (const holding of importedHoldings) {
+        try {
+          await updateHolding({
+            portfolioId: portfolio.id,
+            holding: {
+              ticker: holding.ticker,
+              quantity: holding.quantity,
+              average_price: holding.average_price,
+              total_invested: holding.total_invested || (holding.quantity * holding.average_price),
+            }
+          });
+        } catch (error) {
+          console.error(`Error importing holding ${holding.ticker}:`, error);
+          // Continue with next holding even if one fails
+        }
+      }
+      
+      // Invalidate the portfolio query to refetch data
+      await queryClient.invalidateQueries({ queryKey: ['portfolio', portfolio.id] });
+      
+      // Update local state with the new holdings
+      const updatedPortfolio = queryClient.getQueryData(['portfolio', portfolio.id]) as Portfolio | undefined;
+      if (updatedPortfolio?.holdings) {
+        setHoldings(updatedPortfolio.holdings);
+      }
+      
+      // Switch back to holdings tab
+      setActiveTab('holdings');
+      
+      toast({
+        title: 'Import successful',
+        description: `Successfully imported ${importedHoldings.length} holdings.`,
+      });
+    } catch (error) {
+      console.error('Error during import:', error);
+      toast({
+        title: 'Import error',
+        description: 'Some holdings may not have been imported. Please check the console for details.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -84,22 +174,76 @@ export const PortfolioEditDialog = ({
     try {
       await updateHolding({
         portfolioId: portfolio.id,
-        holding: updatedHolding
+        holding: {
+          ticker: updatedHolding.ticker,
+          quantity: updatedHolding.quantity,
+          average_price: updatedHolding.average_price,
+          total_invested: updatedHolding.total_invested || (updatedHolding.quantity * updatedHolding.average_price),
+        }
+      });
+      
+      // Invalidate the portfolio query to refetch data
+      await queryClient.invalidateQueries({ queryKey: ['portfolio', portfolio.id] });
+      
+      // Update local state with the actual data from the server
+      const updatedPortfolio = queryClient.getQueryData(['portfolio', portfolio.id]) as Portfolio | undefined;
+      if (updatedPortfolio?.holdings) {
+        setHoldings(updatedPortfolio.holdings);
+      }
+      
+      toast({
+        title: 'Holding updated',
+        description: `${updatedHolding.ticker} has been updated.`,
       });
     } catch (error) {
-      // Error is handled by the mutation
+      console.error('Error updating holding:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update holding. Please try again.',
+        variant: 'destructive',
+      });
       throw error;
     }
   };
 
   const handleDeleteHolding = async (ticker: string) => {
     try {
+      // Optimistically update the UI
+      setHoldings(prev => prev.filter(h => h.ticker !== ticker));
+      
       await deleteHolding({
         portfolioId: portfolio.id,
         ticker
       });
+      
+      // Invalidate the portfolio query to refetch data
+      await queryClient.invalidateQueries({ queryKey: ['portfolio', portfolio.id] });
+      
+      // Update local state with the actual data from the server
+      const updatedPortfolio = queryClient.getQueryData(['portfolio', portfolio.id]) as Portfolio | undefined;
+      if (updatedPortfolio?.holdings) {
+        setHoldings(updatedPortfolio.holdings);
+      }
+      
+      toast({
+        title: 'Holding removed',
+        description: `${ticker} has been removed from your portfolio.`,
+      });
     } catch (error) {
-      // Error is handled by the mutation
+      console.error('Error deleting holding:', error);
+      
+      // Revert optimistic update on error
+      await queryClient.invalidateQueries({ queryKey: ['portfolio', portfolio.id] });
+      const updatedPortfolio = queryClient.getQueryData(['portfolio', portfolio.id]) as Portfolio | undefined;
+      if (updatedPortfolio?.holdings) {
+        setHoldings(updatedPortfolio.holdings);
+      }
+      
+      toast({
+        title: 'Error',
+        description: 'Failed to remove holding. Please try again.',
+        variant: 'destructive',
+      });
       throw error;
     }
   };
@@ -117,10 +261,17 @@ export const PortfolioEditDialog = ({
           <DialogTitle>Edit Portfolio</DialogTitle>
         </DialogHeader>
         
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'details' | 'holdings')}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="details">Details</TabsTrigger>
-            <TabsTrigger value="holdings">Holdings</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'details' | 'holdings' | 'import')}>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="details" onClick={() => setActiveTab('details')}>
+              Portfolio Details
+            </TabsTrigger>
+            <TabsTrigger value="holdings" onClick={() => setActiveTab('holdings')}>
+              Holdings
+            </TabsTrigger>
+            <TabsTrigger value="import" onClick={() => setActiveTab('import')}>
+              Import CSV
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="details" className="mt-6">
@@ -132,45 +283,48 @@ export const PortfolioEditDialog = ({
           </TabsContent>
           
           <TabsContent value="holdings" className="mt-6 space-y-6">
-            <div className="flex flex-col space-y-4">
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-medium">Portfolio Holdings</h3>
-                <Button 
-                  size="sm" 
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-medium">Portfolio Holdings</h3>
+              <div className="space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setActiveTab('import')}
+                >
+                  Import from CSV
+                </Button>
+                <Button
+                  size="sm"
                   onClick={() => setIsAddingHolding(true)}
                   disabled={isAddingHolding}
-                  className="gap-2"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="mr-2 h-4 w-4" />
                   Add Holding
                 </Button>
               </div>
-              
-              {isAddingHolding && (
-                <div className="p-4 border rounded-lg bg-card">
-                  <AddHoldingForm 
-                    onSave={handleAddHolding}
-                    onCancel={() => setIsAddingHolding(false)}
-                  />
-                </div>
-              )}
             </div>
-            
-            <div className="space-y-4">
-              <h4 className="text-sm font-medium text-muted-foreground">CURRENT HOLDINGS</h4>
-              {holdings.length > 0 ? (
-                <HoldingsList 
-                  holdings={holdings} 
-                  onUpdateHolding={handleUpdateHolding}
-                  onDeleteHolding={handleDeleteHolding}
-                  className="border rounded-lg overflow-hidden"
+
+            {isAddingHolding ? (
+              <div className="p-4 border rounded-lg">
+                <AddHoldingForm
+                  onSave={handleAddHolding}
+                  onCancel={() => setIsAddingHolding(false)}
                 />
-              ) : (
-                <div className="text-center py-8 border rounded-lg">
-                  <p className="text-muted-foreground">No holdings yet. Add your first holding to get started.</p>
-                </div>
-              )}
-            </div>
+              </div>
+            ) : (
+              <HoldingsList 
+                holdings={holdings}
+                onUpdateHolding={handleUpdateHolding}
+                onDeleteHolding={handleDeleteHolding}
+              />
+            )}
+          </TabsContent>
+          
+          <TabsContent value="import" className="mt-6">
+            <ImportHoldingsFromCSV 
+              onImport={handleImportHoldings}
+              onCancel={() => setActiveTab('holdings')}
+            />
           </TabsContent>
         </Tabs>
       </DialogContent>
