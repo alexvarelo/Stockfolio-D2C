@@ -77,7 +77,7 @@ export const PortfolioCard: React.FC<PortfolioCardProps> = (props) => {
 
   return (
     <Card className="hover:shadow-lg transition-shadow group">
-      <Link to={`/portfolios/${id}`} className="block h-full">
+      <Link to={`/portfolio/${id}`} className="block h-full">
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
             <div className="space-y-1">

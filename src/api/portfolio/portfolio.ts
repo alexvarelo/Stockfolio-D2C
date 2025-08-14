@@ -33,10 +33,12 @@ export interface Portfolio extends Omit<PortfolioBase, 'portfolio_followers'> {
   };
 }
 
+// Get basic portfolio data without prices
 export const usePortfolio = (portfolioId: string) => {
   return useQuery<Portfolio, Error>({
     queryKey: ['portfolio', portfolioId],
     queryFn: async () => {
+      // First, get basic portfolio data
       const { data, error } = await supabase
         .from('portfolios')
         .select(`
@@ -55,36 +57,10 @@ export const usePortfolio = (portfolioId: string) => {
       if (error) throw error;
       if (!data) throw new Error('Portfolio not found');
       
-      // Get current prices for all holdings
-      const tickers = data.holdings?.map(h => h.ticker) || [];
-      const prices: Record<string, number> = {};
-      
-      if (tickers.length > 0) {
-        try {
-          const pricesResponse = await getMultipleStockPricesApiV1StockTickersPricesGet(
-            tickers.join(',')
-          );
-          
-          // Convert array of PriceData to a map of ticker to current_price
-          if (Array.isArray(pricesResponse?.data)) {
-            pricesResponse.data.forEach(priceData => {
-              if (priceData?.symbol && priceData.current_price !== null && priceData.current_price !== undefined) {
-                prices[priceData.symbol] = priceData.current_price;
-              }
-            });
-          }
-        } catch (error) {
-          console.error('Error fetching current prices:', error);
-        }
-      }
-      
-      // Create the response object with all required fields and current prices
+      // Create initial portfolio object without prices
       const portfolio: Portfolio = {
         ...data,
-        holdings: (data.holdings || []).map(holding => ({
-          ...holding,
-          current_price: prices[holding.ticker] || 0
-        })),
+        holdings: data.holdings || [],
         followers_count: data.portfolio_followers?.[0]?.count || 0,
       };
       
@@ -93,6 +69,95 @@ export const usePortfolio = (portfolioId: string) => {
     enabled: !!portfolioId,
     retry: 1,
     refetchOnWindowFocus: false,
+  });
+};
+
+// Get portfolio performance data (prices, etc.)
+export const usePortfolioPerformance = (portfolioId: string, enabled = true) => {
+  return useQuery<{
+    holdings: Array<PortfolioHolding & { current_price: number; change_percent: number }>;
+    total_value: number;
+    total_change_percent: number;
+  }, Error>({
+    queryKey: ['portfolio-performance', portfolioId],
+    queryFn: async () => {
+      // First get the portfolio with holdings
+      const { data: portfolio } = await supabase
+        .from('portfolios')
+        .select(`
+          id,
+          holdings (
+            ticker,
+            quantity,
+            total_invested,
+            average_price
+          )
+        `)
+        .eq('id', portfolioId)
+        .single();
+
+      if (!portfolio?.holdings?.length) {
+        return { holdings: [], total_value: 0, total_change_percent: 0 };
+      }
+
+      // Get current prices for all holdings
+      const tickers = portfolio.holdings.map(h => h.ticker);
+      const prices: Record<string, number> = {};
+      
+      try {
+        const pricesResponse = await getMultipleStockPricesApiV1StockTickersPricesGet(tickers.join(','));
+        
+        if (Array.isArray(pricesResponse?.data)) {
+          pricesResponse.data.forEach(priceData => {
+            if (priceData?.symbol && priceData.current_price !== null && priceData.current_price !== undefined) {
+              prices[priceData.symbol] = priceData.current_price;
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching current prices:', error);
+        throw error;
+      }
+      
+      // Calculate performance for each holding
+      const holdingsWithPerformance = portfolio.holdings.map(holding => {
+        const currentPrice = prices[holding.ticker] || 0;
+        const changePercent = holding.average_price > 0 
+          ? ((currentPrice - holding.average_price) / holding.average_price) * 100 
+          : 0;
+          
+        return {
+          ...holding,
+          current_price: currentPrice,
+          change_percent: changePercent
+        };
+      });
+      
+      // Calculate total portfolio value and change
+      const totalValue = holdingsWithPerformance.reduce(
+        (sum, h) => sum + (h.current_price * h.quantity),
+        0
+      );
+      
+      const totalInvested = holdingsWithPerformance.reduce(
+        (sum, h) => sum + h.total_invested,
+        0
+      );
+      
+      const totalChangePercent = totalInvested > 0 
+        ? ((totalValue - totalInvested) / totalInvested) * 100 
+        : 0;
+      
+      return {
+        holdings: holdingsWithPerformance,
+        total_value: totalValue,
+        total_change_percent: totalChangePercent
+      };
+    },
+    enabled: !!portfolioId && enabled,
+    retry: 1,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
 

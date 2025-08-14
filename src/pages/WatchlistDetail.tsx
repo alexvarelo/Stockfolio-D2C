@@ -164,7 +164,7 @@ export default function WatchlistDetail() {
                   <TableRow key={item.id}>
                     <TableCell className="font-medium">
                       <Link 
-                        to={`/instruments/${item.ticker}`}
+                        to={`/instrument/${item.ticker}`}
                         className="hover:underline flex items-center"
                       >
                         {item.ticker}

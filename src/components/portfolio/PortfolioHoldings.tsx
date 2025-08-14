@@ -60,7 +60,7 @@ export const PortfolioHoldings = ({ holdings }: PortfolioHoldingsProps) => {
                 <TableRow key={holding.ticker} className="group">
                   <TableCell className="font-medium">
                     <Link 
-                      to={`/instruments/${holding.ticker}`}
+                      to={`/instrument/${holding.ticker}`}
                       className="hover:underline flex items-center gap-2"
                     >
                       {holding.ticker}

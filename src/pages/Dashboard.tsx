@@ -38,6 +38,9 @@ import { UserOnboardingWizard } from "@/components/onboarding/UserOnboardingWiza
 import { PostList } from "@/components/social/PostList";
 import { CreatePost } from "@/components/social/CreatePost";
 import { useQueryClient } from "@tanstack/react-query";
+import { RecentActivity } from "@/components/portfolio/RecentActivity";
+import { TopInvestments } from "@/components/portfolio/TopInvestments";
+import { useNavigate } from "react-router-dom";
 
 interface PortfolioSummary {
   id: string;
@@ -67,6 +70,7 @@ const Dashboard = () => {
   const { needsOnboarding, loading } = useNeedsOnboarding(user?.id);
   const [onboardingOpen, setOnboardingOpen] = useState(true);
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const { data: portfolios, isLoading } = useQuery({
     queryKey: ["portfolios"],
@@ -142,17 +146,18 @@ const Dashboard = () => {
           <div className="h-8 bg-muted rounded w-1/4 mb-2"></div>
           <div className="h-4 bg-muted rounded w-1/2"></div>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-32 bg-muted rounded animate-pulse"></div>
-          ))}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+          <RecentActivity className="col-span-3" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+          <TopInvestments className="col-span-4" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container py-6 space-y-8">
+    <div>
       <Tabs defaultValue="feed" className="space-y-8">
         <TabsList className="grid w-full grid-cols-2 max-w-md mb-8">
           <TabsTrigger value="feed">Social Feed</TabsTrigger>
@@ -197,14 +202,14 @@ const Dashboard = () => {
                     className="w-full" 
                     variant="outline"
                     onClick={() => {
-                      const tabs = document.querySelector('button[data-value="overview"]') as HTMLButtonElement;
-                      tabs?.click();
+                      navigate("/portfolios")
                     }}
                   >
                     View All Portfolios
                   </Button>
                 </CardContent>
               </Card>
+              <TopInvestments className="col-span-4" /> 
             </div>
           </div>
         </TabsContent>

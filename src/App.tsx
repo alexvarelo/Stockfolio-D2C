@@ -56,7 +56,9 @@ function MainLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col w-full">
       <Navbar />
-      <main className="flex-1 p-4 md:p-6">{children}</main>
+      <main className="flex-1 px-4 py-6 sm:px-2 md:px-6 md:py-4 max-w-[2000px] mx-auto w-full">
+        {children}
+      </main>
     </div>
   );
 }
@@ -98,7 +100,7 @@ const App = () => (
                 }
               />
               <Route
-                path="/portfolios/:portfolioId"
+                path="/portfolio/:portfolioId"
                 element={
                   <ProtectedRoute>
                     <MainLayout>

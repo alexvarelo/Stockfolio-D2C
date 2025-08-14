@@ -7,6 +7,15 @@ export interface User {
   is_following?: boolean;
 }
 
+export interface PortfolioData {
+  id: string;
+  name: string;
+  is_public: boolean;
+  total_value?: number;
+  daily_change?: number;
+  holdings_count?: number;
+}
+
 export interface Post {
   id: string;
   user_id: string;
@@ -20,6 +29,7 @@ export interface Post {
   likes_count: number;
   comments_count: number;
   has_liked: boolean;
+  portfolio?: PortfolioData;
 }
 
 export interface Comment {

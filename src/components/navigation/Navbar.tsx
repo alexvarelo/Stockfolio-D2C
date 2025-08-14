@@ -4,10 +4,13 @@ import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { SearchButtonWithDialog } from '@/components/search/SearchButtonWithDialog';
 import { NavLinks } from './NavLinks';
 import { MobileNav } from './MobileNav';
+import { useAuth } from '@/lib/auth';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const { userProfile } = useAuth();
 
   const navLinks = [
     { href: "/", label: "Dashboard" },
@@ -21,7 +24,18 @@ export const Navbar = () => {
       <div className="flex h-14 items-center px-4 gap-4">
         {/* Logo */}
         <a href="/" className="flex items-center gap-2">
-          <img src="/shark.png" alt="Logo" className="h-7 w-7" />
+          {userProfile?.avatar_url || userProfile?.full_name ? (
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={userProfile.avatar_url} alt={userProfile.full_name || 'User'} />
+              <AvatarFallback>
+                {userProfile.full_name ? userProfile.full_name.charAt(0).toUpperCase() : 'U'}
+              </AvatarFallback>
+            </Avatar>
+          ) : (
+            <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+              <span className="text-xs font-medium">U</span>
+            </div>
+          )}
         </a>
 
         {/* Desktop Navigation */}
