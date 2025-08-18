@@ -43,7 +43,7 @@ export const PortfolioDetail = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  const { data: portfolio, isLoading, error } = usePortfolio(portfolioId || "");
+  const { data: portfolio, isLoading, error } = usePortfolio(portfolioId || "", true);
   const { mutateAsync: deletePortfolio } = useDeletePortfolio();
   const { data: performanceData } = usePortfolioPerformance(
     portfolio?.holdings

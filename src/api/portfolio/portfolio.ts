@@ -33,8 +33,9 @@ export interface Portfolio extends Omit<PortfolioBase, 'portfolio_followers'> {
   };
 }
 
-// Get basic portfolio data without prices
-export const usePortfolio = (portfolioId: string) => {
+// Get portfolio data with current prices and performance
+// This is a combination of basic portfolio data and current market data
+export const usePortfolio = (portfolioId: string, includePrices = true) => {
   return useQuery<Portfolio, Error>({
     queryKey: ['portfolio', portfolioId],
     queryFn: async () => {
@@ -57,18 +58,58 @@ export const usePortfolio = (portfolioId: string) => {
       if (error) throw error;
       if (!data) throw new Error('Portfolio not found');
       
-      // Create initial portfolio object without prices
+      // Create initial portfolio object
       const portfolio: Portfolio = {
         ...data,
         holdings: data.holdings || [],
         followers_count: data.portfolio_followers?.[0]?.count || 0,
       };
+
+      // If we don't need prices or there are no holdings, return early
+      if (!includePrices || !portfolio.holdings.length) {
+        return portfolio;
+      }
+
+      // Get current prices for all holdings
+      const tickers = portfolio.holdings.map(h => h.ticker);
+      const prices: Record<string, number> = {};
+      
+      try {
+        const pricesResponse = await getMultipleStockPricesApiV1StockTickersPricesGet(tickers.join(','));
+        
+        if (Array.isArray(pricesResponse?.data)) {
+          pricesResponse.data.forEach(priceData => {
+            if (priceData?.symbol && priceData.current_price !== null && priceData.current_price !== undefined) {
+              prices[priceData.symbol] = priceData.current_price;
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching current prices:', error);
+        // Continue without prices rather than failing the whole query
+        return portfolio;
+      }
+      
+      // Update holdings with current prices and calculate performance
+      portfolio.holdings = portfolio.holdings.map(holding => {
+        const currentPrice = prices[holding.ticker] || 0;
+        const changePercent = holding.average_price > 0 
+          ? ((currentPrice - holding.average_price) / holding.average_price) * 100 
+          : 0;
+          
+        return {
+          ...holding,
+          current_price: currentPrice,
+          change_percent: changePercent
+        };
+      });
       
       return portfolio;
     },
     enabled: !!portfolioId,
     retry: 1,
     refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };
 
