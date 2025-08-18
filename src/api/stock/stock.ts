@@ -26,12 +26,106 @@ import type {
   GetHistoricalDataApiV1StockTickerHistoryGetParams,
   HTTPValidationError,
   HistoricalDataResponse,
+  MarketDataResponse,
   PriceData,
   StockInfo
 } from '../financialDataApi.schemas';
 
 import { useSendRequest } from '.././orvalSendRequest';
 
+
+
+
+/**
+ * Get market overview data including:
+    - Top gainers
+    - Top losers
+    - Most active stocks
+    
+    Data is cached for 5 minutes to reduce API calls.
+ * @summary Get market overview data
+ */
+export const getMarketDataApiV1MarketGet = (
+    
+ signal?: AbortSignal
+) => {
+      
+      
+      return useSendRequest<MarketDataResponse>(
+      {url: `/api/v1/market`, method: 'GET', signal
+    },
+      );
+    }
+  
+
+export const getGetMarketDataApiV1MarketGetQueryKey = () => {
+    return [`/api/v1/market`] as const;
+    }
+
+    
+export const getGetMarketDataApiV1MarketGetQueryOptions = <TData = Awaited<ReturnType<typeof getMarketDataApiV1MarketGet>>, TError = ErrorResponse>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMarketDataApiV1MarketGet>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMarketDataApiV1MarketGetQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMarketDataApiV1MarketGet>>> = ({ signal }) => getMarketDataApiV1MarketGet(signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMarketDataApiV1MarketGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+}
+
+export type GetMarketDataApiV1MarketGetQueryResult = NonNullable<Awaited<ReturnType<typeof getMarketDataApiV1MarketGet>>>
+export type GetMarketDataApiV1MarketGetQueryError = ErrorResponse
+
+
+export function useGetMarketDataApiV1MarketGet<TData = Awaited<ReturnType<typeof getMarketDataApiV1MarketGet>>, TError = ErrorResponse>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMarketDataApiV1MarketGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMarketDataApiV1MarketGet>>,
+          TError,
+          Awaited<ReturnType<typeof getMarketDataApiV1MarketGet>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useGetMarketDataApiV1MarketGet<TData = Awaited<ReturnType<typeof getMarketDataApiV1MarketGet>>, TError = ErrorResponse>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMarketDataApiV1MarketGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMarketDataApiV1MarketGet>>,
+          TError,
+          Awaited<ReturnType<typeof getMarketDataApiV1MarketGet>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useGetMarketDataApiV1MarketGet<TData = Awaited<ReturnType<typeof getMarketDataApiV1MarketGet>>, TError = ErrorResponse>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMarketDataApiV1MarketGet>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+/**
+ * @summary Get market overview data
+ */
+
+export function useGetMarketDataApiV1MarketGet<TData = Awaited<ReturnType<typeof getMarketDataApiV1MarketGet>>, TError = ErrorResponse>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMarketDataApiV1MarketGet>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
+
+  const queryOptions = getGetMarketDataApiV1MarketGetQueryOptions(options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
 
 
 

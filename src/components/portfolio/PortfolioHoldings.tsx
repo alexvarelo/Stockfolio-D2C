@@ -21,9 +21,27 @@ import {
 
 interface PortfolioHoldingsProps {
   holdings: PortfolioHolding[];
+  isLoading?: boolean;
 }
 
-export const PortfolioHoldings = ({ holdings }: PortfolioHoldingsProps) => {
+export const PortfolioHoldings = ({ holdings, isLoading = false }: PortfolioHoldingsProps) => {
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Holdings</CardTitle>
+          <CardDescription>Loading holdings...</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-12 bg-muted/20 rounded-lg animate-pulse" />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
   if (holdings.length === 0) {
     return (
       <Card>

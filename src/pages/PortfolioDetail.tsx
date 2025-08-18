@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { usePortfolio, useDeletePortfolio } from "@/api/portfolio/portfolio";
+import { usePortfolio, useDeletePortfolio, type PortfolioHolding } from "@/api/portfolio/portfolio";
 import { usePortfolioPerformance } from "@/api/portfolio/usePortfolioPerformance";
 import { usePortfolioTransactions } from "@/api/transaction/usePortfolioTransactions";
 import { Button } from "@/components/ui/button";
@@ -43,12 +43,33 @@ export const PortfolioDetail = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  const { data: portfolio, isLoading, error } = usePortfolio(portfolioId || "", true);
+  // Load portfolio data with prices
+  const { data: portfolio, isLoading: isLoadingPortfolio, error } = usePortfolio(portfolioId || "");
+  
   const { mutateAsync: deletePortfolio } = useDeletePortfolio();
-  const { data: performanceData } = usePortfolioPerformance(
-    portfolio?.holdings
+  
+  // Load performance data if we have a portfolio with holdings
+  const { data: performanceData, isLoading: isLoadingPerformance } = usePortfolioPerformance(
+    (portfolio?.holdings || []) as PortfolioHolding[]
   );
-  const { data: transactions } = usePortfolioTransactions(portfolioId);
+  
+  // Load transactions in parallel
+  const { data: transactions, isLoading: isLoadingTransactions } = usePortfolioTransactions(portfolioId);
+  
+  // Calculate derived values
+  const holdingsCount = portfolio?.holdings?.length || 0;
+  const totalValue = portfolio?.holdings?.reduce(
+    (sum, h) => sum + ((h.current_price || 0) * h.quantity),
+    0
+  ) || 0;
+  
+  const totalInvested = portfolio?.holdings?.reduce(
+    (sum, h) => sum + h.total_invested,
+    0
+  ) || 0;
+  
+  const totalReturn = totalValue - totalInvested;
+  const returnPercentage = totalInvested > 0 ? (totalReturn / totalInvested) * 100 : 0;
 
   const handleDelete = async () => {
     if (!portfolioId) return;
@@ -75,7 +96,7 @@ export const PortfolioDetail = () => {
     queryClient.invalidateQueries({ queryKey: ["portfolios"] });
   };
 
-  if (isLoading || !portfolio) {
+  if (isLoadingPortfolio && !portfolio) {
     return <PortfolioDetailSkeleton />;
   }
 
@@ -100,17 +121,9 @@ export const PortfolioDetail = () => {
     );
   }
 
-  const isOwner = user?.id === portfolio.user_id;
-  const totalValue = portfolio.holdings.reduce(
-    (sum, holding) => sum + (holding.current_price || 0) * holding.quantity,
-    0
-  );
-  const totalInvested = portfolio.holdings.reduce(
-    (sum, holding) => sum + holding.total_invested,
-    0
-  );
-  const totalReturn = totalValue - totalInvested;
-  const returnPercentage = (totalReturn / totalInvested) * 100;
+  // Check if user is the owner of the portfolio
+  const isOwner = user?.id === portfolio?.user_id;
+  const isLoadingPrices = isLoadingPortfolio;
 
   return (
     <div className="container mx-auto px-1 sm:px-2 md:px-4 py-2 sm:py-4 space-y-3 sm:space-y-4">
@@ -190,11 +203,11 @@ export const PortfolioDetail = () => {
 
       <div className="px-1 sm:px-0">
         <PortfolioHeader
-          name={portfolio.name}
-          description={portfolio.description}
-          isPublic={portfolio.is_public}
-          followersCount={portfolio.followers_count || 0}
-          createdAt={portfolio.created_at}
+          name={portfolio?.name || ''}
+          description={portfolio?.description || ''}
+          isPublic={portfolio?.is_public || false}
+          followersCount={portfolio?.followers_count || 0}
+          createdAt={portfolio?.created_at || ''}
         />
       </div>
 
@@ -225,22 +238,28 @@ export const PortfolioDetail = () => {
           <div className="mt-4 lg:mt-0">
             <PortfolioStats
               totalValue={totalValue}
+              totalInvested={totalInvested}
               totalReturn={totalReturn}
               returnPercentage={returnPercentage}
-              totalInvested={totalInvested}
-              holdingsCount={portfolio.holdings.length}
+              holdingsCount={holdingsCount}
+              className="w-full"
             />
           </div>
         </div>
 
-        {/* Holdings section - full width below the graph and stats */}
+        {/* Holdings and Transactions section - full width below the graph and stats */}
         <div className="space-y-3 sm:space-y-4">
-          <PortfolioHoldings holdings={portfolio.holdings} />
+          <PortfolioHoldings 
+            holdings={portfolio?.holdings || []} 
+            isLoading={isLoadingPortfolio}
+          />
           
-          {/* Transactions - shown on mobile, hidden on desktop (shown in sidebar on desktop) */}
-          <div className="lg:hidden">
-            <TransactionsCard transactions={transactions || []} />
-          </div>
+         
+              <TransactionsCard 
+                transactions={transactions || []} 
+                isLoading={isLoadingTransactions}
+              />
+            
         </div>
       </div>
 

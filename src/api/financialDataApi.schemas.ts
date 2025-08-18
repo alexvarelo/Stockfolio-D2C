@@ -203,6 +203,112 @@ export interface HistoricalDataResponse {
 }
 
 /**
+ * Current price
+ */
+export type MarketDataPrice = number | null;
+
+/**
+ * Price change
+ */
+export type MarketDataChange = number | null;
+
+/**
+ * Price change percentage
+ */
+export type MarketDataChangePercent = number | null;
+
+/**
+ * Trading volume
+ */
+export type MarketDataVolume = number | null;
+
+/**
+ * Market capitalization
+ */
+export type MarketDataMarketCap = number | null;
+
+/**
+ * Price-to-earnings ratio
+ */
+export type MarketDataPeRatio = number | null;
+
+/**
+ * Schema for market data
+ */
+export interface MarketData {
+  /** Stock ticker symbol */
+  symbol: string;
+  /** Company name */
+  name: string;
+  /** Current price */
+  price?: MarketDataPrice;
+  /** Price change */
+  change?: MarketDataChange;
+  /** Price change percentage */
+  change_percent?: MarketDataChangePercent;
+  /** Trading volume */
+  volume?: MarketDataVolume;
+  /** Market capitalization */
+  market_cap?: MarketDataMarketCap;
+  /** Price-to-earnings ratio */
+  pe_ratio?: MarketDataPeRatio;
+}
+
+/**
+ * Schema for market data response
+ */
+export interface MarketDataResponse {
+  /** Top gainers */
+  gainers: MarketData[];
+  /** Top losers */
+  losers: MarketData[];
+  /** Most active stocks */
+  active: MarketData[];
+  /** Last update timestamp */
+  last_updated: string;
+}
+
+/**
+ * News publisher
+ */
+export type NewsArticlePublisher = string | null;
+
+/**
+ * URL to the full article
+ */
+export type NewsArticleLink = string | null;
+
+/**
+ * Publication date and time
+ */
+export type NewsArticlePublishedAt = string | null;
+
+export type NewsArticleThumbnailAnyOf = { [key: string]: unknown };
+
+/**
+ * Thumbnail image information
+ */
+export type NewsArticleThumbnail = NewsArticleThumbnailAnyOf | null;
+
+/**
+ * Schema for news articles related to stocks
+ */
+export interface NewsArticle {
+  /** Article title */
+  title: string;
+  /** News publisher */
+  publisher?: NewsArticlePublisher;
+  /** URL to the full article */
+  link?: NewsArticleLink;
+  /** Publication date and time */
+  published_at?: NewsArticlePublishedAt;
+  /** Thumbnail image information */
+  thumbnail?: NewsArticleThumbnail;
+  /** List of related ticker symbols */
+  related_tickers?: string[];
+}
+
+/**
  * Current stock price
  */
 export type PriceDataCurrentPrice = number | null;
@@ -361,6 +467,8 @@ export interface StockInfo {
   price_data: PriceData;
   /** Company information */
   company_info: CompanyInfo;
+  /** List of recent news articles */
+  news?: NewsArticle[];
   /** Additional financial data */
   additional_data?: StockInfoAdditionalData;
 }

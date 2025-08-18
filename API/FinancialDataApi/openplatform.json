@@ -364,6 +364,43 @@
         }
       }
     },
+    "/api/v1/market": {
+      "get": {
+        "tags": [
+          "stock"
+        ],
+        "summary": "Get market overview data",
+        "description": "Get market overview data including:\n    - Top gainers\n    - Top losers\n    - Most active stocks\n    \n    Data is cached for 5 minutes to reduce API calls.",
+        "operationId": "get_market_data_api_v1_market_get",
+        "responses": {
+          "200": {
+            "description": "Market overview data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MarketDataResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "YFinance service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/stock/{ticker}": {
       "get": {
         "tags": [
@@ -1142,6 +1179,214 @@
         "title": "HistoricalDataResponse",
         "description": "Schema for historical price data response"
       },
+      "MarketData": {
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "title": "Symbol",
+            "description": "Stock ticker symbol"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Company name"
+          },
+          "price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price",
+            "description": "Current price"
+          },
+          "change": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change",
+            "description": "Price change"
+          },
+          "change_percent": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change Percent",
+            "description": "Price change percentage"
+          },
+          "volume": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Volume",
+            "description": "Trading volume"
+          },
+          "market_cap": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market Cap",
+            "description": "Market capitalization"
+          },
+          "pe_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pe Ratio",
+            "description": "Price-to-earnings ratio"
+          }
+        },
+        "type": "object",
+        "required": [
+          "symbol",
+          "name"
+        ],
+        "title": "MarketData",
+        "description": "Schema for market data"
+      },
+      "MarketDataResponse": {
+        "properties": {
+          "gainers": {
+            "items": {
+              "$ref": "#/components/schemas/MarketData"
+            },
+            "type": "array",
+            "title": "Gainers",
+            "description": "Top gainers"
+          },
+          "losers": {
+            "items": {
+              "$ref": "#/components/schemas/MarketData"
+            },
+            "type": "array",
+            "title": "Losers",
+            "description": "Top losers"
+          },
+          "active": {
+            "items": {
+              "$ref": "#/components/schemas/MarketData"
+            },
+            "type": "array",
+            "title": "Active",
+            "description": "Most active stocks"
+          },
+          "last_updated": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last Updated",
+            "description": "Last update timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "gainers",
+          "losers",
+          "active",
+          "last_updated"
+        ],
+        "title": "MarketDataResponse",
+        "description": "Schema for market data response"
+      },
+      "NewsArticle": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Article title"
+          },
+          "publisher": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publisher",
+            "description": "News publisher"
+          },
+          "link": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Link",
+            "description": "URL to the full article"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At",
+            "description": "Publication date and time"
+          },
+          "thumbnail": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumbnail",
+            "description": "Thumbnail image information"
+          },
+          "related_tickers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Related Tickers",
+            "description": "List of related ticker symbols"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title"
+        ],
+        "title": "NewsArticle",
+        "description": "Schema for news articles related to stocks"
+      },
       "PriceData": {
         "properties": {
           "symbol": {
@@ -1423,6 +1668,14 @@
               }
             ],
             "description": "Company information"
+          },
+          "news": {
+            "items": {
+              "$ref": "#/components/schemas/NewsArticle"
+            },
+            "type": "array",
+            "title": "News",
+            "description": "List of recent news articles"
           },
           "additional_data": {
             "anyOf": [
