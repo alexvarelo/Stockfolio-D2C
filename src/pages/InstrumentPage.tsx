@@ -11,6 +11,7 @@ import { ArrowUp, ArrowDown, ExternalLink } from "lucide-react";
 import { useGetStockInfoApiV1StockTickerGet } from "@/api/stock/stock";
 import type { StockInfo, CompanyInfo } from "@/api/financialDataApi.schemas";
 import { PriceChart } from "@/components/charts/PriceChart";
+import { NewsSection } from "@/components/news/NewsSection";
 
 // Formatter components
 import {
@@ -174,9 +175,10 @@ export function InstrumentPage() {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid gap-6 xl:grid-cols-3">
-        {/* Left Column - Company Info */}
-        <div className="space-y-6 xl:col-span-2">
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Left Column - Financial Highlights and Key Executives */}
+        <div className="space-y-6 lg:col-span-2">
+          {/* Company Information */}
           <Card>
             <CardHeader>
               <CardTitle>Company Information</CardTitle>
@@ -303,96 +305,50 @@ export function InstrumentPage() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Key Executives */}
+          {additionalData.companyOfficers?.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Key Executives</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {additionalData.companyOfficers.map(
+                    (officer: any, index: number) => (
+                      <div key={index} className="p-4 border rounded-lg">
+                        <h4 className="font-medium">{officer.name}</h4>
+                        <p className="text-sm text-muted-foreground">
+                          {officer.title}
+                        </p>
+                        {officer.totalPay && (
+                          <p className="text-sm mt-1">
+                            Total Pay:
+                            <MoneyDisplay
+                              value={officer.totalPay}
+                              currency={companyInfo?.currency}
+                            />
+                          </p>
+                        )}
+                      </div>
+                    )
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
-        {/* Right Column - Key Statistics */}
-        <div className="space-y-6">
-          {/* Key Statistics */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Key Statistics</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {additionalData?.fiftyTwoWeekHigh !== undefined &&
-                renderInfoCard(
-                  "52-Week High",
-                  <MoneyDisplay
-                    value={additionalData.fiftyTwoWeekHigh}
-                    currency={companyInfo?.currency}
-                  />
-                )}
-              {additionalData?.fiftyTwoWeekLow !== undefined &&
-                renderInfoCard(
-                  "52-Week Low",
-                  <MoneyDisplay
-                    value={additionalData.fiftyTwoWeekLow}
-                    currency={companyInfo?.currency}
-                  />
-                )}
-              {additionalData?.fiftyDayAverage !== undefined &&
-                renderInfoCard(
-                  "50-Day MA",
-                  <MoneyDisplay
-                    value={additionalData.fiftyDayAverage}
-                    currency={companyInfo?.currency}
-                  />
-                )}
-              {additionalData?.twoHundredDayAverage !== undefined &&
-                renderInfoCard(
-                  "200-Day MA",
-                  <MoneyDisplay
-                    value={additionalData.twoHundredDayAverage}
-                    currency={companyInfo?.currency}
-                  />
-                )}
-              {companyInfo?.shares_outstanding !== undefined &&
-                renderInfoCard(
-                  "Shares Outstanding",
-                  <FormattedNumber value={companyInfo.shares_outstanding} />
-                )}
-              {additionalData?.heldPercentInstitutions !== undefined &&
-                renderInfoCard(
-                  "Institutional Ownership",
-                  <PercentageDisplay
-                    value={additionalData.heldPercentInstitutions}
-                  />
-                )}
-            </CardContent>
-          </Card>
+        {/* Right Column - News Section */}
+        <div className="lg:col-span-1">
+          <NewsSection 
+            news={stockInfo.news} 
+            ticker={ticker}
+            companyName={companyInfo?.name}
+            isLoading={isLoading}
+          />
         </div>
       </div>
-
-      {/* Company Officers */}
-      {additionalData.companyOfficers?.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Key Executives</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {additionalData.companyOfficers.map(
-                (officer: any, index: number) => (
-                  <div key={index} className="p-4 border rounded-lg">
-                    <h4 className="font-medium">{officer.name}</h4>
-                    <p className="text-sm text-muted-foreground">
-                      {officer.title}
-                    </p>
-                    {officer.totalPay && (
-                      <p className="text-sm mt-1">
-                        Total Pay:
-                        <MoneyDisplay
-                          value={officer.totalPay}
-                          currency={companyInfo?.currency}
-                        />
-                      </p>
-                    )}
-                  </div>
-                )
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }
