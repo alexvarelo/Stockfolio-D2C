@@ -1,58 +1,90 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDebounce } from "@/hooks/useDebounce";
+import { Search, ArrowRight, Plus, Clock, BarChart2, Star, Briefcase, List } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Search, ArrowRight, Plus } from "lucide-react";
 import {
-  CommandDialog,
-  CommandInput,
-  CommandList,
+  Command,
   CommandEmpty,
   CommandGroup,
+  CommandInput,
   CommandItem,
+  CommandList,
   CommandSeparator,
 } from "@/components/ui/command";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useSearchInstruments } from "@/api/instruments/useSearchInstruments";
+import { usePopularStocks } from "@/api/stock/usePopularStocks";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AddToWatchlist } from "@/components/watchlist/AddToWatchlist";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth";
+import { useWatchlists } from '@/api/watchlist/useWatchlists';
+import { useRecentPortfolios } from '@/hooks/useRecentPortfolios';
 
 /**
  * SearchButtonWithDialog
  * - Shows a responsive search button (full or icon-only depending on screen size)
- * - Opens a CommandDialog for searching instruments and portfolios
+ * - Opens a CommandDialog for searching instruments, portfolios, and watchlists
+ * - Shows popular stocks, recent portfolios, and watchlists when search is empty
  * - Keyboard shortcut: Cmd+K / Ctrl+K
  */
 export function SearchButtonWithDialog() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [commandOpen, setCommandOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  
-  // Debounce the search query
-  const [debouncedQuery, setDebouncedQuery] = useState("");
-  
-  // Debounce the search input
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedQuery(searchQuery);
-    }, 300);
-    
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
+  const debouncedQuery = useDebounce(searchQuery, 300);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Fetch search results using our custom hook
-  const { data: searchResults = [], isLoading } = useSearchInstruments(
+  const { data: searchResults = [], isLoading: isSearching } = useSearchInstruments(
     debouncedQuery,
     { 
       enabled: debouncedQuery.length >= 2 // Only fetch if query is 2+ characters
     }
   );
 
+  // Fetch popular stocks
+  const { data: popularStocks = [], isLoading: isLoadingPopular } = usePopularStocks({
+    enabled: commandOpen && !searchQuery
+  });
+
+  // Fetch recent portfolios and watchlists
+  const { data: recentPortfolios = [], isLoading: isLoadingRecentPortfolios } = useRecentPortfolios({
+    enabled: commandOpen && !!user,
+    limit: 3
+  });
+
+  // Fetch watchlists
+  const { data: watchlists = [], isLoading: isLoadingWatchlists } = useWatchlists();
+
   // Handle result selection
-  const handleSelectResult = useCallback((ticker: string) => {
+  const handleSelectResult = useCallback((type: 'instrument' | 'portfolio' | 'watchlist', id: string) => {
     setCommandOpen(false);
     setSearchQuery("");
-    navigate(`/instrument/${ticker}`);
+    
+    switch (type) {
+      case 'instrument':
+        navigate(`/instrument/${id}`);
+        break;
+      case 'portfolio':
+        navigate(`/portfolio/${id}`);
+        break;
+      case 'watchlist':
+        navigate(`/watchlist/${id}`);
+        break;
+    }
   }, [navigate]);
+
+  // Focus input when dialog opens
+  useEffect(() => {
+    if (commandOpen && inputRef.current) {
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 0);
+    }
+  }, [commandOpen]);
 
   // Keyboard shortcut: Cmd+K or Ctrl+K
   useEffect(() => {
@@ -100,40 +132,35 @@ export function SearchButtonWithDialog() {
         <Search className="h-5 w-5" />
       </button>
 
-      <CommandDialog 
-        open={commandOpen} 
-        onOpenChange={(open) => {
-          setCommandOpen(open);
-          if (!open) setSearchQuery("");
-        }}
-      >
-        <CommandInput 
-          placeholder="Search instruments..." 
-          value={searchQuery}
-          onValueChange={setSearchQuery}
-        />
-        <CommandList>
-          {searchQuery.length < 2 ? (
-            <CommandEmpty>Type at least 2 characters to search</CommandEmpty>
-          ) : isLoading || !searchResults ? (
-            <div className="p-4 space-y-2">
-              {[...Array(3)].map((_, i) => (
-                <Skeleton key={i} className="h-10 w-full" />
-              ))}
-            </div>
-          ) : searchResults.length === 0 ? (
-            <CommandEmpty>No results found for "{searchQuery}"</CommandEmpty>
-          ) : (
-            <CommandGroup heading="Instruments">
-              {searchResults.map((result) => (
-                <div key={result.ticker} className="relative group">
-                  <CommandItem
-                    value={`${result.ticker} ${result.name}`}
-                    onSelect={() => handleSelectResult(result.ticker)}
-                    className="flex items-center justify-between pr-16"
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <div className="flex-1 min-w-0">
+      <Dialog open={commandOpen} onOpenChange={setCommandOpen}>
+        <DialogContent className="p-0 overflow-hidden">
+          <Command>
+            <CommandInput
+              placeholder="Search stocks, ETFs, and more..."
+              value={searchQuery}
+              onValueChange={setSearchQuery}
+              className="border-b-0 pb-2"
+            />
+          <CommandList className="max-h-[400px] overflow-auto">
+          {searchQuery.length >= 2 ? (
+            // Search results
+            isSearching || !searchResults ? (
+              <div className="p-4 space-y-2">
+                {[...Array(3)].map((_, i) => (
+                  <Skeleton key={i} className="h-10 w-full" />
+                ))}
+              </div>
+            ) : searchResults.length === 0 ? (
+              <CommandEmpty>No results found for "{searchQuery}"</CommandEmpty>
+            ) : (
+              <CommandGroup heading="Instruments">
+                {searchResults.map((result) => (
+                  <div key={result.ticker} className="relative group">
+                    <div className="flex items-center justify-between w-full px-2">
+                      <div 
+                        className="flex-1 min-w-0 pr-2 py-2 cursor-pointer"
+                        onClick={() => handleSelectResult('instrument', result.ticker)}
+                      >
                         <p className="text-sm font-medium truncate">
                           {result.name} <span className="text-muted-foreground">({result.ticker})</span>
                         </p>
@@ -144,12 +171,11 @@ export function SearchButtonWithDialog() {
                           </p>
                         )}
                       </div>
-                      <div className="flex-shrink-0 ml-2">
+                      <div className="flex-shrink-0">
                         <AddToWatchlist 
                           ticker={result.ticker}
                           buttonVariant="outline"
                           buttonSize="sm"
-                          className="ml-2"
                           onAdded={() => {
                             setSearchQuery('');
                             setCommandOpen(false);
@@ -157,19 +183,93 @@ export function SearchButtonWithDialog() {
                         />
                       </div>
                     </div>
-                  </CommandItem>
-                </div>
-              ))}
-            </CommandGroup>
+                  </div>
+                ))}
+              </CommandGroup>
+            )
+          ) : (
+            <>
+              {/* Quick Access */}
+              {user && (
+                <>
+                  <CommandGroup heading="Quick Access">
+                    <CommandItem
+                      onSelect={() => {
+                        navigate('/portfolios');
+                        setCommandOpen(false);
+                      }}
+                      className="flex items-center gap-2 cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors rounded-md px-2 py-1.5"
+                    >
+                      <Briefcase className="h-4 w-4 text-muted-foreground" />
+                      <span>My Portfolios</span>
+                    </CommandItem>
+                    <CommandItem
+                      onSelect={() => {
+                        navigate('/watchlists');
+                        setCommandOpen(false);
+                      }}
+                      className="flex items-center gap-2 cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors rounded-md px-2 py-1.5"
+                    >
+                      <List className="h-4 w-4 text-yellow-500" />
+                      <span>My Watchlists</span>
+                    </CommandItem>
+                  </CommandGroup>
+                  <CommandSeparator />
+                </>
+              )}
+
+              {/* Popular Stocks */}
+              <CommandGroup heading="Popular Stocks">
+                {isLoadingPopular ? (
+                  <div className="p-2 space-y-2">
+                    {[...Array(5)].map((_, i) => (
+                      <Skeleton key={i} className="h-10 w-full" />
+                    ))}
+                  </div>
+                ) : popularStocks.length > 0 ? (
+                  popularStocks.map((stock) => (
+                    <div key={stock.symbol} className="relative group">
+                      <div className="flex items-center justify-between w-full px-2">
+                        <div 
+                          className="flex-1 min-w-0 pr-2 py-2 cursor-pointer"
+                          onClick={() => handleSelectResult('instrument', stock.symbol)}
+                        >
+                          <p className="text-sm font-medium truncate">
+                            {stock.name} <span className="text-muted-foreground">({stock.symbol})</span>
+                          </p>
+                          {stock.exchange && (
+                            <p className="text-xs text-muted-foreground truncate">
+                              {stock.exchange}
+                              {stock.country && ` • ${stock.country}`}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex-shrink-0">
+                          <AddToWatchlist 
+                            ticker={stock.symbol}
+                            buttonVariant="outline"
+                            buttonSize="sm"
+                            onAdded={() => {
+                              setSearchQuery('');
+                              setCommandOpen(false);
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="py-3 text-center text-sm text-muted-foreground">
+                    No popular stocks available
+                  </div>
+                )}
+              </CommandGroup>
+            </>
           )}
-          
-          {searchQuery.length === 0 && (
-            <CommandGroup heading="Popular">
-              <CommandEmpty>Try searching for a stock or ETF</CommandEmpty>
-            </CommandGroup>
-          )}
-        </CommandList>
-      </CommandDialog>
+          </CommandList>
+          </Command>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

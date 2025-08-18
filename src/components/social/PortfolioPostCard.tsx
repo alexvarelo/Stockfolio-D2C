@@ -69,7 +69,7 @@ export const PortfolioPostCard = ({ portfolioId }: PortfolioPostCardProps) => {
 
   // Calculate values based on whether performance data is available
   const totalValue = performanceData?.total_value || 0;
-  const dailyChangePercent = performanceData?.total_change_percent || 0;
+  const totalChangePercent = performanceData?.total_change_percent || 0;
   const holdingsCount = portfolio.holdings?.length || 0;
 
   // Get top 3 holdings by value
@@ -123,7 +123,7 @@ export const PortfolioPostCard = ({ portfolioId }: PortfolioPostCardProps) => {
             )}
           </div>
           <div>
-            <p className="text-muted-foreground">24h</p>
+            <p className="text-muted-foreground">Total change</p>
             {isPerformanceLoading ? (
               <Skeleton className="h-5 w-16 mt-1" />
             ) : isPerformanceError ? (
@@ -141,15 +141,15 @@ export const PortfolioPostCard = ({ portfolioId }: PortfolioPostCardProps) => {
               <p
                 className={cn(
                   "font-medium",
-                  dailyChangePercent > 0
+                  totalChangePercent > 0
                     ? "text-green-600 dark:text-green-400"
-                    : dailyChangePercent < 0
+                    : totalChangePercent < 0
                     ? "text-red-600 dark:text-red-400"
                     : ""
                 )}
               >
-                {dailyChangePercent > 0 ? "+" : ""}
-                {dailyChangePercent.toFixed(2)}%
+                {totalChangePercent > 0 ? "+" : ""}
+                {totalChangePercent.toFixed(2)}%
               </p>
             )}
           </div>

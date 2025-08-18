@@ -87,7 +87,7 @@ export const PortfolioDetail = () => {
 
   if (error || !portfolio) {
     return (
-      <div className="container mx-auto p-6">
+      <div className="mx-2 sm:mx-4 p-4 sm:p-6">
         <Button variant="outline" onClick={() => navigate(-1)} className="mb-6">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Portfolios
@@ -119,7 +119,7 @@ export const PortfolioDetail = () => {
   const returnPercentage = (totalReturn / totalInvested) * 100;
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
+    <div className="mx-2 sm:mx-4 md:container md:mx-auto p-2 sm:p-4 space-y-4 sm:space-y-6">
       <div className="flex items-center justify-between mb-4">
         <Button variant="outline" onClick={() => navigate(-1)}>
           <ArrowLeft className="mr-2 h-4 w-4" />

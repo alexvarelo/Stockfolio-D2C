@@ -146,7 +146,7 @@ const App = () => (
                 }
               />
               <Route
-                path="/watchlists/:id"
+                path="/watchlist/:id"
                 element={
                   <ProtectedRoute>
                     <MainLayout>
