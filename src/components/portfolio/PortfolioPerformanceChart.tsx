@@ -16,6 +16,7 @@ import { formatCurrency } from "@/lib/formatters";
 interface PortfolioPerformanceChartProps {
   dates: string[];
   values: number[];
+  className?: string;
 }
 
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -35,6 +36,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 export const PortfolioPerformanceChart = ({
   dates,
   values,
+  className = ""
 }: PortfolioPerformanceChartProps) => {
   const chartData = useMemo(() => {
     return dates.map((date, index) => ({
@@ -74,16 +76,17 @@ export const PortfolioPerformanceChart = ({
   };
 
   return (
-    <ResponsiveContainer width="100%" height="100%">
-      <AreaChart
-        data={chartData}
-        margin={{
-          top: 10,
-          right: 30,
-          left: 0,
-          bottom: 0,
-        }}
-      >
+    <div className={`h-full w-full ${className}`}>
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart
+          data={chartData}
+          margin={{
+            top: 10,
+            right: 30,
+            left: 0,
+            bottom: 0
+          }}
+        >
         <defs>
           <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
             <stop
@@ -141,5 +144,6 @@ export const PortfolioPerformanceChart = ({
         />
       </AreaChart>
     </ResponsiveContainer>
+    </div>
   );
 };

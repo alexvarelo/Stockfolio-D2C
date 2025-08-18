@@ -8,6 +8,7 @@ interface PortfolioStatsProps {
   totalReturn: number;
   returnPercentage: number;
   holdingsCount: number;
+  className?: string;
 }
 
 export const PortfolioStats = ({
@@ -16,6 +17,7 @@ export const PortfolioStats = ({
   totalReturn,
   returnPercentage,
   holdingsCount,
+  className = "",
 }: PortfolioStatsProps) => {
   const isPositiveReturn = totalReturn >= 0;
   const stats = [
@@ -51,7 +53,7 @@ export const PortfolioStats = ({
   ];
 
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader>
         <CardTitle>Overview</CardTitle>
       </CardHeader>

@@ -123,7 +123,7 @@ export function InstrumentPage() {
   };
 
   return (
-    <div className="space-y-6 p-4">
+    <div className="space-y-6">
       {/* Header Section */}
       <div className="space-y-2">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">

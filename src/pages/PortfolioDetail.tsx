@@ -4,13 +4,7 @@ import { usePortfolio, useDeletePortfolio } from "@/api/portfolio/portfolio";
 import { usePortfolioPerformance } from "@/api/portfolio/usePortfolioPerformance";
 import { usePortfolioTransactions } from "@/api/transaction/usePortfolioTransactions";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowLeft,
@@ -87,7 +81,7 @@ export const PortfolioDetail = () => {
 
   if (error || !portfolio) {
     return (
-      <div className="mx-2 sm:mx-4 p-4 sm:p-6">
+      <div className="mx-2 sm:mx-1 p-4 sm:p-0">
         <Button variant="outline" onClick={() => navigate(-1)} className="mb-6">
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Portfolios
@@ -119,14 +113,15 @@ export const PortfolioDetail = () => {
   const returnPercentage = (totalReturn / totalInvested) * 100;
 
   return (
-    <div className="mx-2 sm:mx-4 md:container md:mx-auto p-2 sm:p-4 space-y-4 sm:space-y-6">
-      <div className="flex items-center justify-between mb-4">
-        <Button variant="outline" onClick={() => navigate(-1)}>
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Portfolios
+    <div className="container mx-auto px-1 sm:px-2 md:px-4 py-2 sm:py-4 space-y-3 sm:space-y-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-3 sm:mb-4">
+        <Button variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => navigate(-1)}>
+          <ArrowLeft className="mr-1 sm:mr-2 h-4 w-4" />
+          <span className="hidden sm:inline">Back to Portfolios</span>
+          <span className="sm:hidden">Back</span>
         </Button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <TransactionDrawer
             portfolioId={portfolioId || ""}
             onTransactionAdded={() => {
@@ -138,9 +133,10 @@ export const PortfolioDetail = () => {
               });
             }}
           >
-            <Button size="sm" className="gap-2">
+            <Button size="sm" className="gap-1 sm:gap-2 flex-1 sm:flex-initial">
               <Plus className="h-4 w-4" />
-              New Transaction
+              <span className="hidden sm:inline">New Transaction</span>
+              <span className="sm:hidden">Add</span>
             </Button>
           </TransactionDrawer>
 
@@ -153,7 +149,7 @@ export const PortfolioDetail = () => {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="icon" className="shrink-0">
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -192,56 +188,59 @@ export const PortfolioDetail = () => {
         </div>
       </div>
 
-      <PortfolioHeader
-        name={portfolio.name}
-        description={portfolio.description}
-        isPublic={portfolio.is_public}
-        followersCount={portfolio.followers_count || 0}
-        createdAt={portfolio.created_at}
-      />
+      <div className="px-1 sm:px-0">
+        <PortfolioHeader
+          name={portfolio.name}
+          description={portfolio.description}
+          isPublic={portfolio.is_public}
+          followersCount={portfolio.followers_count || 0}
+          createdAt={portfolio.created_at}
+        />
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Performance</CardTitle>
-              <CardDescription>Portfolio value over time</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-80">
-                {performanceData ? (
-                  <PortfolioPerformanceChart
-                    dates={performanceData.dates}
-                    values={performanceData.values}
-                  />
-                ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <p className="text-muted-foreground">
-                      Loading performance data...
-                    </p>
+      <div className="space-y-3 sm:space-y-4">
+        {/* Main content area - full width on mobile, grid on desktop */}
+        <div className="lg:grid lg:grid-cols-4 gap-4">
+          {/* Graph - takes 3/4 width on desktop, full width on mobile */}
+          <div className="lg:col-span-3">
+            {performanceData && (
+              <Card className="h-full flex flex-col">
+                <CardHeader className="pb-2">
+                  <CardTitle>Performance</CardTitle>
+                </CardHeader>
+                <CardContent className="flex-1 p-0">
+                  <div className="h-[300px] md:h-[400px] w-full md:px-1 pb-6 pt-4">
+                    <PortfolioPerformanceChart 
+                      dates={performanceData.dates} 
+                      values={performanceData.values} 
+                      className="h-full w-full"
+                    />
                   </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          <PortfolioHoldings holdings={portfolio.holdings} />
-          <TransactionsCard
-            transactions={transactions || []}
-            className="lg:hidden"
-          />
+                </CardContent>
+              </Card>
+            )}
+          </div>
+          
+          {/* Portfolio stats - appears below graph on mobile, to the right on desktop */}
+          <div className="mt-4 lg:mt-0">
+            <PortfolioStats
+              totalValue={totalValue}
+              totalReturn={totalReturn}
+              returnPercentage={returnPercentage}
+              totalInvested={totalInvested}
+              holdingsCount={portfolio.holdings.length}
+            />
+          </div>
         </div>
 
-        <div className="space-y-6">
-          <PortfolioStats
-            totalValue={totalValue}
-            totalInvested={totalInvested}
-            totalReturn={totalReturn}
-            returnPercentage={returnPercentage}
-            holdingsCount={portfolio.holdings.length}
-          />
-
-          <TransactionsCard transactions={transactions || []} />
+        {/* Holdings section - full width below the graph and stats */}
+        <div className="space-y-3 sm:space-y-4">
+          <PortfolioHoldings holdings={portfolio.holdings} />
+          
+          {/* Transactions - shown on mobile, hidden on desktop (shown in sidebar on desktop) */}
+          <div className="lg:hidden">
+            <TransactionsCard transactions={transactions || []} />
+          </div>
         </div>
       </div>
 
