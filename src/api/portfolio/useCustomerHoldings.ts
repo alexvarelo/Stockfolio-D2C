@@ -1,8 +1,8 @@
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { PortfolioHolding } from '@/types/portfolio';
-import { useGetMultipleStockPricesApiV1StockTickersPricesGet } from '@/api/stock/stock';
-import { PriceData } from '../financialDataApi.schemas';
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { PortfolioHolding } from "@/types/portfolio";
+import { useGetMultipleStockPricesApiV1StockTickersPricesGet } from "@/api/stock/stock";
+import { PriceData } from "../financialDataApi.schemas";
 
 interface ConsolidatedHolding {
   symbol: string;
@@ -13,14 +13,34 @@ interface ConsolidatedHolding {
   portfolioNames: string[];
 }
 
-export const useCustomerHoldings = () => {
-  const { data: holdings, isLoading, error } = useQuery({
-    queryKey: ['consolidated-holdings'],
+interface UseCustomerHoldingsOptions {
+  includeMarketData?: boolean;
+  limit?: number;
+}
+
+interface UseCustomerHoldingsResult {
+  data: PortfolioHolding[];
+  isLoading: boolean;
+  isLoadingMarketData: boolean;
+  error: any;
+}
+
+export const useCustomerHoldings = (
+  options: UseCustomerHoldingsOptions = {}
+): UseCustomerHoldingsResult => {
+  const { includeMarketData = true, limit } = options;
+
+  // Fetch basic holdings data
+  const {
+    data: holdings,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["consolidated-holdings"],
     queryFn: async () => {
-      // Get all holdings for the current user across all portfolios
-      const { data: holdingsData, error: holdingsError } = await supabase
-        .from('holdings')
-        .select(`
+      const { data: holdingsData, error: holdingsError } = await supabase.from(
+        "holdings"
+      ).select(`
           id,
           ticker,
           quantity,
@@ -32,7 +52,6 @@ export const useCustomerHoldings = () => {
       if (holdingsError) throw holdingsError;
       if (!holdingsData?.length) return [];
 
-      // Consolidate holdings by ticker
       const holdingsByTicker = new Map<string, ConsolidatedHolding>();
 
       for (const holding of holdingsData) {
@@ -41,24 +60,25 @@ export const useCustomerHoldings = () => {
         const totalInvested = holding.total_invested || 0;
 
         if (existing) {
-          // Update existing consolidated holding
           existing.totalQuantity += quantity;
           existing.totalInvested += totalInvested;
-          existing.averagePrice = existing.totalInvested / (existing.totalQuantity || 1);
-          
+          existing.averagePrice =
+            existing.totalInvested / (existing.totalQuantity || 1);
+
           if (!existing.portfolioIds.includes(holding.portfolio_id)) {
             existing.portfolioIds.push(holding.portfolio_id);
-            existing.portfolioNames.push(holding.portfolios?.name || 'Unnamed Portfolio');
+            existing.portfolioNames.push(
+              holding.portfolios?.name || "Unnamed Portfolio"
+            );
           }
         } else {
-          // Create new consolidated holding
           holdingsByTicker.set(holding.ticker, {
             symbol: holding.ticker,
             totalQuantity: quantity,
             totalInvested,
             averagePrice: quantity > 0 ? totalInvested / quantity : 0,
             portfolioIds: [holding.portfolio_id],
-            portfolioNames: [holding.portfolios?.name || 'Unnamed Portfolio'],
+            portfolioNames: [holding.portfolios?.name || "Unnamed Portfolio"],
           });
         }
       }
@@ -68,40 +88,67 @@ export const useCustomerHoldings = () => {
     refetchOnWindowFocus: false,
   });
 
-  // Get current prices for all unique tickers
-  const tickers = holdings?.map(h => h.symbol).join(',') || '';
-  const { data: prices } = useGetMultipleStockPricesApiV1StockTickersPricesGet(
-    tickers,
-    { 
-      query: { 
-        enabled: !!tickers && tickers.length > 0,
-      } 
-    }
-  );
+  // Get current prices if market data is requested
+  const tickers = holdings?.map((h) => h.symbol).join(",") || "";
+  const {
+    data: prices,
+    isLoading: isLoadingPrices,
+    error: pricesError,
+  } = useGetMultipleStockPricesApiV1StockTickersPricesGet(tickers, {
+    query: {
+      enabled: includeMarketData && !!tickers && tickers.length > 0,
+      refetchOnWindowFocus: false,
+    },
+  });
 
-  // Enrich with current prices and calculate values
-  const enrichedHoldings = useQuery({
-    queryKey: ['enriched-holdings', holdings, prices],
+  // Process holdings with or without market data
+  const processedHoldings = useQuery({
+    queryKey: ["processed-holdings", holdings, prices],
     queryFn: () => {
-      if (!holdings || !prices?.data) return [];
+      if (!holdings) return [];
 
+      // If we don't need market data or it's not available yet, return basic holdings
+      if (!includeMarketData || !prices?.data) {
+        return holdings.map(
+          (holding) =>
+            ({
+              id: holding.symbol,
+              symbol: holding.symbol,
+              quantity: holding.totalQuantity,
+              averagePrice: holding.averagePrice,
+              currentPrice: null,
+              currentValue: null,
+              costBasis: holding.totalInvested,
+              dailyChangePercent: null,
+              totalGainLoss: null,
+              totalGainLossPercent: null,
+              portfolioCount: holding.portfolioIds.length,
+              portfolioNames: holding.portfolioNames,
+              lastUpdated: new Date().toISOString(),
+              isLoading: includeMarketData, // Indicate if we're still loading market data
+            } as PortfolioHolding)
+        );
+      }
+
+      // If we have market data, enrich the holdings
       const priceMap = new Map(
         prices.data.map((p: PriceData) => [p.symbol, p])
       );
 
       return holdings
-        .map(holding => {
+        .map((holding) => {
           const priceData = priceMap.get(holding.symbol);
           const currentPrice = priceData?.current_price || 0;
           const dailyChangePercent = priceData?.change_percent || 0;
           const currentValue = currentPrice * holding.totalQuantity;
           const totalGainLoss = currentValue - holding.totalInvested;
-          const totalGainLossPercent = holding.totalInvested > 0 
-            ? (totalGainLoss / holding.totalInvested) * 100 
-            : 0;
+          const totalGainLossPercent =
+            holding.totalInvested > 0
+              ? (totalGainLoss / holding.totalInvested) * 100
+              : 0;
 
           return {
-            id: holding.symbol, // Using symbol as ID since we're consolidating
+            id: holding.symbol,
             symbol: holding.symbol,
             quantity: holding.totalQuantity,
             averagePrice: holding.averagePrice,
@@ -114,17 +161,38 @@ export const useCustomerHoldings = () => {
             portfolioCount: holding.portfolioIds.length,
             portfolioNames: holding.portfolioNames,
             lastUpdated: new Date().toISOString(),
+            isLoading: false,
           } as PortfolioHolding;
         })
-        .sort((a, b) => b.currentValue - a.currentValue)
-        .slice(0, 10); // Return only top 10 by value
+        .sort((a, b) => (b.currentValue || 0) - (a.currentValue || 0))
+        .slice(0, limit || holdings.length);
     },
-    enabled: !!holdings?.length && !!prices?.data,
+    enabled: !!holdings && (!includeMarketData || !!prices?.data),
   });
 
   return {
-    data: enrichedHoldings.data || [],
-    isLoading: isLoading || enrichedHoldings.isLoading,
-    error: error || enrichedHoldings.error,
+    data:
+      (processedHoldings.data ??
+        holdings?.map((x) => ({
+          id: x.symbol,
+          symbol: x.symbol,
+          quantity: x.totalQuantity,
+          averagePrice: x.averagePrice,
+          currentPrice: null,
+          currentValue: null,
+          costBasis: x.totalInvested,
+          dailyChangePercent: null,
+          totalGainLoss: null,
+          totalGainLossPercent: null,
+          portfolioCount: x.portfolioIds.length,
+          portfolioNames: x.portfolioNames,
+          lastUpdated: new Date().toISOString(),
+          isLoading: includeMarketData,
+        }))) ||
+      [],
+    isLoading,
+    isLoadingMarketData:
+      includeMarketData && (isLoadingPrices || processedHoldings.isLoading),
+    error: error || pricesError || processedHoldings.error,
   };
 };

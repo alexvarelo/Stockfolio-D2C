@@ -8,10 +8,7 @@ export function useWatchlistItems(watchlistId: string) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('watchlist_items')
-        .select(`
-          *,
-          instrument:instruments!watchlist_items_ticker_fkey(name, current_price, price_change_percentage)
-        `)
+        .select('*')
         .eq('watchlist_id', watchlistId)
         .order('created_at', { ascending: false });
       
@@ -23,20 +20,19 @@ export function useWatchlistItems(watchlistId: string) {
   });
 }
 
-export function useAddToWatchlist() {
+export function useAddToWatchlist(watchlistId: string) {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (input: AddToWatchlistInput) => {
+    mutationFn: async (input: Omit<AddToWatchlistInput, 'watchlistId'>) => {
       const { data, error } = await supabase
         .from('watchlist_items')
-        .insert([
-          {
-            watchlist_id: input.watchlistId,
-            ticker: input.ticker,
-            notes: input.notes,
-          }
-        ])
+        .insert({
+          watchlist_id: watchlistId,
+          ticker: input.ticker,
+          target_price: input.target_price || null,
+          notes: input.notes || null,
+        })
         .select()
         .single();
       
@@ -50,18 +46,23 @@ export function useAddToWatchlist() {
   });
 }
 
-export function useUpdateWatchlistItem(watchlistId: string, itemId: string) {
+export function useUpdateWatchlistItem(watchlistId: string) {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (updates: UpdateWatchlistItemInput) => {
+    mutationFn: async (input: UpdateWatchlistItemInput & { id: string }) => {
+      const { id, ...updateData } = input;
       const { data, error } = await supabase
         .from('watchlist_items')
-        .update(updates)
-        .eq('id', itemId)
+        .update({
+          ...(updateData.target_price !== undefined && { target_price: updateData.target_price }),
+          ...(updateData.notes !== undefined && { notes: updateData.notes }),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', id)
         .select()
         .single();
-      
+
       if (error) throw error;
       return data as WatchlistItem;
     },
@@ -79,7 +80,8 @@ export function useRemoveFromWatchlist(watchlistId: string) {
       const { error } = await supabase
         .from('watchlist_items')
         .delete()
-        .eq('id', itemId);
+        .eq('id', itemId)
+        .eq('watchlist_id', watchlistId);
       
       if (error) throw error;
       return itemId;

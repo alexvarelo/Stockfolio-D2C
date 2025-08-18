@@ -17,7 +17,7 @@ import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import { SearchButtonWithDialog } from "@/components/search/SearchButtonWithDialog";
 import Watchlists from "./pages/Watchlists";
 import WatchlistDetail from "./pages/WatchlistDetail";
-import { CreateEditWatchlist } from "./pages/CreateEditWatchlist";
+// CreateEditWatchlist component has been replaced with dialogs
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -136,31 +136,11 @@ const App = () => (
                 }
               />
               <Route
-                path="/watchlists/new"
-                element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <CreateEditWatchlist />
-                    </MainLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
                 path="/watchlist/:id"
                 element={
                   <ProtectedRoute>
                     <MainLayout>
                       <WatchlistDetail />
-                    </MainLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/watchlists/:id/edit"
-                element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <CreateEditWatchlist />
                     </MainLayout>
                   </ProtectedRoute>
                 }

@@ -13,6 +13,7 @@ export interface WatchlistItem {
   id: string;
   watchlist_id: string;
   ticker: string;
+  target_price: number | null;
   notes: string | null;
   created_at: string;
 }
@@ -31,10 +32,12 @@ export interface UpdateWatchlistInput {
 
 export interface AddToWatchlistInput {
   ticker: string;
+  target_price?: number | null;
   notes?: string | null;
   watchlistId: string;
 }
 
 export interface UpdateWatchlistItemInput {
+  target_price?: number | null;
   notes?: string | null;
 }

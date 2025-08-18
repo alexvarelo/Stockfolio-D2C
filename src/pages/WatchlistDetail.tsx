@@ -1,5 +1,15 @@
 import { useParams, Link } from 'react-router-dom';
 import { useWatchlistItems, useRemoveFromWatchlist } from '@/api/watchlist/useWatchlistItems';
+// Define the WatchlistItem type since the import is missing
+interface WatchlistItem {
+  id: string;
+  ticker: string;
+  name?: string;
+  current_price?: number;
+  price_change_percentage?: number;
+  target_price?: number;
+  notes?: string;
+}
 import { useWatchlists } from '@/api/watchlist/useWatchlists';
 import { useSearchInstruments } from '@/api/instruments/useSearchInstruments';
 import { Input } from '@/components/ui/input';
@@ -8,29 +18,40 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
-import { ArrowUpRight, Trash2, Plus, Loader2, Search } from 'lucide-react';
+import { ArrowUpRight, Trash2, Plus, Loader2, Search, Pencil } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
 import { useState } from 'react';
 import { AddToWatchlist } from '@/components/watchlist/AddToWatchlist';
+import { EditWatchlistDialog } from '@/components/watchlist/EditWatchlistDialog';
+import { Button } from '@/components/ui/button';
 
 export default function WatchlistDetail() {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
   const { data: watchlists, isLoading: isLoadingWatchlists } = useWatchlists();
-  const watchlist = id ? watchlists?.find(w => w.id === id) : null;
+  const watchlist = id ? watchlists?.find((w: { id: string }) => w.id === id) : null;
   const isLoadingWatchlist = isLoadingWatchlists;
-  const { data: items, isLoading: isLoadingItems, refetch: refetchItems } = useWatchlistItems(id || '');
+  const { data: items = [], isLoading: isLoadingItems, refetch: refetchItems } = useWatchlistItems(id || '');
   const removeFromWatchlist = useRemoveFromWatchlist(id || '');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showEditDialog, setShowEditDialog] = useState(false);
   const { data: searchResults = [], isLoading: isSearching } = useSearchInstruments(searchQuery, {
     enabled: searchQuery.length > 1
   });
 
-  if (isLoadingWatchlist || !watchlist) {
+  if (isLoadingWatchlist) {
     return (
       <div className="container mx-auto p-6 space-y-6">
         <Skeleton className="h-10 w-64 mb-4" />
         <Skeleton className="h-96 w-full" />
+      </div>
+    );
+  }
+
+  if (!watchlist) {
+    return (
+      <div className="container mx-auto p-6 space-y-6">
+        <h1 className="text-2xl font-bold">Watchlist not found</h1>
+        <p className="text-muted-foreground">The requested watchlist could not be found.</p>
       </div>
     );
   }
@@ -54,12 +75,15 @@ export default function WatchlistDetail() {
             </div>
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
-            <Link 
-              to={`/watchlists/${id}/edit`}
-              className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
+            <Button 
+              onClick={() => setShowEditDialog(true)}
+              variant="outline"
+              size="sm"
+              className="gap-2"
             >
+              <Pencil className="h-4 w-4" />
               Edit Watchlist
-            </Link>
+            </Button>
           </div>
         </div>
 
@@ -160,12 +184,12 @@ export default function WatchlistDetail() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {items?.map((item) => (
+                {items.map((item: WatchlistItem) => (
                   <TableRow key={item.id}>
                     <TableCell className="font-medium">
                       <Link 
                         to={`/instrument/${item.ticker}`}
-                        className="hover:underline flex items-center"
+                        className="hover:underline flex items-center group"
                       >
                         {item.ticker}
                         <ArrowUpRight className="ml-1 h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -216,6 +240,15 @@ export default function WatchlistDetail() {
           )}
         </CardContent>
       </Card>
+
+      <EditWatchlistDialog
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        watchlist={watchlist}
+        onSuccess={() => {
+          // The watchlists query will automatically refetch due to the invalidation in the mutation
+        }}
+      />
     </div>
   );
 }

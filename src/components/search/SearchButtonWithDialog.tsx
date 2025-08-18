@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDebounce } from "@/hooks/useDebounce";
-import { Search, ArrowRight, Plus, Clock, BarChart2, Star, Briefcase, List } from "lucide-react";
+import { Search, ArrowRight, Plus, Clock, BarChart2, Star, Briefcase, List, SearchIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Command,
@@ -126,10 +126,10 @@ export function SearchButtonWithDialog() {
         onClick={() => setCommandOpen(true)}
         aria-label="Search"
         className={cn(
-          "md:hidden inline-flex items-center justify-center rounded-full border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-10 w-10 p-0"
+          "md:hidden inline-flex items-center justify-center bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-10 w-10 p-0"
         )}
       >
-        <Search className="h-5 w-5" />
+        <SearchIcon className="h-5 w-5" />
       </button>
 
       <Dialog open={commandOpen} onOpenChange={setCommandOpen}>

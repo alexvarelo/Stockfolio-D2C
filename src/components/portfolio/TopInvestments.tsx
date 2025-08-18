@@ -3,6 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { ArrowUp, ArrowDown, Minus } from 'lucide-react';
 import { useCustomerHoldings } from '@/api/portfolio/useCustomerHoldings';
+import { isModuleNamespaceObject } from 'util/types';
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('en-US', {
@@ -27,12 +28,21 @@ interface TopInvestmentsProps {
 }
 
 export const TopInvestments = ({ className }: TopInvestmentsProps) => {
-  const { data: holdings, isLoading } = useCustomerHoldings();
-  const topHoldings = holdings?.slice(0, 10) || []; // Already sorted by value in the hook
+  const { 
+    data: holdings, 
+    isLoading,
+    isLoadingMarketData 
+  } = useCustomerHoldings({ 
+    includeMarketData: true,
+    limit: 10 
+  });
 
-  if (isLoading) {
+  console.log(holdings, isLoading, isLoadingMarketData);
+
+  // Show full skeleton only when we don't have any data yet
+  if (isLoading && !holdings?.length) {
     return (
-      <Card>
+      <Card className={className}>
         <CardHeader>
           <CardTitle>Top Investments</CardTitle>
         </CardHeader>
@@ -51,14 +61,16 @@ export const TopInvestments = ({ className }: TopInvestmentsProps) => {
     );
   }
 
-  if (!topHoldings.length) {
+  const displayHoldings = holdings || [];
+
+  if (!displayHoldings.length) {
     return (
-      <Card className={cn('h-full', className)}>
+      <Card className={className}>
         <CardHeader>
           <CardTitle>Top Investments</CardTitle>
         </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">No holdings found</p>
+        <CardContent className="text-center py-8">
+          <p className="text-muted-foreground">No investments found</p>
         </CardContent>
       </Card>
     );
@@ -70,39 +82,53 @@ export const TopInvestments = ({ className }: TopInvestmentsProps) => {
         <CardTitle className="text-lg">Top Investments</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {topHoldings.map((holding) => {
+        {displayHoldings.map((holding) => {
           const isPositive = (holding.dailyChangePercent || 0) > 0;
           const isNegative = (holding.dailyChangePercent || 0) < 0;
           
           return (
             <div key={holding.id} className="flex items-center justify-between">
               <div>
-                <div className="font-medium">{holding.symbol}</div>
-                <div className="text-sm text-muted-foreground">
+                <p className="text-sm font-medium">{holding.symbol}</p>
+                <p className="text-xs text-muted-foreground">
                   {holding.quantity} shares
-                </div>
+                </p>
               </div>
               <div className="text-right">
-                <div className="font-medium">
-                  {formatCurrency(holding.currentValue || 0)}
-                </div>
-                <div
-                  className={`flex items-center justify-end text-sm ${
-                    isPositive
-                      ? 'text-green-600 dark:text-green-400'
-                      : isNegative
-                      ? 'text-red-600 dark:text-red-400'
-                      : 'text-muted-foreground'
-                  }`}
-                >
-                  {isPositive ? (
-                    <ArrowUp className="h-3 w-3 mr-1" />
-                  ) : isNegative ? (
-                    <ArrowDown className="h-3 w-3 mr-1" />
+                {isLoadingMarketData ? (
+                  <Skeleton className="h-4 w-20 mb-1" />
+                ) : (
+                  <p className="font-medium">
+                    {holding.currentValue !== null 
+                      ? formatCurrency(holding.currentValue)
+                      : 'N/A'}
+                  </p>
+                )}
+                <div className={cn(
+                  'text-xs flex items-center justify-end',
+                  holding.dailyChangePercent === null ? 'text-muted-foreground' :
+                  holding.dailyChangePercent > 0 ? 'text-green-500' : 
+                  'text-red-500'
+                )}>
+                  {isLoadingMarketData ? (
+                    <Skeleton className="h-3 w-12" />
                   ) : (
-                    <Minus className="h-3 w-3 mr-1" />
+                    <>
+                      {holding.dailyChangePercent !== null && (
+                        <>
+                          {holding.dailyChangePercent > 0 ? (
+                            <ArrowUp className="h-3 w-3 mr-1" />
+                          ) : holding.dailyChangePercent < 0 ? (
+                            <ArrowDown className="h-3 w-3 mr-1" />
+                          ) : (
+                            <Minus className="h-3 w-3 mr-1" />
+                          )}
+                          {formatPercentage(holding.dailyChangePercent / 100)}
+                        </>
+                      )}
+                      {holding.dailyChangePercent === null && 'N/A'}
+                    </>
                   )}
-                  {formatPercentage(holding.dailyChangePercent || 0)}
                 </div>
               </div>
             </div>
