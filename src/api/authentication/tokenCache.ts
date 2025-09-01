@@ -18,22 +18,60 @@ export async function getCachedAccessToken(): Promise<string> {
     return cachedToken;
   }
 
-  // Fetch a new token
-  const tokenRequest = {
-    client_id: CLIENT_ID,
-    client_secret: CLIENT_SECRET,
-    grant_type: 'client_credentials',
+  let currentClientId = CLIENT_ID;
+  let currentClientSecret = CLIENT_SECRET;
+  
+  const fetchToken = async (clientId: string, clientSecret: string) => {
+    const tokenRequest = {
+      client_id: clientId,
+      client_secret: clientSecret,
+      grant_type: 'client_credentials',
+    };
+
+    const res = await fetch(`${import.meta.env.VITE_API_ORIGIN || process.env.VITE_API_ORIGIN}api/v1/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(tokenRequest),
+    });
+
+    return { response: res, usedDefaultCredentials: clientId === CLIENT_ID };
   };
 
-  // Use fetch instead of react-query for low-level utility
-  const res = await fetch(`${import.meta.env.VITE_API_ORIGIN || process.env.VITE_API_ORIGIN}api/v1/token`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(tokenRequest),
-  });
-  if (!res.ok) throw new Error(`Token request failed: ${res.status}`);
-  const data = await res.json();
-  if (!data.access_token || !data.expires_in) throw new Error('Malformed token response');
+  // First try with current credentials
+  let tokenResponse = await fetchToken(currentClientId, currentClientSecret);
+  
+  // If unauthorized, try to get new client credentials
+  if (tokenResponse.response.status === 401 && tokenResponse.usedDefaultCredentials) {
+    try {
+      const clientRes = await fetch(`${import.meta.env.VITE_API_ORIGIN || process.env.VITE_API_ORIGIN}api/v1/client`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      
+      if (clientRes.ok) {
+        const clientData = await clientRes.json();
+        if (clientData.client_id && clientData.client_secret) {
+          // Update environment variables for future use
+          process.env.VITE_CLIENT_ID = clientData.client_id;
+          process.env.VITE_CLIENT_SECRET = clientData.client_secret;
+          
+          // Retry with new credentials
+          tokenResponse = await fetchToken(clientData.client_id, clientData.client_secret);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to refresh client credentials:', error);
+    }
+  }
+
+  if (!tokenResponse.response.ok) {
+    throw new Error(`Token request failed: ${tokenResponse.response.status}`);
+  }
+
+  const data = await tokenResponse.response.json();
+  if (!data.access_token || !data.expires_in) {
+    throw new Error('Malformed token response');
+  }
 
   cachedToken = data.access_token;
   tokenExpiry = now + (data.expires_in * 1000) - 10000; // 10s buffer
