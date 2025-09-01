@@ -82,6 +82,7 @@ const fetchPosts = async ({
     likes_count: rawPost.likes_count,
     comments_count: rawPost.comments_count,
     has_liked: rawPost.is_liked,
+    ticker: rawPost.ticker
   }));
 
   return {

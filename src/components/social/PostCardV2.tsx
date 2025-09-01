@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/components/ui/use-toast';
 import { PortfolioPostCard } from './PortfolioPostCard';
+import { InstrumentPostCard } from './InstrumentPostCard';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -22,6 +23,7 @@ export interface PostCardV2Props {
       avatar_url?: string;
     };
     portfolio_id?: string;
+    ticker?: string;
   };
   onCommentClick?: () => void;
   onUpdatePost?: (updatedPost: any) => void;
@@ -125,12 +127,11 @@ export const PostCardV2 = ({
           <p className="whitespace-pre-line">{post.content}</p>
         </div>
 
-        {/* Portfolio Card */}
-        {post.portfolio_id && (
-          <div className="mt-6">
-            <PortfolioPostCard portfolioId={post.portfolio_id} />
-          </div>
-        )}
+        {/* Portfolio or Instrument Card */}
+        <div className="mt-6 space-y-4">
+          {post.portfolio_id && <PortfolioPostCard portfolioId={post.portfolio_id} />}
+          {post.ticker && <InstrumentPostCard ticker={post.ticker} />}
+        </div>
 
         {/* Actions */}
         <div className="mt-3 flex items-center gap-4 text-muted-foreground">

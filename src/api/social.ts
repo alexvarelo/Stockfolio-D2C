@@ -77,7 +77,8 @@ export const useCreatePost = () => {
         p_content: postData.content,  // Required
         p_post_type: postData.post_type || 'GENERAL',
         p_is_public: postData.is_public ?? true,
-        p_portfolio_id: postData.portfolio_id
+        p_portfolio_id: postData.portfolio_id,
+        p_ticker: postData.ticker
       });
 
       if (error) throw error;

@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { useAuth } from '@/lib/auth';
-import { useToast } from '@/components/ui/use-toast';
-import { PostCardV2 } from './PostCardV2';
-import { Post } from '@/types/social';
+import { useState } from "react";
+import { useAuth } from "@/lib/auth";
+import { useToast } from "@/components/ui/use-toast";
+import { PostCardV2 } from "./PostCardV2";
+import { Post } from "@/types/social";
 
 type User = {
   id?: string;
@@ -12,13 +12,19 @@ type User = {
 
 // Mock hooks for like functionality
 const useLikePost = () => ({
-  mutate: (_: { postId: string; userId: string }, __: { onSuccess: () => void }) => {},
-  isPending: false
+  mutate: (
+    _: { postId: string; userId: string },
+    __: { onSuccess: () => void }
+  ) => {},
+  isPending: false,
 });
 
 const useUnlikePost = () => ({
-  mutate: (_: { postId: string; userId: string }, __: { onSuccess: () => void }) => {},
-  isPending: false
+  mutate: (
+    _: { postId: string; userId: string },
+    __: { onSuccess: () => void }
+  ) => {},
+  isPending: false,
 });
 
 interface PostCardProps {
@@ -35,12 +41,17 @@ interface PostCardProps {
       avatar_url?: string;
     };
     portfolio_id?: string;
+    ticker?: string;
   };
   onCommentClick?: () => void;
   onUpdatePost?: (updatedPost: Post) => void;
 }
 
-export const PostCard = ({ post, onCommentClick, onUpdatePost }: PostCardProps) => {
+export const PostCard = ({
+  post,
+  onCommentClick,
+  onUpdatePost,
+}: PostCardProps) => {
   const [isLiked, setIsLiked] = useState(post.has_liked);
   const [likeCount, setLikeCount] = useState(post.likes_count || 0);
   const { user } = useAuth();
@@ -63,20 +74,20 @@ export const PostCard = ({ post, onCommentClick, onUpdatePost }: PostCardProps) 
     e.stopPropagation();
     if (!user?.id) {
       toast({
-        title: 'Authentication required',
-        description: 'Please sign in to like posts',
-        variant: 'destructive',
+        title: "Authentication required",
+        description: "Please sign in to like posts",
+        variant: "destructive",
       });
       return;
     }
 
-    const params = { 
-      postId: post.id, 
-      userId: user.id 
+    const params = {
+      postId: post.id,
+      userId: user.id,
     };
 
     if (isLiked) {
-      setLikeCount(prev => Math.max(0, prev - 1));
+      setLikeCount((prev) => Math.max(0, prev - 1));
       setIsLiked(false);
       unlikePost(params, {
         onSuccess: () => {
@@ -88,7 +99,7 @@ export const PostCard = ({ post, onCommentClick, onUpdatePost }: PostCardProps) 
         },
       });
     } else {
-      setLikeCount(prev => prev + 1);
+      setLikeCount((prev) => prev + 1);
       setIsLiked(true);
       likePost(params, {
         onSuccess: () => {
@@ -106,7 +117,7 @@ export const PostCard = ({ post, onCommentClick, onUpdatePost }: PostCardProps) 
     ...post,
     user: {
       ...post.user,
-      id: post.user_id
+      id: post.user_id,
     } as User,
     comments_count: post.comments_count || 0,
     likes_count: likeCount,
@@ -114,7 +125,7 @@ export const PostCard = ({ post, onCommentClick, onUpdatePost }: PostCardProps) 
   };
 
   return (
-    <PostCardV2 
+    <PostCardV2
       post={postData}
       onCommentClick={handleComment}
       onUpdatePost={onUpdatePost}

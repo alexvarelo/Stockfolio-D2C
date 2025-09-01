@@ -20,6 +20,7 @@ export interface Post {
   id: string;
   user_id: string;
   portfolio_id?: string;
+  ticker?: string;
   content: string;
   post_type: PostType;
   is_public: boolean;
@@ -47,6 +48,7 @@ export interface Comment {
 export interface CreatePostDto {
   user_id: string;
   content: string;
+  ticker?: string;
   post_type?: PostType;
   is_public?: boolean;
   portfolio_id?: string | null;

@@ -132,7 +132,7 @@ export default function Watchlists() {
                   <div>
                     <CardTitle className="text-lg">
                       <Link
-                        to={`/watchlists/${watchlist.id}`}
+                        to={`/watchlist/${watchlist.id}`}
                         className="hover:underline"
                       >
                         {watchlist.name}
