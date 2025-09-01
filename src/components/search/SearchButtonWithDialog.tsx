@@ -98,6 +98,8 @@ export function SearchButtonWithDialog() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  console.log(searchResults);
+
   return (
     <>
       {/* Desktop/Tablet: full search button */}
@@ -155,12 +157,14 @@ export function SearchButtonWithDialog() {
             ) : (
               <CommandGroup heading="Instruments">
                 {searchResults.map((result) => (
-                  <div key={result.ticker} className="relative group">
-                    <div className="flex items-center justify-between w-full px-2">
-                      <div 
-                        className="flex-1 min-w-0 pr-2 py-2 cursor-pointer"
-                        onClick={() => handleSelectResult('instrument', result.ticker)}
-                      >
+                  <CommandItem 
+                    key={result.ticker} 
+                    value={`${result.ticker} ${result.name}`}
+                    className="relative group"
+                    onSelect={() => handleSelectResult('instrument', result.ticker)}
+                  >
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex-1 min-w-0 pr-2">
                         <p className="text-sm font-medium truncate">
                           {result.name} <span className="text-muted-foreground">({result.ticker})</span>
                         </p>
@@ -183,7 +187,7 @@ export function SearchButtonWithDialog() {
                         />
                       </div>
                     </div>
-                  </div>
+                  </CommandItem>
                 ))}
               </CommandGroup>
             )
