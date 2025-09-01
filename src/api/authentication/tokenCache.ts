@@ -43,7 +43,7 @@ export async function getCachedAccessToken(): Promise<string> {
   // If unauthorized, try to get new client credentials
   if (tokenResponse.response.status === 401 && tokenResponse.usedDefaultCredentials) {
     try {
-      const clientRes = await fetch(`${import.meta.env.VITE_API_ORIGIN || process.env.VITE_API_ORIGIN}api/v1/client`, {
+      const clientRes = await fetch(`${import.meta.env.VITE_API_ORIGIN || process.env.VITE_API_ORIGIN}api/v1/clients`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
       });
