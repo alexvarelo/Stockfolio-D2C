@@ -3,6 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { usePortfolio, useDeletePortfolio, type PortfolioHolding } from "@/api/portfolio/portfolio";
 import { usePortfolioPerformance } from "@/api/portfolio/usePortfolioPerformance";
 import { usePortfolioTransactions } from "@/api/transaction/usePortfolioTransactions";
+import { usePortfolioFollows } from "@/api/portfolio/usePortfolioFollows";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -127,8 +128,13 @@ export const PortfolioDetail = () => {
   const isOwner = user?.id === portfolio?.user_id;
   const isLoadingPrices = isLoadingPortfolio;
   
-  // Check if current user is following the portfolio
-  const isFollowing = false; // TODO: Implement this with actual follow status from API
+  // Handle portfolio follows
+  const { 
+    isFollowing, 
+    toggleFollow, 
+    followersCount, 
+    isLoading: isFollowLoading 
+  } = usePortfolioFollows(portfolioId);
 
   return (
     <div className="container mx-auto px-1 sm:px-2 md:px-4 py-2 sm:py-4 space-y-3 sm:space-y-4">
@@ -210,15 +216,24 @@ export const PortfolioDetail = () => {
                 variant={isFollowing ? "outline" : "default"} 
                 size="sm" 
                 className="gap-1 sm:gap-2"
-                onClick={() => {
-                  // TODO: Implement follow/unfollow functionality
-                  toast({
-                    title: isFollowing ? "Unfollowed portfolio" : "Following portfolio",
-                    description: isFollowing 
-                      ? "You've unfollowed this portfolio" 
-                      : "You're now following this portfolio",
-                  });
+                onClick={async () => {
+                  try {
+                    await toggleFollow();
+                    toast({
+                      title: isFollowing ? "Unfollowed portfolio" : "Following portfolio",
+                      description: isFollowing 
+                        ? "You've unfollowed this portfolio" 
+                        : "You're now following this portfolio",
+                    });
+                  } catch (error) {
+                    toast({
+                      title: "Error",
+                      description: "Failed to update follow status. Please try again.",
+                      variant: "destructive",
+                    });
+                  }
                 }}
+                disabled={isFollowLoading}
               >
                 {isFollowing ? (
                   <>
@@ -266,7 +281,7 @@ export const PortfolioDetail = () => {
           name={portfolio?.name || ''}
           description={portfolio?.description || ''}
           isPublic={portfolio?.is_public || false}
-          followersCount={portfolio?.followers_count || 0}
+          followersCount={followersCount}
           createdAt={portfolio?.created_at || ''}
         />
       </div>
