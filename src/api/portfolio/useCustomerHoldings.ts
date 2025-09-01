@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PortfolioHolding } from "@/types/portfolio";
 import { useGetMultipleStockPricesApiV1StockTickersPricesGet } from "@/api/stock/stock";
 import { PriceData } from "../financialDataApi.schemas";
+import { useAuth } from "@/lib/auth";
 
 interface ConsolidatedHolding {
   symbol: string;
@@ -29,6 +30,7 @@ export const useCustomerHoldings = (
   options: UseCustomerHoldingsOptions = {}
 ): UseCustomerHoldingsResult => {
   const { includeMarketData = true, limit } = options;
+  const { user } = useAuth();
 
   // Fetch basic holdings data
   const {
@@ -38,16 +40,23 @@ export const useCustomerHoldings = (
   } = useQuery({
     queryKey: ["consolidated-holdings"],
     queryFn: async () => {
-      const { data: holdingsData, error: holdingsError } = await supabase.from(
-        "holdings"
-      ).select(`
+      if (!user?.id) return [];
+      
+      const { data: holdingsData, error: holdingsError } = await supabase
+        .from("holdings")
+        .select(`
           id,
           ticker,
           quantity,
           total_invested,
           portfolio_id,
-          portfolios!inner(id, name)
-        `);
+          portfolios!inner(
+            id, 
+            name,
+            user_id
+          )
+        `)
+        .eq('portfolios.user_id', user.id);
 
       if (holdingsError) throw holdingsError;
       if (!holdingsData?.length) return [];

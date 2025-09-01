@@ -1,16 +1,32 @@
 import { useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { SearchButtonWithDialog } from '@/components/search/SearchButtonWithDialog';
 import { NavLinks } from './NavLinks';
 import { MobileNav } from './MobileNav';
 import { useAuth } from '@/lib/auth';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { LogOut, User, Settings } from 'lucide-react';
 
 export const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
-  const { userProfile } = useAuth();
+  const navigate = useNavigate();
+  const { userProfile, signOut } = useAuth();
+  
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/home');
+  };
 
   const navLinks = [
     { href: "/", label: "Dashboard" },
@@ -22,10 +38,10 @@ export const Navbar = () => {
   return (
     <header className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-30">
       <div className="flex h-14 items-center px-4 gap-4">
-        {/* Logo */}
-        <a href="/" className="flex items-center gap-2">
+        {/* User Icon - Moved to left */}
+        <div className="flex items-center gap-2">
           {userProfile?.avatar_url || userProfile?.full_name ? (
-            <Avatar className="h-10 w-10">
+            <Avatar className="h-8 w-8">
               <AvatarImage src={userProfile.avatar_url} alt={userProfile.full_name || 'User'} />
               <AvatarFallback>
                 {userProfile.full_name ? userProfile.full_name.charAt(0).toUpperCase() : 'U'}
@@ -33,10 +49,10 @@ export const Navbar = () => {
             </Avatar>
           ) : (
             <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-              <span className="text-xs font-medium">U</span>
+              <User className="h-4 w-4" />
             </div>
           )}
-        </a>
+        </div>
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-1">
@@ -53,6 +69,25 @@ export const Navbar = () => {
           
           {/* Theme toggle */}
           <ThemeToggle />
+          
+          {/* Settings Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full">
+                <Settings className="h-5 w-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={() => navigate('/profile')}>
+                <User className="mr-2 h-4 w-4" />
+                <span>Profile</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleSignOut}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Sign out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           
           {/* Mobile menu button */}
           <button

@@ -15,6 +15,8 @@ import {
   BarChart2,
   MoreVertical,
   Plus,
+  Heart,
+  HeartOff,
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/auth";
@@ -124,6 +126,9 @@ export const PortfolioDetail = () => {
   // Check if user is the owner of the portfolio
   const isOwner = user?.id === portfolio?.user_id;
   const isLoadingPrices = isLoadingPortfolio;
+  
+  // Check if current user is following the portfolio
+  const isFollowing = false; // TODO: Implement this with actual follow status from API
 
   return (
     <div className="container mx-auto px-1 sm:px-2 md:px-4 py-2 sm:py-4 space-y-3 sm:space-y-4">
@@ -135,54 +140,55 @@ export const PortfolioDetail = () => {
         </Button>
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          <TransactionDrawer
-            portfolioId={portfolioId || ""}
-            onTransactionAdded={() => {
-              queryClient.invalidateQueries({
-                queryKey: ["portfolio", portfolioId],
-              });
-              queryClient.invalidateQueries({
-                queryKey: ["portfolioTransactions", portfolioId],
-              });
-            }}
-          >
-            <Button size="sm" className="gap-1 sm:gap-2 flex-1 sm:flex-initial">
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">New Transaction</span>
-              <span className="sm:hidden">Add</span>
-            </Button>
-          </TransactionDrawer>
+          {isOwner ? (
+            // Owner actions
+            <>
+              <TransactionDrawer
+                portfolioId={portfolioId || ""}
+                onTransactionAdded={() => {
+                  queryClient.invalidateQueries({
+                    queryKey: ["portfolio", portfolioId],
+                  });
+                  queryClient.invalidateQueries({
+                    queryKey: ["portfolioTransactions", portfolioId],
+                  });
+                }}
+              >
+                <Button size="sm" className="gap-1 sm:gap-2 flex-1 sm:flex-initial">
+                  <Plus className="h-4 w-4" />
+                  <span className="hidden sm:inline">New Transaction</span>
+                  <span className="sm:hidden">Add</span>
+                </Button>
+              </TransactionDrawer>
 
-          <PortfolioEditDialog
-            portfolio={portfolio}
-            isOpen={isEditDialogOpen}
-            onOpenChange={setIsEditDialogOpen}
-            onSaved={handlePortfolioSaved}
-          />
+              <PortfolioEditDialog
+                portfolio={portfolio}
+                isOpen={isEditDialogOpen}
+                onOpenChange={setIsEditDialogOpen}
+                onSaved={handlePortfolioSaved}
+              />
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" className="shrink-0">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>
-                <Share2 className="mr-2 h-4 w-4" />
-                <span>Share</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <BarChart2 className="mr-2 h-4 w-4" />
-                <span>Analytics</span>
-              </DropdownMenuItem>
-              {portfolio.is_public && (
-                <DropdownMenuItem>
-                  <Users className="mr-2 h-4 w-4" />
-                  <span>{portfolio.followers_count || 0} Followers</span>
-                </DropdownMenuItem>
-              )}
-              {isOwner && (
-                <>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="shrink-0">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem>
+                    <Share2 className="mr-2 h-4 w-4" />
+                    <span>Share</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <BarChart2 className="mr-2 h-4 w-4" />
+                    <span>Analytics</span>
+                  </DropdownMenuItem>
+                  {portfolio.is_public && (
+                    <DropdownMenuItem>
+                      <Users className="mr-2 h-4 w-4" />
+                      <span>{portfolio.followers_count || 0} Followers</span>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
                     <Edit className="mr-2 h-4 w-4" />
                     <span>Edit Portfolio</span>
@@ -194,10 +200,64 @@ export const PortfolioDetail = () => {
                     <Trash2 className="mr-2 h-4 w-4" />
                     <span>Delete Portfolio</span>
                   </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          ) : (
+            // Non-owner actions
+            <div className="flex items-center gap-2">
+              <Button 
+                variant={isFollowing ? "outline" : "default"} 
+                size="sm" 
+                className="gap-1 sm:gap-2"
+                onClick={() => {
+                  // TODO: Implement follow/unfollow functionality
+                  toast({
+                    title: isFollowing ? "Unfollowed portfolio" : "Following portfolio",
+                    description: isFollowing 
+                      ? "You've unfollowed this portfolio" 
+                      : "You're now following this portfolio",
+                  });
+                }}
+              >
+                {isFollowing ? (
+                  <>
+                    <HeartOff className="h-4 w-4" />
+                    <span className="hidden sm:inline">Unfollow</span>
+                  </>
+                ) : (
+                  <>
+                    <Heart className="h-4 w-4" />
+                    <span className="hidden sm:inline">Follow</span>
+                  </>
+                )}
+              </Button>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="shrink-0">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem>
+                    <Share2 className="mr-2 h-4 w-4" />
+                    <span>Share</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem>
+                    <BarChart2 className="mr-2 h-4 w-4" />
+                    <span>Analytics</span>
+                  </DropdownMenuItem>
+                  {portfolio.is_public && (
+                    <DropdownMenuItem>
+                      <Users className="mr-2 h-4 w-4" />
+                      <span>{portfolio.followers_count || 0} Followers</span>
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
         </div>
       </div>
 
