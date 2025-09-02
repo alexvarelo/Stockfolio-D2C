@@ -48,6 +48,17 @@ export const usePortfolioFollows = (portfolioId?: string) => {
     },
     enabled: Boolean(portfolioId),
   });
+  
+  // Early return if no portfolioId is provided
+  if (!portfolioId) {
+    return {
+      isFollowing: false,
+      toggleFollow: () => {},
+      followersCount: 0,
+      isLoading: false,
+      error: null,
+    };
+  }
 
   // Follow a portfolio
   const followPortfolio = useMutation({

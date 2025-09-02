@@ -16,23 +16,28 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { LogOut, User, Settings } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 
 export const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { userProfile, signOut } = useAuth();
+  const queryClient = useQueryClient();
   
   const handleSignOut = async () => {
     await signOut();
-    navigate('/home');
+    // Clear all cached queries
+    await queryClient.clear();
+    // Invalidate all queries to ensure fresh data on next login
+    await queryClient.invalidateQueries();
+    navigate('/auth');
   };
 
   const navLinks = [
     { href: "/", label: "Dashboard" },
     { href: "/portfolios", label: "Portfolios" },
     { href: "/watchlists", label: "Watchlists" },
-    { href: "/following", label: "Following" },
   ];
 
   return (

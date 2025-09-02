@@ -1,20 +1,28 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useMemo } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { format } from 'date-fns';
 import {
   Card,
   CardHeader,
   CardTitle,
   CardDescription,
   CardContent,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Eye, Lock, Briefcase, ArrowRight } from "lucide-react";
-import { useGetMultipleStockPricesApiV1StockTickersPricesGet } from "@/api/stock/stock";
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Eye, Lock, User, Users, Heart, HeartOff, ArrowRight } from 'lucide-react';
+import { useAuth } from '@/lib/auth';
+import { useToast } from '@/components/ui/use-toast';
+import { usePortfolioFollows } from '@/api/portfolio/usePortfolioFollows';
+import { usePortfolio } from '@/api/portfolio/portfolio';
+import { formatCurrency } from '@/lib/formatters';
 
-interface Holding {
+export interface Holding {
   ticker: string;
   quantity: number;
-  total_invested: number;
+  average_price?: number;
+  current_price?: number;
+  total_value?: number;
+  total_invested?: number;
 }
 
 export interface PortfolioCardProps {
@@ -25,161 +33,244 @@ export interface PortfolioCardProps {
   is_default: boolean;
   created_at: string;
   holdings?: Holding[];
+  isFollowing?: boolean;
+  showOwner?: boolean;
+  user_name?: string;
+  user_avatar_url?: string;
+  className?: string;
+  isOwnPortfolio?: boolean;
 }
 
-export const PortfolioCard: React.FC<PortfolioCardProps> = (props) => {
-  const { id, name, description, is_public, is_default, created_at, holdings = [] } = props;
+export const PortfolioCard: React.FC<PortfolioCardProps> = ({
+  id,
+  name,
+  description,
+  is_public,
+  is_default,
+  created_at,
+  holdings = [],
+  isFollowing: initialIsFollowing = false,
+  showOwner = false,
+  user_name,
+  user_avatar_url,
+  className = '',
+  isOwnPortfolio,
+}) => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { isFollowing, toggleFollow, isLoading: isFollowLoading, followersCount } = usePortfolioFollows(id);
+  const [isProcessing, setIsProcessing] = React.useState(false);
 
-  const { data: instrumentPrices, isLoading: isLoadingPrices } =
-    useGetMultipleStockPricesApiV1StockTickersPricesGet(
-      holdings.map((h) => h.ticker).join(",")
+  const handleFollowClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!user) {
+      navigate('/auth/signin');
+      return;
+    }
+    
+    if (isProcessing) return;
+    
+    setIsProcessing(true);
+    try {
+      await toggleFollow();
+      toast({
+        title: isFollowing ? 'Unfollowed portfolio' : 'Following portfolio',
+        description: isFollowing 
+          ? `You've unfollowed ${name}`
+          : `You're now following ${name}`,
+      });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to update follow status',
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Get portfolio data with metrics
+  const { data: portfolioData, isLoading: isLoadingPrices } = usePortfolio(id, true);
+
+  // Calculate portfolio metrics from portfolio data
+  const portfolioMetrics = useMemo(() => {
+    if (!portfolioData?.holdings?.length) {
+      return {
+        currentValue: 0,
+        costBasis: 0,
+        earnedLost: 0,
+        isPositive: true,
+        formattedPerformance: '0.00'
+      };
+    }
+
+    const { currentValue, costBasis } = portfolioData.holdings.reduce<{ currentValue: number; costBasis: number }>(
+      (acc, holding) => {
+        const price = holding.current_price || 0;
+        return {
+          currentValue: acc.currentValue + (price * holding.quantity),
+          costBasis: acc.costBasis + ((holding.average_price || 0) * holding.quantity)
+        };
+      },
+      { currentValue: 0, costBasis: 0 }
     );
 
-  console.log(instrumentPrices);
+    const earnedLost = currentValue - costBasis;
+    const performance = costBasis > 0 ? earnedLost / costBasis : 0;
 
-  // --- Portfolio performance calculations ---
-  const priceMap = React.useMemo(() => {
-    const map = new Map<string, any>();
-    (instrumentPrices?.data ?? []).forEach((p: any) => map.set(p.symbol, p));
-    return map;
-  }, [instrumentPrices]);
+    return {
+      currentValue,
+      costBasis,
+      earnedLost,
+      isPositive: earnedLost >= 0,
+      formattedPerformance: (Math.abs(performance) * 100).toFixed(2)
+    };
+  }, [portfolioData]);
 
-  let totalCurrentValue = 0;
-  let totalCostBasis = 0;
-  let totalTodayChange = 0;
 
-  holdings.forEach((h) => {
-    const price = priceMap.get(h.ticker);
-    if (!price || price.current_price == null) return;
-
-    const currentValue = h.quantity * price.current_price;
-    const costBasis = h.total_invested;
-    const previousClose =
-      price.previous_close ?? price.current_price - (price.change ?? 0);
-    const todayChange =
-      h.quantity * ((price.current_price ?? 0) - (previousClose ?? 0));
-
-    totalCurrentValue += currentValue;
-    totalCostBasis += costBasis;
-    totalTodayChange += todayChange;
-  });
-
-  const totalEarnedLost = totalCurrentValue - totalCostBasis;
-  const portfolioPerformance =
-    totalCostBasis > 0 ? totalEarnedLost / totalCostBasis : 0;
-  const todayPerformance =
-    totalCurrentValue - totalTodayChange > 0
-      ? totalTodayChange / (totalCurrentValue - totalTodayChange)
-      : 0;
-
-  const totalValue = totalCostBasis;
+  // Calculate total number of holdings
   const totalHoldings = holdings?.length || 0;
+  const hasHoldings = totalHoldings > 0;
+  
+  // Format creation date
+  const formattedDate = useMemo(() => {
+    try {
+      return format(new Date(created_at), 'MMM d, yyyy');
+    } catch (e) {
+      return '';
+    }
+  }, [created_at]);
 
   return (
-    <Card className="hover:shadow-lg transition-shadow group">
+    <Card className={`hover:shadow-lg transition-shadow group h-full flex flex-col ${className}`}>
       <Link to={`/portfolio/${id}`} className="block h-full">
         <CardHeader className="pb-3">
-          <div className="flex items-start justify-between">
-            <div className="space-y-1">
-              <CardTitle className="text-lg">{name}</CardTitle>
-              <div className="flex items-center gap-2">
-                {is_default && <Badge variant="secondary">Default</Badge>}
-                <Badge variant={is_public ? "default" : "outline"}>
-                  {is_public ? (
-                    <>
-                      <Eye className="mr-1 h-3 w-3" /> Public
-                    </>
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle className="text-xl">{name}</CardTitle>
+              {showOwner && user_name && (
+                <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
+                  {user_avatar_url ? (
+                    <img 
+                      src={user_avatar_url} 
+                      alt={user_name}
+                      className="h-4 w-4 rounded-full"
+                    />
                   ) : (
-                    <>
-                      <Lock className="mr-1 h-3 w-3" /> Private
-                    </>
+                    <User className="h-4 w-4" />
                   )}
-                </Badge>
-              </div>
+                  <span>{user_name}</span>
+                </div>
+              )}
             </div>
-            <Briefcase className="h-5 w-5 text-muted-foreground" />
+            <div className="flex items-center gap-2">
+              {!isOwnPortfolio ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                  onClick={handleFollowClick}
+                  disabled={isFollowLoading || isProcessing}
+                >
+                  {isFollowing ? (
+                    <Heart className="h-4 w-4 fill-red-500 text-red-500" />
+                  ) : (
+                    <Heart className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </Button>
+              ) : (
+                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <Users className="h-4 w-4" />
+                  <span>{followersCount || 0}</span>
+                </div>
+              )}
+              {is_public ? (
+                <Eye className="h-4 w-4 text-muted-foreground" />
+              ) : (
+                <Lock className="h-4 w-4 text-muted-foreground" />
+              )}
+            </div>
           </div>
           {description && (
-            <CardDescription className="text-sm">{description}</CardDescription>
+            <CardDescription className="line-clamp-2 mt-2">
+              {description}
+            </CardDescription>
           )}
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">
-                Current Portfolio Value
-              </span>
-              <span className="font-semibold">
-                $
-                {totalCurrentValue.toLocaleString("en-US", {
-                  minimumFractionDigits: 2,
-                })}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">
-                Total Value (Invested)
-              </span>
-              <span className="font-semibold">
-                $
-                {totalValue.toLocaleString("en-US", { minimumFractionDigits: 2 })}
-              </span>
+          <div className="space-y-4">
+            {/* Portfolio Value and Today's Performance */}
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Portfolio Value</p>
+                <p className="text-2xl font-semibold">
+                  {isLoadingPrices ? (
+                    <span className="inline-block h-8 w-24 bg-muted rounded animate-pulse"></span>
+                  ) : (
+                    formatCurrency(portfolioMetrics.currentValue)
+                  )}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-muted-foreground">Today</p>
+                <p className={`text-sm ${
+                  isLoadingPrices ? '' : (portfolioData?.today_change_percent || 0) >= 0 ? 'text-green-500' : 'text-red-500'
+                }`}>
+                  {isLoadingPrices ? (
+                    <span className="inline-block h-4 w-24 bg-muted rounded animate-pulse"></span>
+                  ) : (
+                    `${(portfolioData?.today_change_percent || 0).toFixed(2)}% • ${formatCurrency(portfolioData?.today_change || 0)}`
+                  )}
+                </p>
+              </div>
             </div>
 
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">Holdings</span>
-              <span className="font-medium">{totalHoldings}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">
-                Total Earned/Lost
-              </span>
-              <span
-                className={
-                  totalEarnedLost >= 0 ? "text-success" : "text-destructive"
-                }
-              >
-                $
-                {totalEarnedLost.toLocaleString("en-US", {
-                  minimumFractionDigits: 2,
-                })}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">
-                Portfolio Performance
-              </span>
-              <span
-                className={
-                  portfolioPerformance >= 0 ? "text-success" : "text-destructive"
-                }
-              >
-                {(portfolioPerformance * 100).toFixed(2)}%
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-muted-foreground">
-                Today's Change
-              </span>
-              <span
-                className={
-                  totalTodayChange >= 0 ? "text-success" : "text-destructive"
-                }
-              >
-                $
-                {totalTodayChange.toLocaleString("en-US", {
-                  minimumFractionDigits: 2,
-                })}{" "}
-                ({(todayPerformance * 100).toFixed(2)}%)
-              </span>
+            {/* Total Invested and Total Return */}
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Total Invested</p>
+                <p className="text-sm">
+                  {isLoadingPrices ? (
+                    <span className="inline-block h-4 w-20 bg-muted rounded animate-pulse"></span>
+                  ) : (
+                    formatCurrency(portfolioMetrics.costBasis)
+                  )}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-muted-foreground">Total Return</p>
+                <p className={`text-sm ${
+                  !isLoadingPrices && (portfolioMetrics.earnedLost >= 0 ? 'text-green-500' : 'text-red-500')
+                }`}>
+                  {isLoadingPrices ? (
+                    <span className="inline-block h-4 w-24 bg-muted rounded animate-pulse"></span>
+                  ) : (
+                    `${portfolioMetrics.formattedPerformance}% • ${formatCurrency(portfolioMetrics.earnedLost)}`
+                  )}
+                </p>
+              </div>
             </div>
           </div>
-          {totalHoldings > 0 && (
+
+          <div className="pt-4 border-t">
+            <div className="flex justify-between text-sm mb-2">
+              <span className="font-medium">Holdings</span>
+              {isLoadingPrices ? (
+                <span className="inline-block h-4 w-12 bg-muted rounded animate-pulse"></span>
+              ) : (
+                <span>{totalHoldings} {totalHoldings === 1 ? 'asset' : 'assets'}</span>
+              )}
+            </div>
+            
+            {hasHoldings && (
             <div className="space-y-2">
-              <p className="text-sm font-medium">Top Holdings</p>
               <div className="space-y-1">
                 {holdings.slice(0, 3).map((holding, index) => (
-                  <div key={index} className="flex justify-between text-sm">
+                  <div key={`${holding.ticker}-${index}`} className="flex justify-between text-sm">
                     <span className="text-muted-foreground">
                       {holding.ticker}
                     </span>
@@ -194,11 +285,14 @@ export const PortfolioCard: React.FC<PortfolioCardProps> = (props) => {
               </div>
             </div>
           )}
+          </div>
+          
           <div className="pt-2 border-t">
             <p className="text-xs text-muted-foreground">
-              Created {new Date(created_at).toLocaleDateString()}
+              Created {formattedDate}
             </p>
           </div>
+          
           <div className="pt-2 flex items-center justify-end text-sm text-primary font-medium">
             View details <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
           </div>

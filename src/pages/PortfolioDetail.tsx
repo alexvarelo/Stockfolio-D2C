@@ -46,6 +46,14 @@ export const PortfolioDetail = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
+  // Initialize portfolio follows hook early to maintain consistent hook order
+  const { 
+    isFollowing, 
+    toggleFollow, 
+    followersCount = 0, 
+    isLoading: isFollowLoading 
+  } = usePortfolioFollows(portfolioId);
+
   // Validate portfolioId
   if (!portfolioId) {
     navigate('/portfolios');
@@ -133,14 +141,6 @@ export const PortfolioDetail = () => {
   // Check if user is the owner of the portfolio
   const isOwner = user?.id === portfolio?.user_id;
   const isLoadingPrices = isLoadingPortfolio;
-  
-  // Get portfolio follows data
-  const {
-    isFollowing = false,
-    toggleFollow, 
-    followersCount = 0, 
-    isLoading: isFollowLoading 
-  } = usePortfolioFollows(portfolioId);
 
   return (
     <div className="container mx-auto px-1 sm:px-2 md:px-4 py-2 sm:py-4 space-y-3 sm:space-y-4">

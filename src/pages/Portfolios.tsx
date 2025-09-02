@@ -9,18 +9,26 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PortfolioCard } from "@/components/portfolio/PortfolioCard";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Briefcase, TrendingUp, Eye, Lock } from "lucide-react";
+import { Plus, Briefcase, Users, Heart, FolderOpen } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { FormProvider, useForm } from "react-hook-form";
 import { PortfolioWizard } from "@/components/portfolio/portfolioWizard/PortfolioWizard";
+import { useFollowedPortfolios } from "@/api/portfolio/useFollowedPortfolios";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Link } from "react-router-dom";
 
 const Portfolios = () => {
   const { user } = useAuth();
   const [showCreateWizard, setShowCreateWizard] = useState(false);
+  const [activeTab, setActiveTab] = useState("my-portfolios");
 
   const methods = useForm();
+
+  const { data: followedPortfolios, isLoading: isLoadingFollowed } =
+    useFollowedPortfolios();
 
   const { data: portfolios, isLoading } = useQuery({
     queryKey: ["portfolios-detailed"],
@@ -68,50 +76,116 @@ const Portfolios = () => {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-start">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">My Portfolios</h1>
-          <p className="text-muted-foreground">
-            Manage and track your investment portfolios
-          </p>
-        </div>
-        <Button
-          variant="gradient"
-          size="lg"
-          onClick={() => setShowCreateWizard(true)}
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          Create Portfolio
-        </Button>
-      </div>
-
-      {/* Portfolios Grid */}
-      {portfolios && portfolios.length > 0 ? (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {portfolios.map((portfolio) => (
-            <PortfolioCard key={portfolio.id} {...portfolio} />
-          ))}
-        </div>
-      ) : (
-        <Card className="p-12 text-center">
-          <Briefcase className="mx-auto h-16 w-16 text-muted-foreground mb-6" />
-          <h3 className="text-lg font-semibold mb-2">No portfolios yet</h3>
-          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            Start building your investment tracking by creating your first
-            portfolio.
-          </p>
-          <Button
-            variant="gradient"
-            size="lg"
-            onClick={() => setShowCreateWizard(true)}
-          >
+    <div className="container py-8">
+      <div className="flex flex-col gap-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Portfolios</h1>
+            <p className="text-muted-foreground">
+              Manage and track your investment portfolios
+            </p>
+          </div>
+          <Button onClick={() => setShowCreateWizard(true)}>
             <Plus className="mr-2 h-4 w-4" />
-            Create Your First Portfolio
+            New Portfolio
           </Button>
-        </Card>
-      )}
+        </div>
+
+        <Tabs
+          defaultValue="my-portfolios"
+          className="w-full"
+          onValueChange={setActiveTab}
+        >
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="my-portfolios">
+              <FolderOpen className="mr-2 h-4 w-4" />
+              My Portfolios
+            </TabsTrigger>
+            <TabsTrigger value="following">
+              <Heart className="mr-2 h-4 w-4" />
+              Following
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="my-portfolios" className="mt-6">
+            {isLoading ? (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-64 w-full rounded-lg" />
+                ))}
+              </div>
+            ) : portfolios?.length === 0 ? (
+              <Card className="border-dashed">
+                <CardHeader className="space-y-1 text-center">
+                  <Briefcase className="mx-auto h-12 w-12 text-muted-foreground" />
+                  <CardTitle className="text-2xl">No portfolios yet</CardTitle>
+                  <CardDescription className="text-muted-foreground">
+                    Create your first portfolio to get started
+                  </CardDescription>
+                  <Button
+                    onClick={() => setShowCreateWizard(true)}
+                    className="mt-4"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create Portfolio
+                  </Button>
+                </CardHeader>
+              </Card>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {portfolios?.map((portfolio) => (
+                  <PortfolioCard
+                    key={portfolio.id}
+                    {...portfolio}
+                    showOwner={false}
+                    isOwnPortfolio={true}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="following" className="mt-6">
+            {isLoadingFollowed ? (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-64 w-full rounded-lg" />
+                ))}
+              </div>
+            ) : followedPortfolios?.length === 0 ? (
+              <Card className="border-dashed">
+                <CardHeader className="space-y-1 text-center">
+                  <Users className="mx-auto h-12 w-12 text-muted-foreground" />
+                  <CardTitle className="text-2xl">
+                    Not following any portfolios
+                  </CardTitle>
+                  <CardDescription className="text-muted-foreground">
+                    Discover and follow public portfolios to see them here
+                  </CardDescription>
+                  <Button variant="outline" className="mt-4">
+                    <Link to="/discover">
+                      <Users className="mr-2 h-4 w-4" />
+                      Discover Portfolios
+                    </Link>
+                  </Button>
+                </CardHeader>
+              </Card>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {followedPortfolios?.map((portfolio) => (
+                  <PortfolioCard
+                    is_default={false}
+                    key={portfolio.id}
+                    {...portfolio}
+                    showOwner={true}
+                    isFollowing={true}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </div>
 
       <FormProvider {...methods}>
         <PortfolioWizard

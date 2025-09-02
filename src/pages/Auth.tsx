@@ -29,7 +29,6 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence, useMotionValue } from "framer-motion";
 import { cn } from "@/lib/utils";
-import gsap from "gsap";
 // import { Particles } from "@/components/magicui/particles";
 
 // Liquid Glass Card Component - Simplified without 3D effects
@@ -102,28 +101,6 @@ const Auth = () => {
     await signUp(formData.email, formData.password, formData.fullName, formData.username);
     setIsLoading(false);
   };
-
-  // GSAP animations
-  useEffect(() => {
-    try {
-    gsap.fromTo(".hero-title", 
-      { y: 100, opacity: 0 },
-      { y: 0, opacity: 1, duration: 1.2, ease: "power3.out", delay: 0.2 }
-    );
-    
-    gsap.fromTo(".hero-subtitle", 
-      { y: 50, opacity: 0 },
-      { y: 0, opacity: 1, duration: 1, ease: "power2.out", delay: 0.6 }
-    );
-    
-    gsap.fromTo(".feature-card", 
-      { y: 60, opacity: 0 },
-      { y: 0, opacity: 1, duration: 0.8, ease: "power2.out", delay: 0.8, stagger: 0.2 }
-    );
-      } catch (error) {
-      console.error("GSAP animation error:", error);
-    }
-  }, []);
 
   if (loading) {
     return (
