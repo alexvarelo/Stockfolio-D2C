@@ -44,7 +44,7 @@ export async function getCachedAccessToken(): Promise<string> {
   if (tokenResponse.response.status === 401 && tokenResponse.usedDefaultCredentials) {
     try {
       const clientRes = await fetch(`${import.meta.env.VITE_API_ORIGIN || process.env.VITE_API_ORIGIN}api/v1/clients`, {
-        method: 'GET',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       });
       
