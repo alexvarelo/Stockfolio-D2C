@@ -30,7 +30,7 @@ export const Navbar = () => {
 
   const navLinks = [
     { href: "/", label: "Dashboard" },
-    { href: "/portfolios", label: "My Portfolios" },
+    { href: "/portfolios", label: "Portfolios" },
     { href: "/watchlists", label: "Watchlists" },
     { href: "/following", label: "Following" },
   ];
@@ -38,15 +38,22 @@ export const Navbar = () => {
   return (
     <header className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-30">
       <div className="flex h-14 items-center px-4 gap-4">
-        {/* User Icon - Moved to left */}
+        {/* User Profile Picture - Clickable */}
         <div className="flex items-center gap-2">
-          {userProfile?.avatar_url || userProfile?.full_name ? (
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={userProfile.avatar_url} alt={userProfile.full_name || 'User'} />
-              <AvatarFallback>
-                {userProfile.full_name ? userProfile.full_name.charAt(0).toUpperCase() : 'U'}
-              </AvatarFallback>
-            </Avatar>
+          {userProfile?.id ? (
+            <button 
+              onClick={() => navigate(`/user/${userProfile.id}`)}
+              className="rounded-full hover:ring-2 hover:ring-ring hover:ring-offset-2 transition-all"
+            >
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={userProfile.avatar_url} alt={userProfile.full_name || 'User'} />
+                <AvatarFallback>
+                  {userProfile.full_name 
+                    ? userProfile.full_name.charAt(0).toUpperCase() 
+                    : userProfile.email?.charAt(0).toUpperCase() || 'U'}
+                </AvatarFallback>
+              </Avatar>
+            </button>
           ) : (
             <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
               <User className="h-4 w-4" />
@@ -78,9 +85,12 @@ export const Navbar = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={() => navigate('/profile')}>
+              <DropdownMenuItem 
+                onClick={() => userProfile?.id && navigate(`/user/${userProfile.id}`)}
+                disabled={!userProfile?.id}
+              >
                 <User className="mr-2 h-4 w-4" />
-                <span>Profile</span>
+                <span>My Profile</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleSignOut}>
                 <LogOut className="mr-2 h-4 w-4" />

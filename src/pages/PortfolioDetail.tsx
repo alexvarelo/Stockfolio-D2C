@@ -46,8 +46,14 @@ export const PortfolioDetail = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
+  // Validate portfolioId
+  if (!portfolioId) {
+    navigate('/portfolios');
+    return null;
+  }
+
   // Load portfolio data with prices
-  const { data: portfolio, isLoading: isLoadingPortfolio, error } = usePortfolio(portfolioId || "");
+  const { data: portfolio, isLoading: isLoadingPortfolio, error } = usePortfolio(portfolioId);
   
   const { mutateAsync: deletePortfolio } = useDeletePortfolio();
   
@@ -128,11 +134,11 @@ export const PortfolioDetail = () => {
   const isOwner = user?.id === portfolio?.user_id;
   const isLoadingPrices = isLoadingPortfolio;
   
-  // Handle portfolio follows
-  const { 
-    isFollowing, 
+  // Get portfolio follows data
+  const {
+    isFollowing = false,
     toggleFollow, 
-    followersCount, 
+    followersCount = 0, 
     isLoading: isFollowLoading 
   } = usePortfolioFollows(portfolioId);
 

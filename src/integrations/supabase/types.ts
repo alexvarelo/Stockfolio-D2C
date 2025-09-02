@@ -477,6 +477,7 @@ export type Database = {
           is_public: boolean | null
           is_verified: boolean | null
           updated_at: string | null
+          website: string | null
           username: string
         }
         Insert: {

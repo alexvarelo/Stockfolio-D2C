@@ -1,6 +1,7 @@
 import { formatDistanceToNow } from 'date-fns';
 import { Heart, MessageCircle, Share2, MoreHorizontal, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { useToast } from '@/components/ui/use-toast';
 import { PortfolioPostCard } from './PortfolioPostCard';
@@ -40,6 +41,7 @@ export const PostCardV2 = ({
   const [likeCount, setLikeCount] = useState(post.likes_count || 0);
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   // Mock hooks for like functionality
   const handleLike = (e: React.MouseEvent) => {
@@ -100,21 +102,31 @@ export const PostCardV2 = ({
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={post.user?.avatar_url} alt={post.user?.name || 'User'} />
-              <AvatarFallback>{(post.user?.name || 'U').charAt(0).toUpperCase()}</AvatarFallback>
-            </Avatar>
-            
-            <div className="min-w-0">
-              <div className="flex flex-col">
-                <span className="font-semibold text-foreground line-clamp-1">
-                  {post.user?.name || 'Anonymous'}
-                </span>
-                <span className="text-muted-foreground text-sm">
-                  {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
-                </span>
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                if (post.user_id) {
+                  navigate(`/user/${post.user_id}`);
+                }
+              }}
+              className="flex items-start gap-3 hover:opacity-80 transition-opacity"
+            >
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={post.user?.avatar_url} alt={post.user?.name || 'User'} />
+                <AvatarFallback>{(post.user?.name || 'U').charAt(0).toUpperCase()}</AvatarFallback>
+              </Avatar>
+              
+              <div className="min-w-0">
+                <div className="flex flex-col items-start">
+                  <span className="font-semibold text-foreground line-clamp-1 hover:underline">
+                    {post.user?.name || 'Anonymous'}
+                  </span>
+                  <span className="text-muted-foreground text-sm">
+                    {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+                  </span>
+                </div>
               </div>
-            </div>
+            </button>
           </div>
           
           <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">

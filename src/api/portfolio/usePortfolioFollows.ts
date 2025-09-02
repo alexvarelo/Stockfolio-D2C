@@ -29,7 +29,7 @@ export const usePortfolioFollows = (portfolioId?: string) => {
       if (error) throw error;
       return !!data;
     },
-    enabled: !!user?.id && !!portfolioId,
+    enabled: Boolean(user?.id && portfolioId),
   });
 
   // Get followers count for a portfolio
@@ -46,7 +46,7 @@ export const usePortfolioFollows = (portfolioId?: string) => {
       if (error) throw error;
       return count || 0;
     },
-    enabled: !!portfolioId,
+    enabled: Boolean(portfolioId),
   });
 
   // Follow a portfolio
