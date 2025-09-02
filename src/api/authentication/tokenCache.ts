@@ -45,7 +45,14 @@ export async function getCachedAccessToken(): Promise<string> {
     try {
       const clientRes = await fetch(`${import.meta.env.VITE_API_ORIGIN || process.env.VITE_API_ORIGIN}api/v1/clients`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'accept': 'application/json',
+          'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify({
+          name: 'Stockfolio Web Client',
+          description: 'Automatically generated client for Stockfolio web application'
+        })
       });
       
       if (clientRes.ok) {
