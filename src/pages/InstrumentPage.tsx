@@ -373,57 +373,6 @@ export function InstrumentPage() {
                 companyName={companyInfo?.name}
                 isLoading={isLoading}
               />
-
-              {/* Company Information Card */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Company Information</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground">
-                        Sector
-                      </h3>
-                      <p>{additionalData.sector || "N/A"}</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground">
-                        Industry
-                      </h3>
-                      <p>{additionalData.industry || "N/A"}</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground">
-                        Employees
-                      </h3>
-                      <p>
-                        {additionalData.fullTimeEmployees?.toLocaleString() ||
-                          "N/A"}
-                      </p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-muted-foreground">
-                        Headquarters
-                      </h3>
-                      <p>
-                        {[additionalData.city, additionalData.country]
-                          .filter(Boolean)
-                          .join(", ") || "N/A"}
-                      </p>
-                    </div>
-                  </div>
-
-                  {additionalData.longBusinessSummary && (
-                    <div className="pt-4 border-t">
-                      <h3 className="font-medium mb-2">About</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {additionalData.longBusinessSummary}
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
             </div>
           </div>
         </TabsContent>
