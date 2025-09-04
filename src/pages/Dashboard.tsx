@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 import {
   CommandDialog,
   CommandInput,
@@ -139,309 +140,255 @@ const Dashboard = () => {
   const totalHoldings =
     portfolios?.reduce((sum, p) => sum + p.total_holdings, 0) || 0;
 
+  // Animation variants
+  const container: Variants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2,
+      },
+    },
+  };
+
+  const item: Variants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { 
+      opacity: 1, 
+      y: 0,
+      transition: {
+        type: "spring",
+        stiffness: 100,
+        damping: 12,
+      },
+    },
+  };
+
+  const cardHover = {
+    scale: 1.02,
+    transition: { type: "spring" as const, stiffness: 400, damping: 10 }
+  };
+
+  const cardTap = {
+    scale: 0.98
+  } as const;
+
   if (isLoading) {
     return (
-      <div className="space-y-8">
-        <div className="animate-pulse">
+      <motion.div 
+        className="space-y-8"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+      >
+        <motion.div 
+          className="animate-pulse"
+          variants={item}
+        >
           <div className="h-8 bg-muted rounded w-1/4 mb-2"></div>
           <div className="h-4 bg-muted rounded w-1/2"></div>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        </motion.div>
+        <motion.div 
+          className="grid gap-4 md:grid-cols-2 lg:grid-cols-7"
+          variants={container}
+        >
           <RecentActivity className="col-span-3" />
-        </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        </motion.div>
+        <motion.div 
+          className="grid gap-4 md:grid-cols-2 lg:grid-cols-7"
+          variants={container}
+        >
           <TopInvestments className="col-span-4" />
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     );
   }
 
   return (
-    <div>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+    >
       <Tabs defaultValue="feed" className="space-y-8">
         <TabsList className="grid w-full grid-cols-2 max-w-md mb-8">
           <TabsTrigger value="feed">Social Feed</TabsTrigger>
           <TabsTrigger value="overview">Portfolio Overview</TabsTrigger>
         </TabsList>
 
-        {/* Social Feed Tab */}
-        <TabsContent value="feed" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Main Feed */}
-            <div className="lg:col-span-2 space-y-6">
-              <CreatePost 
-                onPostCreated={() => {
-                  queryClient.invalidateQueries({ queryKey: ['posts'] });
-                }} 
-              />
-              <PostList />
-            </div>
-
-            {/* Sidebar */}
-            <div className="space-y-6">
-              {/* Portfolio Summary Card */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Portfolio Summary</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total Value</p>
-                    <p className="text-2xl font-semibold">
-                      ${totalPortfolioValue.toLocaleString('en-US', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Total Holdings</p>
-                    <p className="text-2xl font-semibold">{totalHoldings}</p>
-                  </div>
-                  <Button 
-                    className="w-full" 
-                    variant="outline"
-                    onClick={() => {
-                      navigate("/portfolios")
-                    }}
-                  >
-                    View All Portfolios
-                  </Button>
-                </CardContent>
-              </Card>
-              <TopInvestments className="col-span-4" /> 
-            </div>
-          </div>
-        </TabsContent>
-
-        {/* Portfolio Overview Tab */}
-        <TabsContent value="overview" className="space-y-8">
-          {/* Header */}
-          <div className="flex justify-between items-start">
-            <div className="flex items-center gap-6">
-              <Avatar className="h-16 w-16">
-                {userProfile?.avatar_url ? (
-                  <AvatarImage
-                    src={userProfile.avatar_url}
-                    alt={userProfile.full_name || userProfile.email || "User"}
+        <AnimatePresence mode="wait">
+          <TabsContent value="feed" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Main Feed */}
+              <motion.div 
+                className="lg:col-span-2 space-y-6"
+                variants={container}
+                initial="hidden"
+                animate="show"
+              >
+                <motion.div variants={item}>
+                  <CreatePost 
+                    onPostCreated={() => {
+                      queryClient.invalidateQueries({ queryKey: ['posts'] });
+                    }} 
                   />
-                ) : null}
-                <AvatarFallback>
-                  {userProfile?.full_name
-                    ? userProfile.full_name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .toUpperCase()
-                    : userProfile?.email?.[0]?.toUpperCase() || "U"}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col">
-                <span className="font-bold text-2xl">
-                  {userProfile?.full_name || userProfile?.email || "User"}
-                </span>
-                {userProfile?.email && userProfile?.full_name && (
-                  <span className="text-muted-foreground">
-                    Welcome back!
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
+                </motion.div>
+                <motion.div variants={item}>
+                  <PostList />
+                </motion.div>
+              </motion.div>
 
-          {/* Overview Cards */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Total Value
-                </CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  $
-                  {totalPortfolioValue.toLocaleString("en-US", {
-                    minimumFractionDigits: 2,
-                  })}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Across {portfolios?.length || 0} portfolios
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Holdings</CardTitle>
-                <Briefcase className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{totalHoldings}</div>
-                <p className="text-xs text-muted-foreground">
-                  Active investments
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Today's Change
-                </CardTitle>
-                <BarChart3 className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-success">
-                  +$2,350.00
-                </div>
-                <p className="text-xs text-success flex items-center">
-                  <ArrowUpRight className="mr-1 h-3 w-3" />
-                  +2.4% from yesterday
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Performance
-                </CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-success">+12.3%</div>
-                <p className="text-xs text-muted-foreground">30-day return</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Portfolio Grid */}
-          <div className="grid gap-6 md:grid-cols-2">
-            {/* Portfolios */}
-            <Card>
-              <CardHeader>
-                <CardTitle>My Portfolios</CardTitle>
-                <CardDescription>
-                  Manage and track your investment portfolios
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {portfolios?.map((portfolio) => (
-                  <div
-                    key={portfolio.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors cursor-pointer"
-                  >
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium">{portfolio.name}</p>
-                        {portfolio.is_default && (
-                          <Badge variant="secondary">Default</Badge>
-                        )}
+              {/* Sidebar */}
+              <motion.div 
+                className="space-y-6"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                {/* Portfolio Summary Card */}
+                <motion.div
+                  whileHover={cardHover}
+                  whileTap={cardTap}
+                >
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Portfolio Summary</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Total Value</p>
+                        <p className="text-2xl font-semibold">
+                          ${totalPortfolioValue?.toLocaleString('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </p>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        {portfolio.total_holdings} holdings
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold">
-                        $
-                        {portfolio.total_invested.toLocaleString("en-US", {
+                      <div>
+                        <p className="text-sm text-muted-foreground">Total Holdings</p>
+                        <p className="text-2xl font-semibold">{totalHoldings}</p>
+                      </div>
+                      <Button 
+                        className="w-full" 
+                        variant="outline"
+                        onClick={() => navigate("/portfolios")}
+                      >
+                        View All Portfolios
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+                <motion.div
+                  whileHover={cardHover}
+                  whileTap={cardTap}
+                >
+                  <TopInvestments className="col-span-4" />
+                </motion.div>
+              </motion.div>
+            </div>
+          </TabsContent>
+
+          {/* Portfolio Overview Tab */}
+          <TabsContent value="overview" className="space-y-8">
+            {/* Header */}
+            <motion.div
+              className="flex justify-between items-start"
+              variants={item}
+              initial="hidden"
+              animate="show"
+            >
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight">Portfolio Overview</h1>
+                <p className="text-muted-foreground">
+                  Track and manage your investments
+                </p>
+              </div>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Transaction
+              </Button>
+            </motion.div>
+
+            {/* Portfolio Cards */}
+            <motion.div
+              className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+              variants={container}
+              initial="hidden"
+              animate="show"
+            >
+              {portfolios?.map((portfolio) => (
+                <motion.div key={portfolio.id} variants={item}>
+                  <Card className="h-full">
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">
+                        {portfolio.name}
+                        {portfolio.is_default && (
+                          <Badge className="ml-2" variant="secondary">
+                            Default
+                          </Badge>
+                        )}
+                      </CardTitle>
+                      <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">
+                        ${portfolio.total_invested?.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
                         })}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Total Invested
                       </p>
-                      <p className="text-sm text-success">+5.2%</p>
+                      <div className="mt-4">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Holdings</span>
+                          <span className="font-medium">
+                            {portfolio.total_holdings}
+                          </span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+
+              {/* Add Portfolio Card */}
+              <motion.div variants={item}>
+                <Card className="h-full border-dashed hover:border-primary/50 transition-colors cursor-pointer">
+                  <CardContent className="flex flex-col items-center justify-center h-full p-6 text-center">
+                    <div className="rounded-full bg-muted p-3 mb-4">
+                      <Plus className="h-6 w-6" />
                     </div>
-                  </div>
-                ))}
-                {portfolios?.length === 0 && (
-                  <div className="text-center py-8">
-                    <Briefcase className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground mb-4">
-                      No portfolios yet
+                    <h3 className="text-lg font-medium mb-1">Add Portfolio</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Create a new portfolio to organize your investments
                     </p>
-                    <Button variant="outline">
-                      Create Your First Portfolio
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </motion.div>
 
             {/* Recent Activity */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Transactions</CardTitle>
-                <CardDescription>
-                  Your latest investment activity
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {recentTransactions?.map((transaction) => (
-                  <div
-                    key={transaction.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
-                  >
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium">{transaction.ticker}</p>
-                        <Badge
-                          variant={
-                            transaction.transaction_type === "BUY"
-                              ? "default"
-                              : "destructive"
-                          }
-                        >
-                          {transaction.transaction_type}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {transaction.quantity} shares @ $
-                        {transaction.price_per_share}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold">
-                        $
-                        {(
-                          transaction.quantity * transaction.price_per_share
-                        ).toLocaleString("en-US", { minimumFractionDigits: 2 })}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(
-                          transaction.transaction_date
-                        ).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-                {recentTransactions?.length === 0 && (
-                  <div className="text-center py-8">
-                    <TrendingUp className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                    <p className="text-muted-foreground mb-4">
-                      No transactions yet
-                    </p>
-                    <Button variant="outline">
-                      Add Your First Transaction
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
+            <motion.div variants={item}>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recent Activity</CardTitle>
+                  <CardDescription>
+                    Your latest transactions across all portfolios
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <RecentActivity />
+                </CardContent>
+              </Card>
+            </motion.div>
+          </TabsContent>
+        </AnimatePresence>
       </Tabs>
-
-      {/* Onboarding Wizard */}
-      {user && needsOnboarding && !loading && (
-        <UserOnboardingWizard
-          open={onboardingOpen}
-          onComplete={() => setOnboardingOpen(false)}
-          userId={user.id}
-          email={user.email}
-        />
-      )}
-    </div>
+    </motion.div>
   );
 };
 

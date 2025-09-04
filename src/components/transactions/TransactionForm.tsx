@@ -1,10 +1,12 @@
-import { useState } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useState, useEffect } from "react";
+import { useForm, Controller, useFormContext, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useCustomerHoldings } from "@/api/portfolio/useCustomerHoldings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -26,15 +28,22 @@ import {
   useCreateTransaction,
   type TransactionFormData,
 } from "@/api/transaction/transaction";
-import { StockSearch } from "@/components/stock/StockSearch";
 import { useGetStockPriceApiV1StockTickerPriceGet } from "@/api/stock/stock";
+import type { PortfolioHolding } from "@/api/portfolio/portfolio";
 import { Skeleton } from "@/components/ui/skeleton";
+import { StockSearch } from "@/components/stock/StockSearch";
 
 const transactionSchema = z.object({
   portfolio_id: z.string().uuid(),
   ticker: z.string().min(1, "Ticker is required"),
   transaction_type: z.enum(["BUY", "SELL"]),
-  quantity: z.number().positive("Quantity must be greater than 0"),
+  quantity: z.union([
+    z.string().min(1, "Quantity is required").transform(Number),
+    z.number()
+  ]).refine(
+    (val) => !isNaN(Number(val)) && Number(val) > 0,
+    { message: "Quantity must be greater than 0" }
+  ),
   price_per_share: z.number().positive("Price must be greater than 0"),
   transaction_date: z.string().or(z.date()),
   fees: z.number().min(0).optional(),
@@ -47,6 +56,7 @@ interface TransactionFormProps {
   portfolioId: string;
   onSuccess?: () => void;
   onCancel?: () => void;
+  portfolioHoldings?: PortfolioHolding[];
 }
 
 interface SelectedInstrument {
@@ -59,10 +69,24 @@ export function TransactionForm({
   portfolioId,
   onSuccess,
   onCancel,
+  portfolioHoldings = [],
 }: TransactionFormProps) {
   const { mutate: createTransaction, isPending } = useCreateTransaction();
-  const [selectedInstrument, setSelectedInstrument] =
-    useState<SelectedInstrument | null>(null);
+  const [selectedInstrument, setSelectedInstrument] = useState<{
+    symbol: string;
+    name: string;
+    exchange?: string;
+  } | null>(null);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const isLoadingHoldings = false; // No longer need to load holdings since we get them as props
+  
+  // Use the provided portfolioHoldings or fallback to empty array
+  const userHoldings = portfolioHoldings.map(holding => ({
+    symbol: holding.ticker,
+    name: holding.ticker, // Using ticker as name since PortfolioHolding doesn't have a name property
+    quantity: holding.quantity,
+  }));
 
   // Fetch current price when an instrument is selected
   const { data: priceData, isLoading: isLoadingPrice } =
@@ -79,13 +103,30 @@ export function TransactionForm({
       portfolio_id: portfolioId,
       ticker: "",
       transaction_type: "BUY",
-      quantity: 0,
+      quantity: 1,
       price_per_share: 0,
       transaction_date: new Date().toISOString().split("T")[0],
       fees: 0,
       notes: "",
     },
   });
+
+  // Watch for changes in the selected ticker to update the available quantity
+  const watchTicker = form.watch("ticker");
+  const watchTransactionType = form.watch("transaction_type");
+  
+  // Get the selected holding when in SELL mode
+  const selectedHolding = watchTransactionType === "SELL" 
+    ? portfolioHoldings.find(h => h.ticker === watchTicker)
+    : null;
+
+  // Update form context when transaction type or selected holding changes
+  useEffect(() => {
+    form.setValue("quantity", 1); // Reset quantity when holding changes
+    form.trigger("quantity"); // Re-validate quantity
+  }, [watchTicker, watchTransactionType]);
+
+  const transactionType = form.watch("transaction_type");
 
   const handleInstrumentSelect = (instrument: SelectedInstrument) => {
     setSelectedInstrument(instrument);
@@ -96,7 +137,32 @@ export function TransactionForm({
     }
   };
 
+  const validateSellQuantity = (value: number | string) => {
+    if (value === "") return "Quantity is required";
+    const numValue = Number(value);
+    if (isNaN(numValue)) return "Quantity must be a number";
+    if (numValue <= 0) return "Quantity must be greater than 0";
+    
+    if (watchTransactionType === "SELL" && selectedHolding) {
+      if (numValue > selectedHolding.quantity) {
+        return `Cannot sell more than ${selectedHolding.quantity} shares`;
+      }
+    }
+    return true;
+  };
+
   const onSubmit = (data: TransactionFormValues) => {
+    // Manual validation for sell quantity
+    if (data.transaction_type === "SELL" && selectedHolding) {
+      const validationResult = validateSellQuantity(data.quantity);
+      if (validationResult !== true) {
+        form.setError("quantity", {
+          type: "manual",
+          message: validationResult as string,
+        });
+        return;
+      }
+    }
     const transactionData: TransactionFormData = {
       portfolio_id: data.portfolio_id,
       ticker: data.ticker,
@@ -182,26 +248,142 @@ export function TransactionForm({
 
       <div className="space-y-4">
         <div className="grid gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="ticker">Stock Ticker</Label>
-            <StockSearch
-              onSelect={handleInstrumentSelect}
-              placeholder="Search for a stock..."
+          <div className="grid gap-2">
+            <Label>Transaction Type</Label>
+            <Controller
+              name="transaction_type"
+              control={form.control}
+              render={({ field }) => (
+                <ToggleGroup
+                  type="single"
+                  value={field.value}
+                  onValueChange={(value: "BUY" | "SELL") => field.onChange(value)}
+                  className="grid grid-cols-2 gap-2"
+                >
+                  <ToggleGroupItem
+                    value="BUY"
+                    className={`${field.value === 'BUY' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}
+                  >
+                    Buy
+                  </ToggleGroupItem>
+                  <ToggleGroupItem
+                    value="SELL"
+                    className={`${field.value === 'SELL' ? 'bg-destructive text-destructive-foreground' : 'bg-muted'}`}
+                  >
+                    Sell
+                  </ToggleGroupItem>
+                </ToggleGroup>
+              )}
             />
           </div>
 
+          <div className="grid gap-2">
+            <Label htmlFor="ticker">Stock Ticker</Label>
+            <div>
+              {transactionType === 'SELL' ? (
+                <div className="space-y-2">
+                  <select
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    value={selectedInstrument?.symbol || ''}
+                    onChange={(e) => {
+                      const symbol = e.target.value;
+                      if (symbol) {
+                        const holding = userHoldings.find(h => h.symbol === symbol);
+                        if (holding) {
+                          setSelectedInstrument({
+                            symbol: holding.symbol,
+                            name: holding.name,
+                          });
+                          form.setValue("ticker", holding.symbol);
+                          setSearchQuery(holding.symbol);
+                        }
+                      } else {
+                        setSelectedInstrument(null);
+                        form.setValue("ticker", "");
+                        setSearchQuery("");
+                      }
+                    }}
+                  >
+                    <option value="">Select a holding to sell</option>
+                    {isLoadingHoldings ? (
+                      <option disabled>Loading holdings...</option>
+                    ) : userHoldings.length > 0 ? (
+                      userHoldings.map((holding) => (
+                        <option key={holding.symbol} value={holding.symbol}>
+                          {holding.symbol} - {holding.quantity} shares
+                        </option>
+                      ))
+                    ) : (
+                      <option disabled>No holdings in this portfolio</option>
+                    )}
+                  </select>
+                  {!isLoadingHoldings && userHoldings.length === 0 && (
+                    <p className="text-sm text-muted-foreground mt-2">
+                      You don't have any stocks in this portfolio to sell.
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <StockSearch
+                  onSelect={(instrument) => {
+                    setSelectedInstrument({
+                      symbol: instrument.symbol,
+                      name: instrument.name,
+                    });
+                    form.setValue("ticker", instrument.symbol);
+                    setSearchQuery(instrument.symbol);
+                  }}
+                />
+              )}
+            </div>
+            {form.formState.errors.ticker && (
+              <p className="text-sm font-medium text-destructive">
+                {form.formState.errors.ticker.message}
+              </p>
+            )}
+          </div>
           <div>
             <Label htmlFor="quantity">Quantity</Label>
-            <Input
-              id="quantity"
-              type="number"
-              step="0.00000001"
-              {...form.register("quantity", { valueAsNumber: true })}
+            <Controller
+              name="quantity"
+              control={form.control}
+              rules={{
+                validate: validateSellQuantity
+              }}
+              render={({ field, fieldState }) => (
+                <div>
+                  <Input
+                    type="number"
+                    min="1"
+                    step="any"
+                    value={field.value ?? ""}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      field.onChange(value);
+                      // Always trigger validation on change
+                      form.trigger("quantity");
+                    }}
+                    onBlur={() => {
+                      form.trigger("quantity");
+                    }}
+                  />
+                  {/* {fieldState.error && (
+                    <p className="text-sm text-destructive mt-1">
+                      {fieldState.error.message}
+                    </p>
+                  )} */}
+                </div>
+              )}
             />
             {form.formState.errors.quantity && (
               <p className="text-sm text-destructive">
                 {form.formState.errors.quantity.message}
               </p>
+            )}
+            {watchTransactionType === "SELL" && selectedHolding && (
+              <div className="text-xs text-muted-foreground mt-1">
+                Available: {selectedHolding.quantity.toLocaleString()}
+              </div>
             )}
           </div>
           <div>
@@ -292,9 +474,15 @@ export function TransactionForm({
         >
           Cancel
         </Button>
-        <Button type="submit" disabled={isPending}>
+        <Button 
+          type="submit" 
+          className="h-10" 
+          disabled={isPending}
+          variant={transactionType === 'SELL' ? 'destructive' : 'default'}
+          size="sm"
+        >
           {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {form.watch("transaction_type")} {form.watch("ticker") || "Stock"}
+          {transactionType === 'SELL' ? 'Sell' : 'Buy'} Stock
         </Button>
       </div>
     </form>

@@ -4,13 +4,16 @@ import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from 
 import { Plus } from 'lucide-react';
 import { TransactionForm } from './TransactionForm';
 
+import { PortfolioHolding } from '@/api/portfolio/portfolio';
+
 interface TransactionDrawerProps {
   portfolioId: string;
   onTransactionAdded?: () => void;
   children?: ReactNode;
+  holdings?: PortfolioHolding[];
 }
 
-export function TransactionDrawer({ portfolioId, onTransactionAdded, children }: TransactionDrawerProps) {
+export function TransactionDrawer({ portfolioId, onTransactionAdded, children, holdings = [] }: TransactionDrawerProps) {
   const [open, setOpen] = useState(false);
 
   const handleSuccess = () => {
@@ -38,6 +41,7 @@ export function TransactionDrawer({ portfolioId, onTransactionAdded, children }:
               portfolioId={portfolioId} 
               onSuccess={handleSuccess}
               onCancel={() => setOpen(false)}
+              portfolioHoldings={holdings}
             />
           </div>
         </div>

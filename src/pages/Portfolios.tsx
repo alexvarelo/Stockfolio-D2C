@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Card,
   CardContent,
@@ -75,17 +76,55 @@ const Portfolios = () => {
     );
   }
 
+  // Animation variants
+  const container: Record<string, any> = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
+  };
+
+  const item: Record<string, any> = {
+    hidden: { opacity: 0, y: 20 },
+    show: { 
+      opacity: 1, 
+      y: 0,
+      transition: {
+        type: "spring" as const,
+        stiffness: 100,
+        damping: 12
+      }
+    }
+  };
+
   return (
-    <div className="container py-8">
-      <div className="flex flex-col gap-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Portfolios</h1>
-            <p className="text-muted-foreground">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="px-4 py-6 sm:px-6 lg:px-8 max-w-7xl mx-auto"
+    >
+      <motion.div 
+        className="flex flex-col gap-6 sm:gap-8"
+        variants={container}
+        initial="hidden"
+        animate="show"
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Portfolios</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
               Manage and track your investment portfolios
             </p>
           </div>
-          <Button onClick={() => setShowCreateWizard(true)}>
+          <Button 
+            onClick={() => setShowCreateWizard(true)}
+            className="w-full sm:w-auto"
+          >
             <Plus className="mr-2 h-4 w-4" />
             New Portfolio
           </Button>
@@ -96,20 +135,20 @@ const Portfolios = () => {
           className="w-full"
           onValueChange={setActiveTab}
         >
-          <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="my-portfolios">
+          <TabsList className="grid w-full max-w-md grid-cols-2 mx-auto sm:mx-0">
+            <TabsTrigger value="my-portfolios" className="text-xs sm:text-sm">
               <FolderOpen className="mr-2 h-4 w-4" />
               My Portfolios
             </TabsTrigger>
-            <TabsTrigger value="following">
-              <Heart className="mr-2 h-4 w-4" />
+            <TabsTrigger value="following" className="text-xs sm:text-sm">
+              <Heart className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
               Following
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="my-portfolios" className="mt-6">
             {isLoading ? (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {[1, 2, 3].map((i) => (
                   <Skeleton key={i} className="h-64 w-full rounded-lg" />
                 ))}
@@ -132,22 +171,26 @@ const Portfolios = () => {
                 </CardHeader>
               </Card>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <motion.div 
+                className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                variants={container}
+              >
                 {portfolios?.map((portfolio) => (
-                  <PortfolioCard
-                    key={portfolio.id}
-                    {...portfolio}
-                    showOwner={false}
-                    isOwnPortfolio={true}
-                  />
+                  <motion.div key={portfolio.id} variants={item}>
+                    <PortfolioCard
+                      {...portfolio}
+                      showOwner={false}
+                      isOwnPortfolio={true}
+                    />
+                  </motion.div>
                 ))}
-              </div>
+              </motion.div>
             )}
           </TabsContent>
 
           <TabsContent value="following" className="mt-6">
             {isLoadingFollowed ? (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {[1, 2, 3].map((i) => (
                   <Skeleton key={i} className="h-64 w-full rounded-lg" />
                 ))}
@@ -185,7 +228,7 @@ const Portfolios = () => {
             )}
           </TabsContent>
         </Tabs>
-      </div>
+      </motion.div>
 
       <FormProvider {...methods}>
         <PortfolioWizard
@@ -193,7 +236,7 @@ const Portfolios = () => {
           onOpenChange={setShowCreateWizard}
         />
       </FormProvider>
-    </div>
+    </motion.div>
   );
 };
 

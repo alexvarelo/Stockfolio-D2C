@@ -285,7 +285,7 @@ export const UserProfile = () => {
           </div>
 
           {/* Right Section - Stats */}
-          <div className="md:pl-8 border-l border-border/50 w-full md:w-1/2">
+          <div className="md:pl-8 w-full md:w-1/2">
             <motion.div 
               variants={item}
               className="flex justify-around md:justify-start md:gap-12 h-full items-center"
