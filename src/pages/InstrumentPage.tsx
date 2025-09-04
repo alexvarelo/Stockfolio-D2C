@@ -14,6 +14,7 @@ import {
   ExternalLink,
   BarChart2,
   MessageSquare,
+  Calculator,
 } from "lucide-react";
 import { useGetStockInfoApiV1StockTickerGet } from "@/api/stock/stock";
 import type { StockInfo, CompanyInfo } from "@/api/financialDataApi.schemas";
@@ -21,6 +22,7 @@ import { PriceChart } from "@/components/charts/PriceChart";
 import { NewsSection } from "@/components/news/NewsSection";
 import { InstrumentPosts } from "@/components/instruments/InstrumentPosts";
 import { InstrumentPostsCarousel } from "@/components/instruments/InstrumentPostsCarousel";
+import { InvestmentSimulator } from "@/components/instruments/InvestmentSimulator";
 
 // Formatter components
 import {
@@ -187,10 +189,14 @@ export function InstrumentPage() {
       {ticker && <InstrumentPostsCarousel ticker={ticker} />}
       {/* Tabs for Main Content */}
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 max-w-xs mb-6">
+        <TabsList className="grid w-full grid-cols-3 max-w-md mb-6">
           <TabsTrigger value="overview" className="flex items-center gap-2">
             <BarChart2 className="h-4 w-4" />
             <span>Overview</span>
+          </TabsTrigger>
+          <TabsTrigger value="simulation" className="flex items-center gap-2">
+            <Calculator className="h-4 w-4" />
+            <span>Simulation</span>
           </TabsTrigger>
           <TabsTrigger value="discussion" className="flex items-center gap-2">
             <MessageSquare className="h-4 w-4" />
@@ -375,6 +381,20 @@ export function InstrumentPage() {
               />
             </div>
           </div>
+        </TabsContent>
+
+        <TabsContent value="simulation" className="mt-0">
+          <Card>
+            <CardContent className="pt-6">
+              {ticker && (
+                <InvestmentSimulator 
+                  ticker={ticker} 
+                  currentPrice={priceData?.current_price || 0}
+                  currency={companyInfo?.currency || 'USD'}
+                />
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="discussion" className="mt-0">
