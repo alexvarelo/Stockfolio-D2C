@@ -26,7 +26,8 @@ interface UseInfinitePostsOptions {
   portfolioId?: string;
   postType?: PostType;
   userId?: string;
-  authorId?:string;
+  authorId?: string;
+  tickerId?: string;
 }
 
 interface PageData {
@@ -47,6 +48,7 @@ const fetchPosts = async ({
   portfolioId?: string;
   postType?: PostType;
   userId?: string;
+  tickerId?: string;
   authorId?: string;
 }): Promise<PageData> => {
   const offset = (pageParam - 1) * pageSize;
@@ -61,6 +63,7 @@ const fetchPosts = async ({
     p_post_type: restOptions.postType || null,
     p_user_id: restOptions.userId || null,
     p_author_id: restOptions.authorId || null,
+    p_ticker: restOptions.tickerId || null,
   });
 
   if (error) {

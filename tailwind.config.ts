@@ -115,12 +115,22 @@ export default {
 					to: {
 						height: '0'
 					}
-				}
+				},
+				marquee: {
+					'0%': { transform: 'translateX(0)' },
+					'100%': { transform: 'translateX(calc(-100% - var(--gap)))' },
+				},
+				'marquee-vertical': {
+					'0%': { transform: 'translateY(0)' },
+					'100%': { transform: 'translateY(calc(-100% - var(--gap)))' },
+				},
 			},
 			animation: {
+				marquee: 'marquee var(--duration, 40s) linear infinite',
+				'marquee-vertical': 'marquee-vertical var(--duration, 40s) linear infinite',
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
-			}
+				'accordion-up': 'accordion-up 0.2s ease-out',
+			},
 		}
 	},
 	plugins: [require("tailwindcss-animate")],

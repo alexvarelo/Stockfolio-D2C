@@ -7,11 +7,20 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { ArrowUp, ArrowDown, ExternalLink } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  ArrowUp,
+  ArrowDown,
+  ExternalLink,
+  BarChart2,
+  MessageSquare,
+} from "lucide-react";
 import { useGetStockInfoApiV1StockTickerGet } from "@/api/stock/stock";
 import type { StockInfo, CompanyInfo } from "@/api/financialDataApi.schemas";
 import { PriceChart } from "@/components/charts/PriceChart";
 import { NewsSection } from "@/components/news/NewsSection";
+import { InstrumentPosts } from "@/components/instruments/InstrumentPosts";
+import { InstrumentPostsCarousel } from "@/components/instruments/InstrumentPostsCarousel";
 
 // Formatter components
 import {
@@ -174,181 +183,259 @@ export function InstrumentPage() {
         />
       </div>
 
-      {/* Main Content Grid */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Left Column - Financial Highlights and Key Executives */}
-        <div className="space-y-6 lg:col-span-2">
-          {/* Company Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Company Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 gap-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground">
-                      Industry
-                    </h3>
-                    <p>{additionalData.industry || "N/A"}</p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground">
-                      Sector
-                    </h3>
-                    <p>{additionalData.sector || "N/A"}</p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground">
-                      Employees
-                    </h3>
-                    <p>
-                      {additionalData.fullTimeEmployees?.toLocaleString() ||
-                        "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-medium text-muted-foreground">
-                      Headquarters
-                    </h3>
-                    <p>
-                      {[additionalData.city, additionalData.country]
-                        .filter(Boolean)
-                        .join(", ") || "N/A"}
-                    </p>
-                  </div>
-                </div>
+      {/* Posts Carousel */}
+      {ticker && <InstrumentPostsCarousel ticker={ticker} />}
+      {/* Tabs for Main Content */}
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="grid w-full grid-cols-2 max-w-xs mb-6">
+          <TabsTrigger value="overview" className="flex items-center gap-2">
+            <BarChart2 className="h-4 w-4" />
+            <span>Overview</span>
+          </TabsTrigger>
+          <TabsTrigger value="discussion" className="flex items-center gap-2">
+            <MessageSquare className="h-4 w-4" />
+            <span>Community</span>
+          </TabsTrigger>
+        </TabsList>
 
-                {additionalData.longBusinessSummary && (
-                  <div className="pt-4 border-t">
-                    <h3 className="font-medium mb-2">About</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {additionalData.longBusinessSummary}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Financial Highlights */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Financial Highlights</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {renderInfoCard(
-                  "Market Cap",
-                  <MoneyDisplay
-                    value={companyInfo?.market_cap}
-                    currency={companyInfo?.currency}
-                  />
-                )}
-                {renderInfoCard(
-                  "P/E (TTM)",
-                  <FormattedNumber value={companyInfo?.pe_ratio} />
-                )}
-                {renderInfoCard(
-                  "EPS (TTM)",
-                  <FormattedNumber value={companyInfo?.eps} />
-                )}
-                {renderInfoCard(
-                  "Dividend Yield",
-                  <PercentageDisplay value={companyInfo?.dividend_yield} />
-                )}
-                {renderInfoCard(
-                  "52-Week Range",
-                  additionalData?.fiftyTwoWeekLow !== undefined &&
-                    additionalData?.fiftyTwoWeekHigh !== undefined ? (
-                    <span>
-                      <MoneyDisplay
-                        value={additionalData.fiftyTwoWeekLow}
-                        currency={companyInfo?.currency}
-                      />
-                      {" - "}
-                      <MoneyDisplay
-                        value={additionalData.fiftyTwoWeekHigh}
-                        currency={companyInfo?.currency}
-                      />
-                    </span>
-                  ) : (
-                    "N/A"
-                  )
-                )}
-                {additionalData?.beta !== undefined &&
-                  renderInfoCard(
-                    "Beta",
-                    <FormattedNumber value={additionalData.beta} />
-                  )}
-                {additionalData?.totalRevenue !== undefined &&
-                  renderInfoCard(
-                    "Revenue (TTM)",
-                    <MoneyDisplay
-                      value={additionalData.totalRevenue}
-                      currency={companyInfo?.currency}
-                    />
-                  )}
-                {additionalData?.ebitda !== undefined &&
-                  renderInfoCard(
-                    "EBITDA",
-                    <MoneyDisplay
-                      value={additionalData.ebitda}
-                      currency={companyInfo?.currency}
-                    />
-                  )}
-                {additionalData?.profitMargins !== undefined &&
-                  renderInfoCard(
-                    "Profit Margin",
-                    <PercentageDisplay value={additionalData.profitMargins} />
-                  )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Key Executives */}
-          {additionalData.companyOfficers?.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Key Executives</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {additionalData.companyOfficers.map(
-                    (officer: any, index: number) => (
-                      <div key={index} className="p-4 border rounded-lg">
-                        <h4 className="font-medium">{officer.name}</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {officer.title}
-                        </p>
-                        {officer.totalPay && (
-                          <p className="text-sm mt-1">
-                            Total Pay:
-                            <MoneyDisplay
-                              value={officer.totalPay}
-                              currency={companyInfo?.currency}
-                            />
-                          </p>
-                        )}
+        <TabsContent value="overview">
+          <div className="grid gap-6 lg:grid-cols-3">
+            {/* Left Column - Financial Highlights and Key Executives */}
+            <div className="space-y-6 lg:col-span-2">
+              {/* Company Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Company Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <h3 className="text-sm font-medium text-muted-foreground">
+                          Industry
+                        </h3>
+                        <p>{additionalData.industry || "N/A"}</p>
                       </div>
-                    )
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+                      <div>
+                        <h3 className="text-sm font-medium text-muted-foreground">
+                          Sector
+                        </h3>
+                        <p>{additionalData.sector || "N/A"}</p>
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-medium text-muted-foreground">
+                          Employees
+                        </h3>
+                        <p>
+                          {additionalData.fullTimeEmployees?.toLocaleString() ||
+                            "N/A"}
+                        </p>
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-medium text-muted-foreground">
+                          Headquarters
+                        </h3>
+                        <p>
+                          {[additionalData.city, additionalData.country]
+                            .filter(Boolean)
+                            .join(", ") || "N/A"}
+                        </p>
+                      </div>
+                    </div>
 
-        {/* Right Column - News Section */}
-        <div className="lg:col-span-1">
-          <NewsSection 
-            news={stockInfo.news} 
-            ticker={ticker}
-            companyName={companyInfo?.name}
-            isLoading={isLoading}
-          />
-        </div>
-      </div>
+                    {additionalData.longBusinessSummary && (
+                      <div className="pt-4 border-t">
+                        <h3 className="font-medium mb-2">About</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {additionalData.longBusinessSummary}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Financial Highlights */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Financial Highlights</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {renderInfoCard(
+                      "Market Cap",
+                      <MoneyDisplay
+                        value={companyInfo?.market_cap}
+                        currency={companyInfo?.currency}
+                      />
+                    )}
+                    {renderInfoCard(
+                      "P/E (TTM)",
+                      <FormattedNumber value={companyInfo?.pe_ratio} />
+                    )}
+                    {renderInfoCard(
+                      "EPS (TTM)",
+                      <FormattedNumber value={companyInfo?.eps} />
+                    )}
+                    {renderInfoCard(
+                      "Dividend Yield",
+                      <PercentageDisplay value={companyInfo?.dividend_yield} />
+                    )}
+                    {renderInfoCard(
+                      "52-Week Range",
+                      additionalData?.fiftyTwoWeekLow !== undefined &&
+                        additionalData?.fiftyTwoWeekHigh !== undefined ? (
+                        <span>
+                          <MoneyDisplay
+                            value={additionalData.fiftyTwoWeekLow}
+                            currency={companyInfo?.currency}
+                          />
+                          {" - "}
+                          <MoneyDisplay
+                            value={additionalData.fiftyTwoWeekHigh}
+                            currency={companyInfo?.currency}
+                          />
+                        </span>
+                      ) : (
+                        "N/A"
+                      )
+                    )}
+                    {additionalData?.beta !== undefined &&
+                      renderInfoCard(
+                        "Beta",
+                        <FormattedNumber value={additionalData.beta} />
+                      )}
+                    {additionalData?.totalRevenue !== undefined &&
+                      renderInfoCard(
+                        "Revenue (TTM)",
+                        <MoneyDisplay
+                          value={additionalData.totalRevenue}
+                          currency={companyInfo?.currency}
+                        />
+                      )}
+                    {additionalData?.ebitda !== undefined &&
+                      renderInfoCard(
+                        "EBITDA",
+                        <MoneyDisplay
+                          value={additionalData.ebitda}
+                          currency={companyInfo?.currency}
+                        />
+                      )}
+                    {additionalData?.profitMargins !== undefined &&
+                      renderInfoCard(
+                        "Profit Margin",
+                        <PercentageDisplay
+                          value={additionalData.profitMargins}
+                        />
+                      )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Key Executives */}
+              {additionalData.companyOfficers?.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Key Executives</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {additionalData.companyOfficers.map(
+                        (officer: any, index: number) => (
+                          <div key={index} className="p-4 border rounded-lg">
+                            <h4 className="font-medium">{officer.name}</h4>
+                            <p className="text-sm text-muted-foreground">
+                              {officer.title}
+                            </p>
+                            {officer.totalPay && (
+                              <p className="text-sm mt-1">
+                                Total Pay:
+                                <MoneyDisplay
+                                  value={officer.totalPay}
+                                  currency={companyInfo?.currency}
+                                />
+                              </p>
+                            )}
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+
+            {/* Right Column - News */}
+            <div className="space-y-6">
+              <NewsSection
+                news={stockInfo.news}
+                ticker={ticker}
+                companyName={companyInfo?.name}
+                isLoading={isLoading}
+              />
+
+              {/* Company Information Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Company Information</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground">
+                        Sector
+                      </h3>
+                      <p>{additionalData.sector || "N/A"}</p>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground">
+                        Industry
+                      </h3>
+                      <p>{additionalData.industry || "N/A"}</p>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground">
+                        Employees
+                      </h3>
+                      <p>
+                        {additionalData.fullTimeEmployees?.toLocaleString() ||
+                          "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-muted-foreground">
+                        Headquarters
+                      </h3>
+                      <p>
+                        {[additionalData.city, additionalData.country]
+                          .filter(Boolean)
+                          .join(", ") || "N/A"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {additionalData.longBusinessSummary && (
+                    <div className="pt-4 border-t">
+                      <h3 className="font-medium mb-2">About</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {additionalData.longBusinessSummary}
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="discussion" className="mt-0">
+          <Card>
+            <CardContent className="pt-6">
+              {ticker && <InstrumentPosts ticker={ticker} />}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

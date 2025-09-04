@@ -36,7 +36,7 @@ import {
 } from "lucide-react";
 import { useNeedsOnboarding } from "@/lib/onboarding";
 import { UserOnboardingWizard } from "@/components/onboarding/UserOnboardingWizard";
-import { PostList } from "@/components/social/PostList";
+import { DashboardPosts } from "@/components/dashboard/DashboardPosts";
 import { CreatePost } from "@/components/social/CreatePost";
 import { useQueryClient } from "@tanstack/react-query";
 import { RecentActivity } from "@/components/portfolio/RecentActivity";
@@ -236,7 +236,7 @@ const Dashboard = () => {
                   />
                 </motion.div>
                 <motion.div variants={item}>
-                  <PostList />
+                  <DashboardPosts />
                 </motion.div>
               </motion.div>
 

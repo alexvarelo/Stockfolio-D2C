@@ -133,6 +133,10 @@
     /* Dark mode gradients */
     --gradient-hero: linear-gradient(135deg, hsl(214 84% 56%) 0%, hsl(214 84% 50%) 50%, hsl(215 25% 5%) 100%);
   }
+  .theme {
+    --animate-marquee: marquee var(--duration) infinite linear;
+    --animate-marquee-vertical: marquee-vertical var(--duration) linear infinite;
+  }
 }
 
 @layer base {
@@ -189,5 +193,24 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@theme inline {
+  @keyframes marquee {
+  from {
+    transform: translateX(0);
+    }
+  to {
+    transform: translateX(calc(-100% - var(--gap)));
+    }
+  }
+  @keyframes marquee-vertical {
+  from {
+    transform: translateY(0);
+    }
+  to {
+    transform: translateY(calc(-100% - var(--gap)));
+    }
   }
 }
