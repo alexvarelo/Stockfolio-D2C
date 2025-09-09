@@ -71,12 +71,18 @@ export const PostList = ({
           {posts.map((post) => (
             <PostCard key={post.id} post={post} />
           ))}
-          {isFetchingNextPage && (
+          {isFetchingNextPage ? (
             <div className="flex justify-center">
               <Skeleton className="h-32 w-full rounded-lg" />
             </div>
-          )}
-          <div ref={loadMoreRef} className="h-1" />
+          ) : hasNextPage ? (
+            <div 
+              ref={loadMoreRef}
+              className="h-10 w-full flex items-center justify-center"
+            >
+              <div className="h-px w-full bg-border" />
+            </div>
+          ) : null}
           {!hasNextPage && posts.length > 0 && (
             <div className="py-4 text-center text-sm text-muted-foreground">
               You've reached the end of the feed
