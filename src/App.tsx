@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AuthProvider, useAuth } from "@/lib/auth";
-import { AppSidebar } from "@/components/layout/AppSidebar";
 import Dashboard from "./pages/Dashboard";
 import Portfolios from "./pages/Portfolios";
 import { PortfolioDetail } from "./pages/PortfolioDetail";
@@ -14,10 +13,10 @@ import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import { Navbar } from "@/components/navigation/Navbar";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
-import { SearchButtonWithDialog } from "@/components/search/SearchButtonWithDialog";
 import Watchlists from "./pages/Watchlists";
 import WatchlistDetail from "./pages/WatchlistDetail";
 import { UserProfile } from "./pages/UserProfile";
+import { Analytics } from "@vercel/analytics/next"
 // CreateEditWatchlist component has been replaced with dialogs
 
 const queryClient = new QueryClient({
@@ -227,6 +226,7 @@ const App = () => (
       </SidebarProvider>
       </ThemeProvider>
     </AuthProvider>
+    <Analytics />
   </QueryClientProvider>
 );
 
