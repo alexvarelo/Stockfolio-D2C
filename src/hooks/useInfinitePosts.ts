@@ -28,6 +28,7 @@ interface UseInfinitePostsOptions {
   userId?: string;
   authorId?: string;
   tickerId?: string;
+  excludeUserId?: string; // User ID to exclude from results
 }
 
 interface PageData {
@@ -50,6 +51,7 @@ const fetchPosts = async ({
   userId?: string;
   tickerId?: string;
   authorId?: string;
+  excludeUserId?: string;
 }): Promise<PageData> => {
   const offset = (pageParam - 1) * pageSize;
   
@@ -64,6 +66,7 @@ const fetchPosts = async ({
     p_user_id: restOptions.userId || null,
     p_author_id: restOptions.authorId || null,
     p_ticker: restOptions.tickerId || null,
+    p_exclude_user: restOptions.excludeUserId || null,
   });
 
   if (error) {
@@ -111,10 +114,11 @@ export const useInfinitePosts = (options: UseInfinitePostsOptions = { pageSize: 
       ...restOptions 
     }),
     getNextPageParam: (lastPage, allPages) => {
-      const totalItems = lastPage.count || 0;
-      const loadedItems = allPages.reduce((acc, page) => acc + (page.data?.length || 0), 0);
-      
-      if (loadedItems >= totalItems) return undefined;
+      // If the last page has fewer items than the page size, we've reached the end
+      if (lastPage.data.length < (options.pageSize || 10)) {
+        return undefined;
+      }
+      // Otherwise, return the next page number
       return allPages.length + 1;
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
