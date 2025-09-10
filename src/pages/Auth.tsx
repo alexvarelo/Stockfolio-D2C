@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { motion } from 'framer-motion';
+import stockyLogo from '@/../public/stocky.png';
 
 const Auth = () => {
   const { user, loading, signIn, signUp } = useAuth();
@@ -68,7 +69,7 @@ const Auth = () => {
         >
           <div className="flex flex-col items-center">
             <img 
-              src="/stocky.png" 
+              src={stockyLogo} 
               alt="Stocky Logo" 
               className="h-20 w-20 lg:h-30 lg:w-30 mb-6 rounded-xl"
             />
