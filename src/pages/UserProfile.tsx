@@ -226,7 +226,7 @@ export const UserProfile = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="max-w-4xl mx-auto px-4 py-6 sm:px-6 lg:px-8"
+      className="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8 w-full"
     >
       <motion.div 
         variants={container}
@@ -240,9 +240,9 @@ export const UserProfile = () => {
           <div className="flex flex-col md:flex-row items-start gap-6 w-full md:w-1/2">
             {/* Avatar */}
             <motion.div variants={item} className="flex-shrink-0">
-              <Avatar className="h-32 w-32 border-2 border-border">
+              <Avatar className="h-24 w-24 sm:h-32 sm:w-32 border-2 border-border">
                 <AvatarImage src={profile.avatar_url} alt={profile.username} />
-                <AvatarFallback className="text-4xl">
+                <AvatarFallback className="text-2xl sm:text-4xl">
                   {profile.username?.charAt(0).toUpperCase() || 'U'}
                 </AvatarFallback>
               </Avatar>

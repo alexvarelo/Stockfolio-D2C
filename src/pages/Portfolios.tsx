@@ -102,11 +102,11 @@ const Portfolios = () => {
   };
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="px-4 py-6 sm:px-6 lg:px-8 max-w-7xl mx-auto"
+      className="py-6 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full"
     >
       <motion.div 
         className="flex flex-col gap-6 sm:gap-8"

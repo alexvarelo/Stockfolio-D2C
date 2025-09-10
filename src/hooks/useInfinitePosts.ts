@@ -90,7 +90,7 @@ const fetchPosts = async ({
     },
     likes_count: rawPost.like_count,
     comments_count: rawPost.comments_count,
-    has_liked: rawPost.is_liked,
+    has_liked: rawPost.is_liked_by_me,
     ticker: rawPost.ticker
   }));
 
