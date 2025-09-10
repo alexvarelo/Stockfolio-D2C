@@ -88,7 +88,7 @@ const fetchPosts = async ({
       name: rawPost.username,
       avatar_url: rawPost.avatar_url || undefined,
     },
-    likes_count: rawPost.likes_count,
+    likes_count: rawPost.like_count,
     comments_count: rawPost.comments_count,
     has_liked: rawPost.is_liked,
     ticker: rawPost.ticker
