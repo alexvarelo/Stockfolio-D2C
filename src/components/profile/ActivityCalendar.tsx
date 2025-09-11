@@ -14,17 +14,28 @@ import {
 } from 'date-fns';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { 
   ChevronLeft, 
   ChevronRight, 
   FileText, 
   PlusCircle, 
   ArrowUpDown,
-  ListPlus
+  ListPlus,
+  Loader2,
+  Calendar,
+  ExternalLink,
+  X
 } from 'lucide-react';
+import { useActivityEvents, type EventType } from '@/hooks/useActivityEvents';
 
-// Define event types
-export type EventType = 'post' | 'portfolio' | 'transaction' | 'watchlist';
+// Re-export types from useActivityEvents
+export type { EventType } from '@/hooks/useActivityEvents';
 
 export interface ActivityEvent {
   id: string;
@@ -35,41 +46,6 @@ export interface ActivityEvent {
   link?: string;
 }
 
-// Mock data - in a real app, this would come from an API
-const mockEvents: ActivityEvent[] = [
-  {
-    id: '1',
-    title: 'Created a new post',
-    type: 'post',
-    date: new Date(2025, 8, 10),
-    description: 'Shared thoughts on market trends',
-    link: '/posts/1'
-  },
-  {
-    id: '2',
-    title: 'Added AAPL to watchlist',
-    type: 'watchlist',
-    date: new Date(2025, 8, 12),
-    description: 'Added to Technology Watchlist',
-    link: '/watchlists/tech'
-  },
-  {
-    id: '3',
-    title: 'Created Growth Portfolio',
-    type: 'portfolio',
-    date: new Date(2025, 8, 15),
-    description: 'Initial investment: $10,000',
-    link: '/portfolios/growth'
-  },
-  {
-    id: '4',
-    title: 'Bought 10 shares of MSFT',
-    type: 'transaction',
-    date: new Date(2025, 8, 16),
-    description: 'Price: $320.45 per share',
-    link: '/transactions/4'
-  },
-];
 
 const eventTypeStyles = {
   post: { 
@@ -112,8 +88,15 @@ const getDaysInMonth = (date: Date) => {
   return days;
 };
 
-export const ActivityCalendar: React.FC = () => {
+interface ActivityCalendarProps {
+  userId: string;
+}
+
+export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({ userId }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedEvent, setSelectedEvent] = useState<ActivityEvent | null>(null);
+  const { data: events = [], isLoading } = useActivityEvents(userId);
+  
   const days = useMemo(() => getDaysInMonth(currentDate), [currentDate]);
   
   const weeks = useMemo(() => {
@@ -127,17 +110,70 @@ export const ActivityCalendar: React.FC = () => {
   const isCurrentMonth = (day: Date) => isSameMonth(day, currentDate);
   
   const getEventsForDay = (day: Date) => {
-    return mockEvents.filter(event => isSameDay(event.date, day));
+    return events.filter(event => isSameDay(event.date, day));
   };
 
-  const handleEventClick = (event: ActivityEvent) => {
-    if (event.link) {
-      window.location.href = event.link;
-    }
+  const handleEventClick = (event: ActivityEvent, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedEvent(event);
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full space-y-4">
+      <Dialog open={!!selectedEvent} onOpenChange={(open) => !open && setSelectedEvent(null)}>
+        {selectedEvent && (
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <div className="flex items-center gap-2">
+                <div 
+                  className="p-2 rounded-lg"
+                  style={{
+                    backgroundColor: `${eventTypeStyles[selectedEvent.type].backgroundColor}15`,
+                    color: eventTypeStyles[selectedEvent.type].borderColor,
+                  }}
+                >
+                  {React.createElement(eventTypeStyles[selectedEvent.type].icon, { className: 'h-5 w-5' })}
+                </div>
+                <DialogTitle className="text-lg">{selectedEvent.title}</DialogTitle>
+              </div>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Calendar className="h-4 w-4" />
+                <span>{format(selectedEvent.date, 'PPP')}</span>
+              </div>
+              
+              {selectedEvent.description && (
+                <div className="text-sm">
+                  <p className="font-medium mb-1">Details:</p>
+                  <p className="text-muted-foreground">{selectedEvent.description}</p>
+                </div>
+              )}
+              
+              {selectedEvent.link && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full mt-4"
+                  onClick={() => window.open(selectedEvent.link, '_blank')}
+                >
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  View Details
+                </Button>
+              )}
+            </div>
+          </DialogContent>
+        )}
+      </Dialog>
+      
       <CardTitle>Activity Calendar</CardTitle>
       <Card>
         <CardHeader className="pb-2">
@@ -212,24 +248,23 @@ export const ActivityCalendar: React.FC = () => {
                         )}
                       </div>
                       <div className="mt-1 space-y-1 max-h-20 overflow-y-auto">
-                        {dayEvents.map(event => (
-                          <div 
-                            key={event.id}
-                            className="text-xs p-1 rounded truncate flex items-center gap-1.5"
-                            style={{
-                              backgroundColor: eventTypeStyles[event.type].backgroundColor,
-                              borderLeft: `3px solid ${eventTypeStyles[event.type].borderColor}`,
-                              color: 'white',
-                            }}
-                            onClick={() => handleEventClick(event)}
-                          >
-                            {React.createElement(eventTypeStyles[event.type].icon, {
-                              className: 'h-3 w-3 flex-shrink-0',
-                              'aria-hidden': 'true'
-                            })}
-                            <span className="truncate">{event.title}</span>
-                          </div>
-                        ))}
+                        {dayEvents.map(event => {
+                          const Icon = eventTypeStyles[event.type].icon;
+                          return (
+                            <div 
+                              key={event.id}
+                              className="text-xs p-1.5 rounded-md truncate flex items-center gap-1.5 cursor-pointer hover:opacity-90 transition-opacity"
+                              style={{
+                                backgroundColor: `${eventTypeStyles[event.type].backgroundColor}15`,
+                                borderLeft: `3px solid ${eventTypeStyles[event.type].borderColor}`,
+                              }}
+                              onClick={(e) => handleEventClick(event, e)}
+                            >
+                              <Icon className="h-3 w-3 flex-shrink-0" />
+                              <span className="truncate">{event.title}</span>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   );
@@ -238,10 +273,10 @@ export const ActivityCalendar: React.FC = () => {
             ))}
           </div>
         </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+      </CardContent>
+    </Card>
+  </div>
+);
 };
 
 export default ActivityCalendar;

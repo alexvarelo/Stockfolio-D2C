@@ -392,7 +392,7 @@ export const UserProfile = () => {
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <ActivityCalendar />
+                    <ActivityCalendar userId={profile.id} />
                   </motion.div>
                 </TabsContent>
               )}
