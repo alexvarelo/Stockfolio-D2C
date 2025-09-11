@@ -154,7 +154,7 @@ export const PostCard = ({
 
   return (
     <div className={cn(
-      "w-full max-w-4xl mx-auto rounded-xl overflow-hidden transition-all duration-200",
+      "w-full max-w-6xl mx-auto rounded-xl overflow-hidden transition-all duration-200",
       "bg-card text-card-foreground shadow-sm border border-border",
       "hover:shadow-md hover:border-border/80",
       className

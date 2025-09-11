@@ -11,12 +11,16 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MessageSquare, Bookmark, Briefcase, Loader2, User, Calendar } from 'lucide-react';
+import { MessageSquare, Bookmark, Briefcase, Loader2, User } from 'lucide-react';
+import { ActivityCalendar } from '@/components/profile/ActivityCalendar';
+import { Calendar as CalendarIcon } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/use-toast';
 import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
+import dynamic from 'next/dynamic';
+
 
 interface UserProfile {
   id: string;
@@ -226,7 +230,7 @@ export const UserProfile = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8 w-full"
+      className="max-w-6xl mx-auto py-6 sm:px-6 lg:px-8 w-full"
     >
       <motion.div 
         variants={container}
@@ -322,7 +326,7 @@ export const UserProfile = () => {
           variants={item}
           className="flex items-center justify-center gap-1 text-sm text-muted-foreground/80"
         >
-          <Calendar className="h-4 w-4" />
+          <CalendarIcon className="h-4 w-4" />
           <span>Joined {format(new Date(profile.created_at), 'MMMM yyyy')}</span>
         </motion.div>
 
@@ -348,12 +352,21 @@ export const UserProfile = () => {
                 Portfolios
               </TabsTrigger>
               {isOwnProfile && (
-                <TabsTrigger 
-                  value="saved" 
-                  className="relative rounded-none border-b-2 border-transparent bg-transparent px-4 pb-4 pt-2 font-medium text-muted-foreground shadow-none transition-none data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
-                >
-                  Saved
-                </TabsTrigger>
+                <>
+                  <TabsTrigger 
+                    value="saved" 
+                    className="relative rounded-none border-b-2 border-transparent bg-transparent px-4 pb-4 pt-2 font-medium text-muted-foreground shadow-none transition-none data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
+                  >
+                    Saved
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="calendar" 
+                    className="relative rounded-none border-b-2 border-transparent bg-transparent px-4 pb-4 pt-2 font-medium text-muted-foreground shadow-none transition-none data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    Calendar
+                  </TabsTrigger>
+                </>
               )}
             </TabsList>
             
@@ -370,6 +383,20 @@ export const UserProfile = () => {
                 </motion.div>
               </TabsContent>
               
+              {isOwnProfile && (
+                <TabsContent value="calendar" className="mt-6">
+                  <motion.div
+                    key="calendar"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ActivityCalendar />
+                  </motion.div>
+                </TabsContent>
+              )}
+
               <TabsContent value="portfolios" className="mt-6">
                 <motion.div
                   key="portfolios"
@@ -381,26 +408,24 @@ export const UserProfile = () => {
                   <UserPortfoliosComponent userId={profile.id} />
                 </motion.div>
               </TabsContent>
-              
-              {isOwnProfile && (
-                <TabsContent value="saved" className="mt-6">
-                  <motion.div
-                    key="saved"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <div className="text-center py-8">
-                      <Bookmark className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-                      <h3 className="text-lg font-medium">Saved posts</h3>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Posts you save will appear here
-                      </p>
-                    </div>
-                  </motion.div>
-                </TabsContent>
-              )}
+
+              <TabsContent value="saved" className="mt-6">
+                <motion.div
+                  key="saved"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className="text-center py-8">
+                    <Bookmark className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
+                    <h3 className="text-lg font-medium">Saved posts</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Posts you save will appear here
+                    </p>
+                  </div>
+                </motion.div>
+              </TabsContent>
             </AnimatePresence>
           </Tabs>
         </motion.div>
@@ -424,13 +449,13 @@ const UserProfileSkeleton = () => (
         <Skeleton className="h-8 w-48 mx-auto" />
         <Skeleton className="h-6 w-32 mx-auto" />
         <Skeleton className="h-10 w-32 mx-auto" />
-      </div>
+            </div>
       
       <div className="flex justify-center gap-8 py-4">
         <Skeleton className="h-12 w-20" />
         <Skeleton className="h-12 w-20" />
         <Skeleton className="h-12 w-20" />
-      </div>
+        </div>
       
       <Skeleton className="h-20 w-full" />
       
@@ -441,106 +466,5 @@ const UserProfileSkeleton = () => (
   </motion.div>
 );
 
-const UserPortfolios = () => {
-  const { userId } = useParams<{ userId: string }>();
-  const { data: portfolios, isLoading, error } = useQuery({
-    queryKey: ['user-portfolios', userId],
-    queryFn: async () => {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      // Mock data for demonstration
-      return [
-        {
-          id: '1',
-          name: 'Tech Growth',
-          description: 'Focused on high-growth tech stocks',
-          value: 12500,
-          return: 24.5,
-          isPublic: true,
-        },
-        {
-          id: '2',
-          name: 'Dividend Income',
-          description: 'Stable dividend-paying stocks',
-          value: 8700,
-          return: 8.2,
-          isPublic: true,
-        },
-      ];
-    },
-    enabled: !!userId,
-  });
-
-  if (isLoading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {[1, 2, 3].map((i) => (
-          <Card key={i} className="h-48">
-            <CardContent className="p-4">
-              <Skeleton className="h-6 w-3/4 mb-2" />
-              <Skeleton className="h-4 w-1/2 mb-4" />
-              <Skeleton className="h-20 w-full" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center py-8">
-        <p className="text-destructive">Failed to load portfolios. Please try again.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {portfolios?.length ? (
-        portfolios.map((portfolio: any) => (
-          <Card key={portfolio.id} className="group hover:shadow-lg transition-shadow duration-300 overflow-hidden">
-            <CardHeader className="pb-3">
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle className="text-lg font-bold group-hover:text-primary transition-colors">
-                    {portfolio.name}
-                  </CardTitle>
-                  {portfolio.isPublic && (
-                    <Badge variant="outline" className="mt-1 text-xs">
-                      Public
-                    </Badge>
-                  )}
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium">
-                    ${portfolio.value.toLocaleString()}
-                  </p>
-                  <p className={`text-xs ${portfolio.return >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                    {portfolio.return >= 0 ? '↑' : '↓'} {Math.abs(portfolio.return)}%
-                  </p>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground line-clamp-2">
-                {portfolio.description}
-              </p>
-              <Button variant="outline" size="sm" className="mt-4 w-full">
-                View Portfolio
-              </Button>
-            </CardContent>
-          </Card>
-        ))
-      ) : (
-        <div className="col-span-full text-center py-8">
-          <Briefcase className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-medium">No portfolios yet</h3>
-          <p className="text-muted-foreground">When you create a portfolio, it will appear here</p>
-        </div>
-      )}
-    </div>
-  );
-};
 
 export default UserProfile;
