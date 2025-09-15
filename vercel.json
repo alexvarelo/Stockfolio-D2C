@@ -1,5 +1,15 @@
 {
   "version": 2,
+  "routes": [
+    {
+      "src": "/(.*)\\.(ico|png|jpg|jpeg|svg|webp|gif)",
+      "headers": {
+        "cache-control": "public, max-age=0, must-revalidate"
+      }
+    },
+    { "handle": "filesystem" },
+    { "src": "/.*", "dest": "/index.html" }
+  ],
   "builds": [
     {
       "src": "package.json",
@@ -7,16 +17,6 @@
       "config": {
         "distDir": "dist"
       }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/assets/(.*)",
-      "dest": "/assets/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
     }
   ]
 }
