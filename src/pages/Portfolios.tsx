@@ -179,6 +179,7 @@ const Portfolios = () => {
                   <motion.div key={portfolio.id} variants={item}>
                     <PortfolioCard
                       {...portfolio}
+                      user_id={user?.id}
                       showOwner={false}
                       isOwnPortfolio={true}
                     />
@@ -219,6 +220,7 @@ const Portfolios = () => {
                   <PortfolioCard
                     is_default={false}
                     key={portfolio.id}
+                    user_id={portfolio.user_id}
                     {...portfolio}
                     showOwner={true}
                     isFollowing={true}

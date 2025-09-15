@@ -47,7 +47,7 @@ export const Navbar = () => {
         <div className="flex items-center gap-2">
           {userProfile?.id ? (
             <button 
-              onClick={() => navigate(`/${userProfile.username || userProfile.id}`)}
+              onClick={() => navigate(`/user/${userProfile.id}`)}
               className="rounded-full hover:ring-2 hover:ring-ring hover:ring-offset-2 transition-all"
             >
               <Avatar className="h-8 w-8">

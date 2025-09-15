@@ -90,7 +90,12 @@ export const UserPortfolios = ({ userId }: { userId: string }) => {
       {portfolios
         .filter(portfolio => portfolio.is_public) // Only show public portfolios
         .map((portfolio) => (
-          <PortfolioCard key={portfolio.id} {...portfolio} isOwnPortfolio={userId === user?.id}/>
+          <PortfolioCard 
+            key={portfolio.id} 
+            {...portfolio} 
+            user_id={userId}
+            isOwnPortfolio={userId === user?.id}
+          />
         ))}
     </div>
   );

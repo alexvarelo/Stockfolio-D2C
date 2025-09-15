@@ -54,7 +54,7 @@ interface UserPostsProps extends TabContentProps {}
 interface UserPortfoliosProps extends TabContentProps {}
 
 export const UserProfile = () => {
-  const { username: urlUsername } = useParams<{ username: string }>();
+  const { userId: urlUserId } = useParams<{ userId: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
   
@@ -65,11 +65,11 @@ export const UserProfile = () => {
     isLoading, 
     error,
     refetch: refetchProfile
-  } = useUserProfile(urlUsername || '');
+  } = useUserProfile(urlUserId || '');
   
   const isOwnProfile = useMemo(() => {
-    return user?.id === profile?.id || user?.user_metadata?.username === urlUsername;
-  }, [user?.id, profile?.id, user?.user_metadata?.username, urlUsername]);
+    return user?.id === profile?.id || user?.id === urlUserId;
+  }, [user?.id, profile?.id, urlUserId]);
   
   // Follow/Unfollow functionality using custom hooks
   const followUser = useFollowUser();
@@ -297,21 +297,21 @@ export const UserProfile = () => {
               className="grid grid-cols-3 gap-4 text-center"
             >
               <button 
-                onClick={() => navigate(`/${profile.username}/followers`)}
+                onClick={() => navigate(`/user/${profile.id}/followers`)}
                 className="flex flex-col items-center group"
               >
                 <span className="text-2xl font-bold">{followers.length}</span>
                 <span className="text-sm text-muted-foreground">Followers</span>
               </button>
               <button 
-                onClick={() => navigate(`/${profile.username}/following`)}
+                onClick={() => navigate(`/user/${profile.id}/following`)}
                 className="flex flex-col items-center group"
               >
                 <span className="text-2xl font-bold">{following.length}</span>
                 <span className="text-sm text-muted-foreground">Following</span>
               </button>
               <button 
-                onClick={() => navigate(`/${profile.username}/posts`)}
+                onClick={() => navigate(`/user/${profile.id}/posts`)}
                 className="flex flex-col items-center group"
               >
                 <span className="text-2xl font-bold">{postCount}</span>

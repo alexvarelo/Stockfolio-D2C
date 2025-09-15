@@ -99,8 +99,8 @@ export const EditProfilePage = () => {
         description: 'Your profile has been updated successfully.',
       });
       
-      // Navigate back to profile
-      navigate(`/${data.username}`);
+      // Navigate back to profile using the new /user/:userId format
+      navigate(`/user/${user.id}`);
     } catch (error) {
       console.error('Error updating profile:', error);
       toast({

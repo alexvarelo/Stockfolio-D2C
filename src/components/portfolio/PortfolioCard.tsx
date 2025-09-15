@@ -35,6 +35,7 @@ export interface PortfolioCardProps {
   holdings?: Holding[];
   isFollowing?: boolean;
   showOwner?: boolean;
+  user_id?: string;
   user_name?: string;
   user_avatar_url?: string;
   className?: string;
@@ -51,6 +52,7 @@ export const PortfolioCard: React.FC<PortfolioCardProps> = ({
   holdings = [],
   isFollowing: initialIsFollowing = false,
   showOwner = false,
+  user_id,
   user_name,
   user_avatar_url,
   className = '',
@@ -152,18 +154,24 @@ export const PortfolioCard: React.FC<PortfolioCardProps> = ({
           <div className="flex justify-between items-start">
             <div>
               <CardTitle className="text-xl">{name}</CardTitle>
-              {showOwner && user_name && (
+              {showOwner && user_name && user_id && (
                 <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-                  {user_avatar_url ? (
-                    <img 
-                      src={user_avatar_url} 
-                      alt={user_name}
-                      className="h-4 w-4 rounded-full"
-                    />
-                  ) : (
-                    <User className="h-4 w-4" />
-                  )}
-                  <span>{user_name}</span>
+                  <Link 
+                    to={`/user/${user_id}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex items-center gap-2 hover:underline"
+                  >
+                    {user_avatar_url ? (
+                      <img 
+                        src={user_avatar_url} 
+                        alt={user_name}
+                        className="h-4 w-4 rounded-full"
+                      />
+                    ) : (
+                      <User className="h-4 w-4" />
+                    )}
+                    <span>{user_name}</span>
+                  </Link>
                 </div>
               )}
             </div>
