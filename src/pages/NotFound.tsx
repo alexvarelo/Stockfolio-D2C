@@ -1,17 +1,49 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect } from "react";
-import { Home, RotateCcw } from "lucide-react";
+import { Home, RotateCcw, User, Briefcase } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 
-const NotFound = () => {
+interface NotFoundProps {
+  type?: 'page' | 'user' | 'portfolio';
+  message?: string;
+}
+
+const NotFound = ({ type = 'page', message }: NotFoundProps) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const pathSegments = location.pathname.split('/').filter(Boolean);
+  const notFoundItem = pathSegments[pathSegments.length - 1] || 'page';
 
   useEffect(() => {
     console.error("404 Error: User attempted to access non-existent route:", location.pathname);
   }, [location.pathname]);
 
+  // Determine the type of 404 page to show
+  const getNotFoundContent = () => {
+    switch (type) {
+      case 'user':
+        return {
+          title: 'User Not Found',
+          description: message || `The user "${notFoundItem}" doesn't exist or has been removed.`,
+          icon: <User className="w-16 h-16 text-blue-500 mb-4" />
+        };
+      case 'portfolio':
+        return {
+          title: 'Portfolio Not Found',
+          description: message || `The portfolio "${notFoundItem}" doesn't exist or you don't have permission to view it.`,
+          icon: <Briefcase className="w-16 h-16 text-blue-500 mb-4" />
+        };
+      default:
+        return {
+          title: 'Page Not Found',
+          description: message || "The page you're looking for doesn't exist or has been moved.",
+          icon: null
+        };
+    }
+  };
+
+  const { title, description, icon } = getNotFoundContent();
   const handleGoHome = () => navigate("/");
   const handleGoBack = () => navigate(-1);
   const handleReload = () => window.location.reload();
@@ -24,27 +56,40 @@ const NotFound = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        {/* Logo with floating animation */}
-        <motion.div
-          className="mx-auto w-32 h-32 md:w-52 md:h-52"
-          animate={{ y: [0, -15, 0] }}
-          transition={{
-            duration: 4,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        >
-          <motion.div 
-            className="w-full h-fullshadow-lg flex items-center justify-center overflow-hidden"
-            whileHover={{ scale: 1.05 }}
-            transition={{ type: "spring", stiffness: 300 }}
+        {/* Not Found Illustration */}
+        <motion.div className="mb-4 ml-8">
+          <motion.div
+            className="mx-auto w-32 h-32 md:w-48 md:h-48 relative"
+            animate={{ y: [0, -10, 0] }}
+            transition={{
+              duration: 4,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
           >
-            <img 
-              src="/socky_empty_bg.png" 
-              alt="Stockfolio Logo"
-              className="w-full h-full object-contain p-4"
-              draggable={false}
-            />
+            <motion.div 
+              className="w-full h-full flex items-center justify-center bg-transparent"
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <img 
+                src="/stocky_not_found.png" 
+                alt="Not Found"
+                className="w-full h-full object-contain mix-blend-multiply"
+                style={{ backgroundColor: 'transparent' }}
+                draggable={false}
+              />
+            </motion.div>
+            {icon && (
+              <motion.div 
+                className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 bg-white p-3 rounded-full shadow-lg"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.5, type: 'spring' }}
+              >
+                {icon}
+              </motion.div>
+            )}
           </motion.div>
         </motion.div>
 
@@ -65,10 +110,10 @@ const NotFound = () => {
               404
             </motion.h1>
             <h2 className="text-2xl md:text-3xl font-semibold text-gray-800 mb-4">
-              Oops! Page not found
+              Oops! {title}
             </h2>
             <p className="text-gray-600 mb-8 max-w-md mx-auto">
-              The page you're looking for doesn't exist or has been moved.
+              {description}
             </p>
           </motion.div>
 
