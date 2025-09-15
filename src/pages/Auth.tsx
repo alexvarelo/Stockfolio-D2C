@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { motion } from 'framer-motion';
-import stockyLogo from '@/../public/stocky.png';
+import stockyLogo from '@/assets/stocky.png';
 
 const Auth = () => {
   const { user, loading, signIn, signUp } = useAuth();

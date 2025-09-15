@@ -1,25 +1,21 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 // Import components with aliases to avoid naming conflicts
 import { UserPosts as UserPostsComponent } from '@/components/profile/UserPosts';
 import { UserPortfolios as UserPortfoliosComponent } from '@/components/profile/UserPortfolios';
 import { useAuth } from '@/lib/auth';
 import { useUserProfile, useFollowUser, useUnfollowUser, useUserFollowers, useUserFollowing, useIsFollowing, useUserPostCount } from '@/api/user/user';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MessageSquare, Bookmark, Briefcase, Loader2, User } from 'lucide-react';
+import { Bookmark, Loader2 } from 'lucide-react';
 import { ActivityCalendar } from '@/components/profile/ActivityCalendar';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/components/ui/use-toast';
 import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
-import { Badge } from '@/components/ui/badge';
-import dynamic from 'next/dynamic';
+import { EditProfileButton } from '@/components/profile/EditProfileButton';
 
 
 interface UserProfile {
@@ -256,7 +252,11 @@ export const UserProfile = () => {
             <div className="space-y-1">
               <div className="flex items-center gap-4">
                 <h1 className="text-2xl font-semibold">{profile.username}</h1>
-                {!isOwnProfile && <FollowButton />}
+                {isOwnProfile ? (
+                  <EditProfileButton variant="ghost" size="sm" className="h-8 px-2" />
+                ) : (
+                  <FollowButton />
+                )}
               </div>
               
               {profile.full_name && (
@@ -292,30 +292,28 @@ export const UserProfile = () => {
           <div className="md:pl-8 w-full md:w-1/2">
             <motion.div 
               variants={item}
-              className="flex justify-around md:justify-start md:gap-12 h-full items-center"
+              className="grid grid-cols-3 gap-4 text-center"
             >
               <button 
-                onClick={() => navigate(`/user/${profile.id}/posts`)}
-                className="flex flex-col items-center group flex-1"
-              >
-                <span className="text-2xl font-bold">{postCount}</span>
-                <span className="text-sm text-muted-foreground">Posts</span>
-              </button>
-              
-              <button 
                 onClick={() => navigate(`/user/${profile.id}/followers`)}
-                className="flex flex-col items-center group flex-1"
+                className="flex flex-col items-center group"
               >
                 <span className="text-2xl font-bold">{followers.length}</span>
                 <span className="text-sm text-muted-foreground">Followers</span>
               </button>
-              
               <button 
                 onClick={() => navigate(`/user/${profile.id}/following`)}
-                className="flex flex-col items-center group flex-1"
+                className="flex flex-col items-center group"
               >
                 <span className="text-2xl font-bold">{following.length}</span>
                 <span className="text-sm text-muted-foreground">Following</span>
+              </button>
+              <button 
+                onClick={() => navigate(`/user/${profile.id}/posts`)}
+                className="flex flex-col items-center group"
+              >
+                <span className="text-2xl font-bold">{postCount}</span>
+                <span className="text-sm text-muted-foreground">Posts</span>
               </button>
             </motion.div>
           </div>
