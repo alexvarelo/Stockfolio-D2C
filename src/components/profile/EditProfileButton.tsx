@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Pencil } from 'lucide-react';
-import { UserOnboardingWizard } from '@/components/onboarding/UserOnboardingWizard';
 import { useAuth } from '@/lib/auth';
 
 interface EditProfileButtonProps {
@@ -15,36 +14,24 @@ export function EditProfileButton({
   variant = 'outline',
   size = 'default'
 }: EditProfileButtonProps) {
-  const { user, userProfile } = useAuth();
-  const [isOpen, setIsOpen] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
-  if (!user || !userProfile) return null;
+  if (!user) return null;
+
+  const handleEditClick = () => {
+    navigate('/accounts/edit');
+  };
 
   return (
-    <>
-      <Button 
-        variant={variant} 
-        size={size} 
-        className={className}
-        onClick={() => setIsOpen(true)}
-      >
-        <Pencil className="h-4 w-4 mr-2" />
-        Edit Profile
-      </Button>
-      
-      <UserOnboardingWizard
-        open={isOpen}
-        onComplete={() => setIsOpen(false)}
-        userId={user.id}
-        email={user.email || ''}
-        isEditMode={true}
-        initialData={{
-          username: userProfile.email?.split('@')[0] || '',
-          full_name: userProfile.full_name || '',
-          bio: '',
-          avatar_url: userProfile.avatar_url || ''
-        }}
-      />
-    </>
+    <Button 
+      variant={variant} 
+      size={size} 
+      className={className}
+      onClick={handleEditClick}
+    >
+      <Pencil className="h-4 w-4 mr-2" />
+      Edit Profile
+    </Button>
   );
 }

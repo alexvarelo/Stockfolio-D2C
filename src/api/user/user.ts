@@ -3,21 +3,31 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { UserProfile, UserFollow } from "@/types/user";
 
-// Get user profile by ID
-export const useUserProfile = (userId: string) => {
+// Get user profile by ID or username
+export const useUserProfile = (identifier: string) => {
   return useQuery({
-    queryKey: ['user-profile', userId],
+    queryKey: ['user-profile', identifier],
     queryFn: async () => {
-      if (!userId) {
-        throw new Error('User ID is required');
+      if (!identifier) {
+        throw new Error('User identifier is required');
       }
 
-      console.log('Fetching user profile for ID:', userId);
-      const { data, error } = await supabase
+      console.log('Fetching user profile for identifier:', identifier);
+      
+      // Check if the identifier is a UUID (user ID)
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(identifier);
+      
+      let query = supabase
         .from('users')
-        .select('*')
-        .eq('id', userId)
-        .single();
+        .select('*');
+      
+      if (isUuid) {
+        query = query.eq('id', identifier);
+      } else {
+        query = query.ilike('username', identifier);
+      }
+      
+      const { data, error } = await query.single();
 
       if (error) {
         console.error('Error fetching user profile:', error);
@@ -25,7 +35,7 @@ export const useUserProfile = (userId: string) => {
       }
 
       if (!data) {
-        console.log('No user found with ID:', userId);
+        console.log('No user found with identifier:', identifier);
         return null;
       }
 
@@ -33,7 +43,7 @@ export const useUserProfile = (userId: string) => {
       console.log('User profile keys:', Object.keys(data));
       return data;
     },
-    enabled: !!userId,
+    enabled: !!identifier,
   });
 };
 
@@ -158,18 +168,39 @@ export const useIsFollowing = (followerId: string | undefined, followingId: stri
     queryFn: async () => {
       if (!followerId || !followingId) return false;
       
+      // If followingId is a username, we need to look up the user ID first
+      let targetUserId = followingId;
+      
+      // Check if followingId is a username (not a UUID)
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(followingId);
+      
+      if (!isUuid) {
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('id')
+          .ilike('username', followingId)
+          .single();
+          
+        if (userError || !userData) {
+          console.error('Error finding user:', userError);
+          return false;
+        }
+        
+        targetUserId = userData.id;
+      }
+      
       const { data, error } = await supabase
         .from("user_follows")
         .select("id")
         .eq("follower_id", followerId)
-        .eq("following_id", followingId)
+        .eq("following_id", targetUserId)
         .maybeSingle();
 
       if (error) {
         console.error("Error checking follow status:", error);
         return false;
       }
-      
+
       return !!data;
     },
     enabled: !!followerId && !!followingId,
@@ -177,20 +208,45 @@ export const useIsFollowing = (followerId: string | undefined, followingId: stri
 };
 
 // Get user's followers
-export const useUserFollowers = (userId: string) => {
-  return useQuery({
-    queryKey: ["user-followers", userId],
+export const useUserFollowers = (identifier: string) => {
+  return useQuery<BasicUserInfo[]>({
+    queryKey: ["user-followers", identifier],
     queryFn: async () => {
+      if (!identifier) return [];
+      
+      // Check if identifier is a username
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(identifier);
+      let userId = identifier;
+      
+      if (!isUuid) {
+        // Look up user ID by username
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('id')
+          .ilike('username', identifier)
+          .single();
+          
+        if (userError || !userData) {
+          console.error('Error finding user:', userError);
+          return [];
+        }
+        
+        userId = userData.id;
+      }
+      
       const { data, error } = await supabase
         .from("user_follows")
-        .select("follower:users!follower_id(*)")
+        .select("follower:profiles!user_follows_follower_id_fkey(id, username, full_name, avatar_url)")
         .eq("following_id", userId);
 
-      if (error) throw error;
-      // Map the database response to match UserProfile type
-     return data;
+      if (error) {
+        console.error("Error fetching followers:", error);
+        return [];
+      }
+
+      return data.map((f: any) => f.follower).filter(Boolean);
     },
-    enabled: !!userId,
+    enabled: !!identifier,
   });
 };
 
@@ -203,11 +259,31 @@ type BasicUserInfo = {
 };
 
 // Get who a user is following
-export const useUserFollowing = (userId: string) => {
+export const useUserFollowing = (identifier: string) => {
   return useQuery<BasicUserInfo[]>({
-    queryKey: ["user-following", userId],
+    queryKey: ["user-following", identifier],
     queryFn: async () => {
-      if (!userId) return [];
+      if (!identifier) return [];
+      
+      // Check if identifier is a username
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(identifier);
+      let userId = identifier;
+      
+      if (!isUuid) {
+        // Look up user ID by username
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('id')
+          .ilike('username', identifier)
+          .single();
+          
+        if (userError || !userData) {
+          console.error('Error finding user:', userError);
+          return [];
+        }
+        
+        userId = userData.id;
+      }
       
       // First get the list of followed user IDs
       const { data: follows, error } = await supabase
@@ -226,25 +302,49 @@ export const useUserFollowing = (userId: string) => {
       if (usersError) throw usersError;
       return users || [];
     },
-    enabled: !!userId,
+    enabled: !!identifier,
   });
 };
 
 // Get user's post count
-export const useUserPostCount = (userId: string | undefined) => {
+export const useUserPostCount = (identifier: string | undefined) => {
   return useQuery<number>({
-    queryKey: ["user-post-count", userId],
+    queryKey: ["user-post-count", identifier],
     queryFn: async () => {
-      if (!userId) return 0;
+      if (!identifier) return 0;
+      
+      // Check if identifier is a username
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(identifier);
+      let userId = identifier;
+      
+      if (!isUuid) {
+        // Look up user ID by username
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('id')
+          .ilike('username', identifier)
+          .single();
+          
+        if (userError || !userData) {
+          console.error('Error finding user:', userError);
+          return 0;
+        }
+        
+        userId = userData.id;
+      }
       
       const { count, error } = await supabase
         .from("posts")
-        .select('*', { count: 'exact', head: true })
+        .select("*", { count: "exact", head: true })
         .eq("user_id", userId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching post count:", error);
+        return 0;
+      }
+
       return count || 0;
     },
-    enabled: !!userId,
+    enabled: !!identifier,
   });
 };

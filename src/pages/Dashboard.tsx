@@ -33,6 +33,7 @@ import {
   Plus,
   ArrowUpRight,
   ArrowDownRight,
+  Clock,
 } from "lucide-react";
 import { useNeedsOnboarding } from "@/lib/onboarding";
 import { UserOnboardingWizard } from "@/components/onboarding/UserOnboardingWizard";
@@ -42,6 +43,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { RecentActivity } from "@/components/portfolio/RecentActivity";
 import { TopInvestments } from "@/components/portfolio/TopInvestments";
 import { useNavigate } from "react-router-dom";
+import { DashboardSkeleton, PortfolioOverviewSkeleton } from "@/components/dashboard/DashboardSkeleton";
 
 interface PortfolioSummary {
   id: string;
@@ -68,8 +70,9 @@ const Dashboard = () => {
   }, []);
   const { user } = useAuth();
 
-  const { needsOnboarding, loading } = useNeedsOnboarding(user?.id);
+  const { needsOnboarding, loading: onboardingLoading } = useNeedsOnboarding(user?.id);
   const [onboardingOpen, setOnboardingOpen] = useState(true);
+  const [activeTab, setActiveTab] = useState("feed");
   const queryClient = useQueryClient();
   const navigate = useNavigate();
 
@@ -175,32 +178,16 @@ const Dashboard = () => {
   } as const;
 
   if (isLoading) {
+    // Show loading state while checking onboarding status or loading portfolios
     return (
-      <motion.div 
-        className="space-y-8"
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
+        className="min-h-screen p-6"
       >
-        <motion.div 
-          className="animate-pulse"
-          variants={item}
-        >
-          <div className="h-8 bg-muted rounded w-1/4 mb-2"></div>
-          <div className="h-4 bg-muted rounded w-1/2"></div>
-        </motion.div>
-        <motion.div 
-          className="grid gap-4 md:grid-cols-2 lg:grid-cols-7"
-          variants={container}
-        >
-          <RecentActivity className="col-span-3" />
-        </motion.div>
-        <motion.div 
-          className="grid gap-4 md:grid-cols-2 lg:grid-cols-7"
-          variants={container}
-        >
-          <TopInvestments className="col-span-4" />
-        </motion.div>
+        {activeTab === 'feed' ? <DashboardSkeleton /> : <PortfolioOverviewSkeleton />}
       </motion.div>
     );
   }
@@ -211,8 +198,9 @@ const Dashboard = () => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
+      className="min-h-screen p-6"
     >
-      <Tabs defaultValue="feed" className="space-y-8">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
         <TabsList className="grid w-full grid-cols-2 max-w-md mb-8">
           <TabsTrigger value="feed">Social Feed</TabsTrigger>
           <TabsTrigger value="overview">Portfolio Overview</TabsTrigger>
@@ -284,107 +272,200 @@ const Dashboard = () => {
                   whileHover={cardHover}
                   whileTap={cardTap}
                 >
-                  <TopInvestments className="col-span-4" />
+                  <TopInvestments />
                 </motion.div>
               </motion.div>
             </div>
           </TabsContent>
 
-          {/* Portfolio Overview Tab */}
           <TabsContent value="overview" className="space-y-8">
-            {/* Header */}
-            <motion.div
-              className="flex justify-between items-start"
-              variants={item}
-              initial="hidden"
-              animate="show"
-            >
-              <div>
-                <h1 className="text-3xl font-bold tracking-tight">Portfolio Overview</h1>
-                <p className="text-muted-foreground">
-                  Track and manage your investments
-                </p>
-              </div>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Transaction
-              </Button>
-            </motion.div>
-
-            {/* Portfolio Cards */}
-            <motion.div
-              className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
-              variants={container}
-              initial="hidden"
-              animate="show"
-            >
-              {portfolios?.map((portfolio) => (
-                <motion.div key={portfolio.id} variants={item}>
-                  <Card className="h-full">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        {portfolio.name}
-                        {portfolio.is_default && (
-                          <Badge className="ml-2" variant="secondary">
-                            Default
-                          </Badge>
-                        )}
-                      </CardTitle>
-                      <DollarSign className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">
-                        ${portfolio.total_invested?.toLocaleString('en-US', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Total Invested
-                      </p>
-                      <div className="mt-4">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">Holdings</span>
-                          <span className="font-medium">
-                            {portfolio.total_holdings}
-                          </span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
-
-              {/* Add Portfolio Card */}
-              <motion.div variants={item}>
-                <Card className="h-full border-dashed hover:border-primary/50 transition-colors cursor-pointer">
-                  <CardContent className="flex flex-col items-center justify-center h-full p-6 text-center">
-                    <div className="rounded-full bg-muted p-3 mb-4">
-                      <Plus className="h-6 w-6" />
-                    </div>
-                    <h3 className="text-lg font-medium mb-1">Add Portfolio</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Create a new portfolio to organize your investments
+            {isLoading ? (
+              <PortfolioOverviewSkeleton />
+            ) : (
+              <>
+                {/* Header */}
+                <motion.div
+                  className="flex justify-between items-start"
+                  variants={item}
+                  initial="hidden"
+                  animate="show"
+                >
+                  <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Portfolio Overview</h1>
+                    <p className="text-muted-foreground">
+                      Track and manage your investments
                     </p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </motion.div>
+                  </div>
+                  <Button>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Transaction
+                  </Button>
+                </motion.div>
 
-            {/* Recent Activity */}
-            <motion.div variants={item}>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Recent Activity</CardTitle>
-                  <CardDescription>
-                    Your latest transactions across all portfolios
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <RecentActivity />
-                </CardContent>
-              </Card>
-            </motion.div>
+                {/* Stats Grid */}
+                <motion.div
+                  className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
+                  variants={container}
+                  initial="hidden"
+                  animate="show"
+                >
+                  {/* Total Value */}
+                  <motion.div variants={item}>
+                    <Card>
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">
+                          Total Value
+                        </CardTitle>
+                        <DollarSign className="h-4 w-4 text-muted-foreground" />
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">
+                          ${totalPortfolioValue?.toLocaleString('en-US', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Across all portfolios
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+
+                  {/* Total Holdings */}
+                  <motion.div variants={item}>
+                    <Card>
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">
+                          Total Holdings
+                        </CardTitle>
+                        <Briefcase className="h-4 w-4 text-muted-foreground" />
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">{totalHoldings}</div>
+                        <p className="text-xs text-muted-foreground">
+                          Unique assets
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+
+                  {/* Performance */}
+                  <motion.div variants={item}>
+                    <Card>
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">
+                          Performance
+                        </CardTitle>
+                        <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold flex items-center">
+                          <TrendingUp className="h-5 w-5 text-green-500 mr-1" />
+                          +12.5%
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Last 30 days
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+
+                  {/* Recent Activity */}
+                  <motion.div variants={item}>
+                    <Card>
+                      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">
+                          Recent Activity
+                        </CardTitle>
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">3</div>
+                        <p className="text-xs text-muted-foreground">
+                          Updates today
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                </motion.div>
+
+                {/* Portfolio List */}
+                <motion.div
+                  className="space-y-4"
+                  variants={container}
+                  initial="hidden"
+                  animate="show"
+                >
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h2 className="text-xl font-semibold">Your Portfolios</h2>
+                      <p className="text-sm text-muted-foreground">
+                        Manage your investment portfolios
+                      </p>
+                    </div>
+                    <Button>
+                      <Plus className="mr-2 h-4 w-4" />
+                      New Portfolio
+                    </Button>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {portfolios && portfolios.map((portfolio) => (
+                      <motion.div key={portfolio.id} variants={item}>
+                        <Card className="h-full">
+                          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">
+                              {portfolio.name}
+                              {portfolio.is_default && (
+                                <Badge className="ml-2" variant="secondary">
+                                  Default
+                                </Badge>
+                              )}
+                            </CardTitle>
+                            <DollarSign className="h-4 w-4 text-muted-foreground" />
+                          </CardHeader>
+                          <CardContent>
+                            <div className="text-2xl font-bold">
+                              ${portfolio.total_invested?.toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              Total Invested
+                            </p>
+                            <div className="mt-4">
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-muted-foreground">Holdings</span>
+                                <span className="font-medium">
+                                  {portfolio.total_holdings}
+                                </span>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    ))}
+
+                    {/* Add Portfolio Card */}
+                    <motion.div variants={item}>
+                      <Card className="h-full border-dashed hover:border-primary/50 transition-colors cursor-pointer">
+                        <CardContent className="flex flex-col items-center justify-center h-full p-6 text-center">
+                          <div className="rounded-full bg-muted p-3 mb-4">
+                            <Plus className="h-6 w-6 text-muted-foreground" />
+                          </div>
+                          <h3 className="font-medium">Create New Portfolio</h3>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Start a new investment portfolio
+                          </p>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  </div>
+                </motion.div>
+              </>
+            )}
           </TabsContent>
         </AnimatePresence>
       </Tabs>

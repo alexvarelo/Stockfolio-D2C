@@ -47,7 +47,7 @@ export const Navbar = () => {
         <div className="flex items-center gap-2">
           {userProfile?.id ? (
             <button 
-              onClick={() => navigate(`/user/${userProfile.id}`)}
+              onClick={() => navigate(`/${userProfile.username || userProfile.id}`)}
               className="rounded-full hover:ring-2 hover:ring-ring hover:ring-offset-2 transition-all"
             >
               <Avatar className="h-8 w-8">
@@ -91,7 +91,7 @@ export const Navbar = () => {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem 
-                onClick={() => userProfile?.id && navigate(`/user/${userProfile.id}`)}
+                onClick={() => userProfile?.username && navigate(`/${userProfile.username}`)}
                 disabled={!userProfile?.id}
               >
                 <User className="mr-2 h-4 w-4" />

@@ -17,7 +17,9 @@ import { ThemeProvider } from "@/components/theme/ThemeProvider";
 import Watchlists from "./pages/Watchlists";
 import WatchlistDetail from "./pages/WatchlistDetail";
 import { UserProfile } from "./pages/UserProfile";
-import { Analytics } from "@vercel/analytics/next"
+import EditProfilePage from "./pages/EditProfilePage";
+import { Analytics } from "@vercel/analytics/next";
+import { DashboardSkeleton } from "./components/dashboard/DashboardSkeleton";
 // CreateEditWatchlist component has been replaced with dialogs
 
 const queryClient = new QueryClient({
@@ -38,11 +40,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   if (!user) {
@@ -78,154 +76,177 @@ const App = () => (
             <PostNotifications />
             <Sonner position="top-right" richColors />
             <BrowserRouter>
-            <Routes>
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <Dashboard />
-                    </MainLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/portfolios"
-                element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <Portfolios />
-                    </MainLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/portfolio/:portfolioId"
-                element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <PortfolioDetail />
-                    </MainLayout>
-                  </ProtectedRoute>
-                }
-              />
-              {/* Placeholder routes for future features */}
-              <Route
-                path="/transactions"
-                element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <div className="text-center py-12">
-                        <h2 className="text-2xl font-bold mb-4">
-                          Transactions
-                        </h2>
-                        <p className="text-muted-foreground">Coming soon...</p>
-                      </div>
-                    </MainLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/watchlists"
-                element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <Watchlists />
-                    </MainLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/user/:userId"
-                element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <UserProfile />
-                    </MainLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/watchlist/:id"
-                element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <WatchlistDetail />
-                    </MainLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/discover"
-                element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <div className="text-center py-12">
-                        <h2 className="text-2xl font-bold mb-4">Discover</h2>
-                        <p className="text-muted-foreground">Coming soon...</p>
-                      </div>
-                    </MainLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/following"
-                element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <div className="text-center py-12">
-                        <h2 className="text-2xl font-bold mb-4">Following</h2>
-                        <p className="text-muted-foreground">Coming soon...</p>
-                      </div>
-                    </MainLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/notifications"
-                element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <div className="text-center py-12">
-                        <h2 className="text-2xl font-bold mb-4">
-                          Notifications
-                        </h2>
-                        <p className="text-muted-foreground">Coming soon...</p>
-                      </div>
-                    </MainLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/settings"
-                element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <div className="text-center py-12">
-                        <h2 className="text-2xl font-bold mb-4">Settings</h2>
-                        <p className="text-muted-foreground">Coming soon...</p>
-                      </div>
-                    </MainLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/instrument/:ticker"
-                element={
-                  <ProtectedRoute>
-                    <MainLayout>
-                      <InstrumentPage />
-                    </MainLayout>
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </SidebarProvider>
+              <Routes>
+                <Route path="/auth" element={<Auth />} />
+                <Route
+                  path="/"
+                  element={<Navigate to="/dashboard" replace />}
+                />
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <MainLayout>
+                        <Dashboard />
+                      </MainLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/portfolios"
+                  element={
+                    <ProtectedRoute>
+                      <MainLayout>
+                        <Portfolios />
+                      </MainLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/portfolio/:portfolioId"
+                  element={
+                    <ProtectedRoute>
+                      <MainLayout>
+                        <PortfolioDetail />
+                      </MainLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                {/* Placeholder routes for future features */}
+                <Route
+                  path="/transactions"
+                  element={
+                    <ProtectedRoute>
+                      <MainLayout>
+                        <div className="text-center py-12">
+                          <h2 className="text-2xl font-bold mb-4">
+                            Transactions
+                          </h2>
+                          <p className="text-muted-foreground">
+                            Coming soon...
+                          </p>
+                        </div>
+                      </MainLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/watchlists"
+                  element={
+                    <ProtectedRoute>
+                      <MainLayout>
+                        <Watchlists />
+                      </MainLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/:username"
+                  element={
+                    <ProtectedRoute>
+                      <MainLayout>
+                        <UserProfile />
+                      </MainLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/accounts/edit"
+                  element={
+                    <ProtectedRoute>
+                      <MainLayout>
+                        <EditProfilePage />
+                      </MainLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/watchlist/:id"
+                  element={
+                    <ProtectedRoute>
+                      <MainLayout>
+                        <WatchlistDetail />
+                      </MainLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/discover"
+                  element={
+                    <ProtectedRoute>
+                      <MainLayout>
+                        <div className="text-center py-12">
+                          <h2 className="text-2xl font-bold mb-4">Discover</h2>
+                          <p className="text-muted-foreground">
+                            Coming soon...
+                          </p>
+                        </div>
+                      </MainLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/following"
+                  element={
+                    <ProtectedRoute>
+                      <MainLayout>
+                        <div className="text-center py-12">
+                          <h2 className="text-2xl font-bold mb-4">Following</h2>
+                          <p className="text-muted-foreground">
+                            Coming soon...
+                          </p>
+                        </div>
+                      </MainLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/notifications"
+                  element={
+                    <ProtectedRoute>
+                      <MainLayout>
+                        <div className="text-center py-12">
+                          <h2 className="text-2xl font-bold mb-4">
+                            Notifications
+                          </h2>
+                          <p className="text-muted-foreground">
+                            Coming soon...
+                          </p>
+                        </div>
+                      </MainLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/settings"
+                  element={
+                    <ProtectedRoute>
+                      <MainLayout>
+                        <div className="text-center py-12">
+                          <h2 className="text-2xl font-bold mb-4">Settings</h2>
+                          <p className="text-muted-foreground">
+                            Coming soon...
+                          </p>
+                        </div>
+                      </MainLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/instrument/:ticker"
+                  element={
+                    <ProtectedRoute>
+                      <MainLayout>
+                        <InstrumentPage />
+                      </MainLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </SidebarProvider>
       </ThemeProvider>
     </AuthProvider>
     <Analytics />

@@ -54,7 +54,7 @@ interface UserPostsProps extends TabContentProps {}
 interface UserPortfoliosProps extends TabContentProps {}
 
 export const UserProfile = () => {
-  const { userId } = useParams<{ userId: string }>();
+  const { username: urlUsername } = useParams<{ username: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
   
@@ -65,9 +65,11 @@ export const UserProfile = () => {
     isLoading, 
     error,
     refetch: refetchProfile
-  } = useUserProfile(userId || '');
+  } = useUserProfile(urlUsername || '');
   
-  const isOwnProfile = useMemo(() => user?.id === profile?.id, [user?.id, profile?.id]);
+  const isOwnProfile = useMemo(() => {
+    return user?.id === profile?.id || user?.user_metadata?.username === urlUsername;
+  }, [user?.id, profile?.id, user?.user_metadata?.username, urlUsername]);
   
   // Follow/Unfollow functionality using custom hooks
   const followUser = useFollowUser();
@@ -77,23 +79,23 @@ export const UserProfile = () => {
   const { 
     data: isFollowing = false, 
     isLoading: isCheckingFollowing 
-  } = useIsFollowing(user?.id, userId);
+  } = useIsFollowing(user?.id, profile?.id);
 
   // Get followers, following, and post counts using custom hooks
-  const { data: followers = [] } = useUserFollowers(userId || '');
-  const { data: following = [] } = useUserFollowing(userId || '');
-  const { data: postCount = 0 } = useUserPostCount(userId);
+  const { data: followers = [] } = useUserFollowers(profile?.id || '');
+  const { data: following = [] } = useUserFollowing(profile?.id || '');
+  const { data: postCount = 0 } = useUserPostCount(profile?.id);
 
   // Follow/Unfollow button with animation
   const FollowButton = () => {
     const handleFollowClick = async () => {
-      if (!userId) return;
+      if (!profile?.id) return;
       
       try {
         if (isFollowing) {
-          await unfollowUser.mutateAsync(userId);
+          await unfollowUser.mutateAsync(profile.id);
         } else {
-          await followUser.mutateAsync(userId);
+          await followUser.mutateAsync(profile.id);
         }
       } catch (error) {
         console.error('Error updating follow status:', error);
@@ -295,21 +297,21 @@ export const UserProfile = () => {
               className="grid grid-cols-3 gap-4 text-center"
             >
               <button 
-                onClick={() => navigate(`/user/${profile.id}/followers`)}
+                onClick={() => navigate(`/${profile.username}/followers`)}
                 className="flex flex-col items-center group"
               >
                 <span className="text-2xl font-bold">{followers.length}</span>
                 <span className="text-sm text-muted-foreground">Followers</span>
               </button>
               <button 
-                onClick={() => navigate(`/user/${profile.id}/following`)}
+                onClick={() => navigate(`/${profile.username}/following`)}
                 className="flex flex-col items-center group"
               >
                 <span className="text-2xl font-bold">{following.length}</span>
                 <span className="text-sm text-muted-foreground">Following</span>
               </button>
               <button 
-                onClick={() => navigate(`/user/${profile.id}/posts`)}
+                onClick={() => navigate(`/${profile.username}/posts`)}
                 className="flex flex-col items-center group"
               >
                 <span className="text-2xl font-bold">{postCount}</span>

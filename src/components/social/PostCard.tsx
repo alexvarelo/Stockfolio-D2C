@@ -166,8 +166,8 @@ export const PostCard = ({
             <button 
               onClick={(e) => {
                 e.stopPropagation();
-                if (post.user_id) {
-                  navigate(`/user/${post.user_id}`);
+                if (post.user?.id) {
+                  navigate(`/${post.user.id}`);
                 }
               }}
               className="flex items-start gap-3 hover:opacity-80 transition-opacity"
