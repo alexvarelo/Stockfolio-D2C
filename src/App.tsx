@@ -74,6 +74,7 @@ const App = () => (
         <SidebarProvider>
           <TooltipProvider>
             <PostNotifications />
+            <Toaster />
             <Sonner position="top-right" richColors />
             <BrowserRouter>
               <Routes>

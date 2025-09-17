@@ -8,6 +8,8 @@ interface UserProfile {
   username?: string;
   full_name?: string;
   email?: string;
+  bio?: string;
+  website?: string | null;
   avatar_url?: string;
 }
 
@@ -19,6 +21,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, fullName: string, username: string) => Promise<{ error: any }>;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+  refetchUserProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -34,7 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchUserProfile = async (userId: string) => {
     const { data, error } = await supabase
       .from('users')
-      .select('id, full_name, email, avatar_url')
+      .select('id, full_name, email, avatar_url, bio, website')
       .eq('id', userId)
       .single();
     if (!error && data) {
@@ -75,34 +78,81 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signUp = async (email: string, password: string, fullName: string, username: string) => {
-    const redirectUrl = `${window.location.origin}/`;
+    const redirectUrl = `${window.location.origin}/auth/callback`;
     
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          full_name: fullName,
-          username: username
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            full_name: fullName,
+            username: username
+          }
+        }
+      });
+
+      if (error) {
+        toast({
+          title: "Sign up failed",
+          description: error.message,
+          variant: "destructive",
+        });
+        return { error };
+      }
+
+      // Create user profile in public.users table
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from('users')
+          .insert([
+            {
+              id: data.user.id,
+              email: email,
+              full_name: fullName,
+              username: username,
+            },
+          ]);
+
+        if (profileError) {
+          console.error('Profile creation error:', profileError);
+          toast({
+            title: 'Account Created with Warning',
+            description: 'Your account was created, but there was an issue setting up your profile. Please contact support.',
+            variant: 'default',
+          });
+          return { error: profileError };
         }
       }
-    });
 
-    if (error) {
+      // Show comprehensive success message
       toast({
-        title: "Sign up failed",
-        description: error.message,
-        variant: "destructive",
+        title: 'Check Your Email',
+        description: (
+          <div className="space-y-1">
+            <p>We've sent a confirmation email to <span className="font-semibold">{email}</span>.</p>
+            <p>Please check your inbox and click the verification link to activate your account.</p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Can't find the email? Check your spam folder or request a new verification link.
+            </p>
+          </div>
+        ),
+        variant: 'default',
+        duration: 15000, // Show for 15 seconds
+        className: 'bg-background text-foreground border border-border',
       });
-    } else {
+
+      return { data, error: null };
+    } catch (error: any) {
+      console.error('Unexpected error during signup:', error);
       toast({
-        title: "Success!",
-        description: "Please check your email to confirm your account.",
+        title: 'Unexpected Error',
+        description: 'An unexpected error occurred during signup. Please try again.',
+        variant: 'destructive',
       });
+      return { error };
     }
-
-    return { error };
   };
 
   const signIn = async (email: string, password: string) => {
@@ -133,6 +183,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const refetchUserProfile = async () => {
+    if (user?.id) {
+      await fetchUserProfile(user.id);
+    }
+  };
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -142,6 +198,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signUp,
       signIn,
       signOut,
+      refetchUserProfile,
     }}>
       {children}
     </AuthContext.Provider>

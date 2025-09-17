@@ -44,6 +44,7 @@ import { RecentActivity } from "@/components/portfolio/RecentActivity";
 import { TopInvestments } from "@/components/portfolio/TopInvestments";
 import { useNavigate } from "react-router-dom";
 import { DashboardSkeleton, PortfolioOverviewSkeleton } from "@/components/dashboard/DashboardSkeleton";
+import { HoldingsDonutChart } from "@/components/charts/HoldingsDonutChart";
 
 interface PortfolioSummary {
   id: string;
@@ -198,7 +199,7 @@ const Dashboard = () => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
-      className="min-h-screen p-6"
+      className="min-h-screen md:p-6"
     >
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
         <TabsList className="grid w-full grid-cols-2 max-w-md mb-8">
@@ -464,11 +465,21 @@ const Dashboard = () => {
                     </motion.div>
                   </div>
                 </motion.div>
+
+                {/* Holdings Donut Chart */}
+                <motion.div
+                  variants={item}
+                  initial="hidden"
+                  animate="show"
+                >
+                  <HoldingsDonutChart />
+                </motion.div>
               </>
             )}
           </TabsContent>
         </AnimatePresence>
       </Tabs>
+      <UserOnboardingWizard />
     </motion.div>
   );
 };

@@ -202,6 +202,6 @@ export const useCustomerHoldings = (
     isLoading,
     isLoadingMarketData:
       includeMarketData && (isLoadingPrices || processedHoldings.isLoading),
-    error: error || pricesError || processedHoldings.error,
+    error: error || (includeMarketData && pricesError) || processedHoldings.error,
   };
 };
