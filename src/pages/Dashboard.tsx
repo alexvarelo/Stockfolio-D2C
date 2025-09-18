@@ -12,7 +12,6 @@ import {
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
-import { SearchButtonWithDialog } from "@/components/search/SearchButtonWithDialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
