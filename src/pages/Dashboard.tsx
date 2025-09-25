@@ -230,7 +230,7 @@ const Dashboard = () => {
 
               {/* Sidebar */}
               <motion.div 
-                className="space-y-6"
+                className="lg:sticky lg:top-16 lg:h-[calc(100vh-6rem)] lg:overflow-y-auto space-y-6"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
@@ -271,6 +271,7 @@ const Dashboard = () => {
                 <motion.div
                   whileHover={cardHover}
                   whileTap={cardTap}
+                  className="pb-6"
                 >
                   <TopInvestments />
                 </motion.div>
