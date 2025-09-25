@@ -1,49 +1,34 @@
 import { useEffect, useState } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { motion, AnimatePresence, Variants } from "framer-motion";
-import {
-  CommandDialog,
-  CommandInput,
-  CommandList,
-  CommandEmpty,
-  CommandGroup,
-  CommandSeparator,
-} from "@/components/ui/command";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth";
-import { cn } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+  CardContent, CardHeader,
+  CardTitle
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
+  TrendingUp, DollarSign,
   Briefcase,
   BarChart3,
-  Plus,
-  ArrowUpRight,
-  ArrowDownRight,
-  Clock,
+  Plus, Clock
 } from "lucide-react";
 import { useNeedsOnboarding } from "@/lib/onboarding";
 import { UserOnboardingWizard } from "@/components/onboarding/UserOnboardingWizard";
 import { DashboardPosts } from "@/components/dashboard/DashboardPosts";
 import { CreatePost } from "@/components/social/CreatePost";
 import { useQueryClient } from "@tanstack/react-query";
-import { RecentActivity } from "@/components/portfolio/RecentActivity";
 import { TopInvestments } from "@/components/portfolio/TopInvestments";
 import { useNavigate } from "react-router-dom";
-import { DashboardSkeleton, PortfolioOverviewSkeleton } from "@/components/dashboard/DashboardSkeleton";
+import {
+  DashboardSkeleton,
+  PortfolioOverviewSkeleton,
+} from "@/components/dashboard/DashboardSkeleton";
 import { HoldingsDonutChart } from "@/components/charts/HoldingsDonutChart";
+import { ActivityCalendar } from "@/components/profile/ActivityCalendar";
 
 interface PortfolioSummary {
   id: string;
@@ -70,7 +55,9 @@ const Dashboard = () => {
   }, []);
   const { user } = useAuth();
 
-  const { needsOnboarding, loading: onboardingLoading } = useNeedsOnboarding(user?.id);
+  const { needsOnboarding, loading: onboardingLoading } = useNeedsOnboarding(
+    user?.id
+  );
   const [onboardingOpen, setOnboardingOpen] = useState(true);
   const [activeTab, setActiveTab] = useState("feed");
   const queryClient = useQueryClient();
@@ -157,8 +144,8 @@ const Dashboard = () => {
 
   const item: Variants = {
     hidden: { opacity: 0, y: 20 },
-    show: { 
-      opacity: 1, 
+    show: {
+      opacity: 1,
       y: 0,
       transition: {
         type: "spring",
@@ -170,11 +157,11 @@ const Dashboard = () => {
 
   const cardHover = {
     scale: 1.02,
-    transition: { type: "spring" as const, stiffness: 400, damping: 10 }
+    transition: { type: "spring" as const, stiffness: 400, damping: 10 },
   };
 
   const cardTap = {
-    scale: 0.98
+    scale: 0.98,
   } as const;
 
   if (isLoading) {
@@ -187,7 +174,11 @@ const Dashboard = () => {
         transition={{ duration: 0.3 }}
         className="min-h-screen p-6"
       >
-        {activeTab === 'feed' ? <DashboardSkeleton /> : <PortfolioOverviewSkeleton />}
+        {activeTab === "feed" ? (
+          <DashboardSkeleton />
+        ) : (
+          <PortfolioOverviewSkeleton />
+        )}
       </motion.div>
     );
   }
@@ -200,7 +191,11 @@ const Dashboard = () => {
       transition={{ duration: 0.3 }}
       className="min-h-screen md:p-6"
     >
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-8"
+      >
         <TabsList className="grid w-full grid-cols-2 max-w-md mb-8">
           <TabsTrigger value="feed">Social Feed</TabsTrigger>
           <TabsTrigger value="overview">Portfolio Overview</TabsTrigger>
@@ -210,17 +205,17 @@ const Dashboard = () => {
           <TabsContent value="feed" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Main Feed */}
-              <motion.div 
+              <motion.div
                 className="lg:col-span-2 space-y-6"
                 variants={container}
                 initial="hidden"
                 animate="show"
               >
                 <motion.div variants={item}>
-                  <CreatePost 
+                  <CreatePost
                     onPostCreated={() => {
-                      queryClient.invalidateQueries({ queryKey: ['posts'] });
-                    }} 
+                      queryClient.invalidateQueries({ queryKey: ["posts"] });
+                    }}
                   />
                 </motion.div>
                 <motion.div variants={item}>
@@ -229,37 +224,41 @@ const Dashboard = () => {
               </motion.div>
 
               {/* Sidebar */}
-              <motion.div 
-                className="lg:sticky lg:top-16 lg:h-[calc(100vh-6rem)] lg:overflow-y-auto space-y-6"
+              <motion.div
+                className="lg:sticky lg:top-24 lg:h-[calc(100vh-8rem)] lg:overflow-y-auto space-y-6 lg:pr-2"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
               >
                 {/* Portfolio Summary Card */}
-                <motion.div
-                  whileHover={cardHover}
-                  whileTap={cardTap}
-                >
+                <motion.div whileHover={cardHover} whileTap={cardTap}>
                   <Card>
                     <CardHeader>
                       <CardTitle>Portfolio Summary</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div>
-                        <p className="text-sm text-muted-foreground">Total Value</p>
+                        <p className="text-sm text-muted-foreground">
+                          Total invested
+                        </p>
                         <p className="text-2xl font-semibold">
-                          ${totalPortfolioValue?.toLocaleString('en-US', {
+                          $
+                          {totalPortfolioValue?.toLocaleString("en-US", {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                           })}
                         </p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Total Holdings</p>
-                        <p className="text-2xl font-semibold">{totalHoldings}</p>
+                        <p className="text-sm text-muted-foreground">
+                          Total Holdings
+                        </p>
+                        <p className="text-2xl font-semibold">
+                          {totalHoldings}
+                        </p>
                       </div>
-                      <Button 
-                        className="w-full" 
+                      <Button
+                        className="w-full"
                         variant="outline"
                         onClick={() => navigate("/portfolios")}
                       >
@@ -292,7 +291,9 @@ const Dashboard = () => {
                   animate="show"
                 >
                   <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Portfolio Overview</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">
+                      Portfolio Overview
+                    </h1>
                     <p className="text-muted-foreground">
                       Track and manage your investments
                     </p>
@@ -315,13 +316,14 @@ const Dashboard = () => {
                     <Card>
                       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">
-                          Total Value
+                          Total Invested
                         </CardTitle>
                         <DollarSign className="h-4 w-4 text-muted-foreground" />
                       </CardHeader>
                       <CardContent>
                         <div className="text-2xl font-bold">
-                          ${totalPortfolioValue?.toLocaleString('en-US', {
+                          $
+                          {totalPortfolioValue?.toLocaleString("en-US", {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                           })}
@@ -343,7 +345,9 @@ const Dashboard = () => {
                         <Briefcase className="h-4 w-4 text-muted-foreground" />
                       </CardHeader>
                       <CardContent>
-                        <div className="text-2xl font-bold">{totalHoldings}</div>
+                        <div className="text-2xl font-bold">
+                          {totalHoldings}
+                        </div>
                         <p className="text-xs text-muted-foreground">
                           Unique assets
                         </p>
@@ -391,8 +395,25 @@ const Dashboard = () => {
                   </motion.div>
                 </motion.div>
 
+                {/* Holdings Donut Chart */}
+                {/* Portfolio Allocation Section */}
+                <div className="space-y-6">
+                  <h2 className="text-xl font-semibold text-foreground">Portfolios Allocation</h2>
+                  <motion.div variants={item} initial="hidden" animate="show" className="h-[36rem]">
+                    <HoldingsDonutChart />
+                  </motion.div>
+                </div>
+
+                {/* Activity Calendar Section */}
+                <div className="space-y-6">
+                  <h2 className="text-xl font-semibold text-foreground">Activity calendar</h2>
+                  <motion.div variants={item} initial="hidden" animate="show" className="h-[42rem]">
+                    <ActivityCalendar userId={user?.id || ""} />
+                  </motion.div>
+                </div>
+
                 {/* Portfolio List */}
-                <motion.div
+                {/* <motion.div
                   className="space-y-4"
                   variants={container}
                   initial="hidden"
@@ -449,31 +470,9 @@ const Dashboard = () => {
                       </motion.div>
                     ))}
 
-                    {/* Add Portfolio Card */}
-                    <motion.div variants={item}>
-                      <Card className="h-full border-dashed hover:border-primary/50 transition-colors cursor-pointer">
-                        <CardContent className="flex flex-col items-center justify-center h-full p-6 text-center">
-                          <div className="rounded-full bg-muted p-3 mb-4">
-                            <Plus className="h-6 w-6 text-muted-foreground" />
-                          </div>
-                          <h3 className="font-medium">Create New Portfolio</h3>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Start a new investment portfolio
-                          </p>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
+                    
                   </div>
-                </motion.div>
-
-                {/* Holdings Donut Chart */}
-                <motion.div
-                  variants={item}
-                  initial="hidden"
-                  animate="show"
-                >
-                  <HoldingsDonutChart />
-                </motion.div>
+                </motion.div> */}
               </>
             )}
           </TabsContent>

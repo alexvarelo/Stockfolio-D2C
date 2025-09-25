@@ -127,7 +127,7 @@ export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({ userId }) =>
   }
 
   return (
-    <div className="w-full space-y-4">
+    <div className="w-full h-full">
       <Dialog open={!!selectedEvent} onOpenChange={(open) => !open && setSelectedEvent(null)}>
         {selectedEvent && (
           <DialogContent className="sm:max-w-md">
@@ -174,11 +174,10 @@ export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({ userId }) =>
         )}
       </Dialog>
       
-      <CardTitle>Activity Calendar</CardTitle>
-      <Card>
-        <CardHeader className="pb-2">
+      <Card className="h-full flex flex-col">
+        <CardHeader className="p-4 pb-2">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-medium">
+            <h3 className="text-base font-medium">
               {format(currentDate, 'MMMM yyyy')}
             </h3>
             <div className="flex items-center space-x-2">
@@ -209,16 +208,16 @@ export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({ userId }) =>
             </div>
           </div>
         </CardHeader>
-      <CardContent className="p-4">
-        <div className="mb-4">
-          <div className="grid grid-cols-7 gap-1 text-center text-sm font-medium text-muted-foreground mb-2">
-            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-              <div key={day} className="py-2">
+      <CardContent className="p-2 flex-1">
+        <div className="flex flex-col h-full">
+          <div className="grid grid-cols-7 gap-0.5 text-center text-xs font-medium text-muted-foreground mb-1">
+            {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, i) => (
+              <div key={i} className="py-1">
                 {day}
               </div>
             ))}
           </div>
-          <div className="grid grid-cols-7 gap-1">
+          <div className="grid grid-cols-7 gap-0.5 flex-1">
             {weeks.map((week, weekIndex) => (
               <React.Fragment key={weekIndex}>
                 {week.map((day, dayIndex) => {
@@ -229,42 +228,44 @@ export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({ userId }) =>
                   return (
                     <div 
                       key={dayIndex} 
-                      className={`min-h-24 p-2 border rounded-md ${
+                      className={`flex flex-col border rounded-sm ${
                         isCurrentMonthDay ? 'bg-background' : 'bg-muted/20'
                       }`}
                     >
-                      <div className="flex justify-between items-start">
-                        <span className={`text-sm font-medium ${
+                      <div className="flex justify-between items-center p-1">
+                        <span className={`text-xs font-medium w-5 h-5 flex items-center justify-center ${
                           isToday
-                            ? 'bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center'
+                            ? 'bg-primary text-primary-foreground rounded-full'
                             : isCurrentMonthDay
                               ? 'text-foreground' 
                               : 'text-muted-foreground/50'
                         }`}>
                           {format(day, 'd')}
                         </span>
-                        {isToday && (
-                          <span className="text-xs text-primary">Today</span>
-                        )}
                       </div>
-                      <div className="mt-1 space-y-1 max-h-20 overflow-y-auto">
-                        {dayEvents.map(event => {
+                      <div className="flex-1 overflow-hidden">
+                        {dayEvents.slice(0, 1).map(event => {
                           const Icon = eventTypeStyles[event.type].icon;
                           return (
                             <div 
                               key={event.id}
-                              className="text-xs p-1.5 rounded-md truncate flex items-center gap-1.5 cursor-pointer hover:opacity-90 transition-opacity"
+                              className="text-[10px] p-0.5 rounded-sm truncate flex items-center gap-1 cursor-pointer hover:opacity-90 transition-opacity"
                               style={{
                                 backgroundColor: `${eventTypeStyles[event.type].backgroundColor}15`,
-                                borderLeft: `3px solid ${eventTypeStyles[event.type].borderColor}`,
+                                borderLeft: `2px solid ${eventTypeStyles[event.type].borderColor}`,
                               }}
                               onClick={(e) => handleEventClick(event, e)}
                             >
-                              <Icon className="h-3 w-3 flex-shrink-0" />
+                              <Icon className="h-2.5 w-2.5 flex-shrink-0" />
                               <span className="truncate">{event.title}</span>
                             </div>
                           );
                         })}
+                        {dayEvents.length > 1 && (
+                          <div className="text-[10px] text-muted-foreground text-center">
+                            +{dayEvents.length - 1} more
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
@@ -274,8 +275,8 @@ export const ActivityCalendar: React.FC<ActivityCalendarProps> = ({ userId }) =>
           </div>
         </div>
       </CardContent>
-    </Card>
-  </div>
+      </Card>
+    </div>
 );
 };
 

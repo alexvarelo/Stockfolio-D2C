@@ -77,15 +77,30 @@ const CustomTooltip = ({ active, payload }: any) => {
 export const HoldingsDonutChart = () => {
   const { data: holdings, isLoading, error } = useCustomerHoldings({ includeMarketData: false });
 
+  // Generate a consistent color for each symbol
+  const getColorForSymbol = (symbol: string) => {
+    // Simple hash function to generate a consistent index
+    let hash = 0;
+    for (let i = 0; i < symbol.length; i++) {
+      hash = symbol.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return COLORS[Math.abs(hash) % COLORS.length];
+  };
+
   // Transform holdings data for the chart
   const chartData = React.useMemo(() => {
     if (!holdings) return [];
     
-    return holdings.map((holding: PortfolioHolding) => ({
+    // Sort holdings by value (descending) to ensure consistent ordering
+    const sortedHoldings = [...holdings].sort((a, b) => 
+      (b.currentValue || 0) - (a.currentValue || 0)
+    );
+    
+    return sortedHoldings.map((holding: PortfolioHolding) => ({
       name: holding.symbol,
-      value: holding.currentValue || holding.averagePrice,
+      value: holding.quantity * holding.averagePrice,
       quantity: holding.quantity,
-      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      color: getColorForSymbol(holding.symbol),
     }));
   }, [holdings]);
 
@@ -114,56 +129,73 @@ export const HoldingsDonutChart = () => {
   }
 
   return (
-    <Card className="w-full border-0 shadow-none">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-semibold text-gray-900">Portfolio Allocation</CardTitle>
-      </CardHeader>
-      <CardContent className="h-96 p-0">
-        <div className="relative h-full">
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-900">
-                {formatCurrency(chartData.reduce((sum, item) => sum + item.value, 0))}
+    <Card className="h-full">
+      <CardContent className="h-full p-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-full">
+          <div className="md:col-span-2 relative h-full">
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-gray-900">
+                  {formatCurrency(chartData.reduce((sum, item) => sum + item.value, 0))}
+                </div>
+                <div className="text-sm text-gray-500">Total Value</div>
               </div>
-              <div className="text-sm text-gray-500">Total Value</div>
             </div>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  outerRadius={140}
+                  innerRadius={90}
+                  paddingAngle={1}
+                  cornerRadius={4}
+                  dataKey="value"
+                >
+                  {chartData.map((entry: any, index: number) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={entry.color || COLORS[index % COLORS.length]} 
+                      stroke="#fff"
+                      strokeWidth={2}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  content={<CustomTooltip />} 
+                  contentStyle={{
+                    backgroundColor: 'white',
+                    border: '1px solid #E2E8F0',
+                    borderRadius: '0.5rem',
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+                    padding: '0.75rem',
+                    fontSize: '0.875rem',
+                  }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
           </div>
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={chartData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={renderCustomizedLabel}
-                outerRadius={140}
-                innerRadius={80}
-                paddingAngle={1}
-                cornerRadius={4}
-                dataKey="value"
-              >
-                {chartData.map((entry: any, index: number) => (
-                  <Cell 
-                    key={`cell-${index}`} 
-                    fill={entry.color || COLORS[index % COLORS.length]} 
-                    stroke="#fff"
-                    strokeWidth={2}
+          
+          {/* Legend */}
+          <div className="hidden md:flex flex-col justify-center space-y-3 pl-4 py-4 overflow-y-auto max-h-full">
+            {chartData.map((entry: any, index: number) => {
+              const color = entry.color || COLORS[index % COLORS.length];
+              const percentage = ((entry.value / chartData.reduce((sum, item) => sum + item.value, 0)) * 100).toFixed(1);
+              
+              return (
+                <div key={`legend-${index}`} className="flex items-center space-x-2 text-sm">
+                  <div 
+                    className="w-4 h-4 rounded-sm flex-shrink-0" 
+                    style={{ backgroundColor: color }}
                   />
-                ))}
-              </Pie>
-              <Tooltip 
-                content={<CustomTooltip />} 
-                contentStyle={{
-                  backgroundColor: 'white',
-                  border: '1px solid #E2E8F0',
-                  borderRadius: '0.5rem',
-                  boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
-                  padding: '0.75rem',
-                  fontSize: '0.875rem',
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+                  <span className="font-medium text-gray-900 truncate">{entry.name}</span>
+                  <span className="text-gray-500 ml-auto">{percentage}%</span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </CardContent>
     </Card>
