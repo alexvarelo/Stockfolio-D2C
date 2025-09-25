@@ -23,14 +23,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/components/ui/use-toast";
 
-interface UserProfileExtended {
-  id: string;
-  username?: string;
-  full_name?: string;
-  avatar_url?: string;
-  email?: string;
-}
-
 const onboardingSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
   full_name: z.string().min(1, "Full name is required"),
@@ -142,52 +134,54 @@ export function UserOnboardingWizard() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Welcome to Stocky!</DialogTitle>
-          <p className="text-sm text-muted-foreground">
+      <DialogContent className="w-[95vw] max-w-md max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+        <DialogHeader className="sticky top-0 bg-background z-10 pb-2">
+          <DialogTitle className="text-xl sm:text-2xl">Welcome to Stocky!</DialogTitle>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Complete your profile to get started
           </p>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="flex flex-col items-center space-y-4">
-              <Avatar className="h-24 w-24">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6 p-1 sm:p-0">
+            <div className="flex flex-col items-center space-y-3 sm:space-y-4">
+              <Avatar className="h-20 w-20 sm:h-24 sm:w-24">
                 <AvatarImage src={selectedAvatar || ""} alt="Profile" />
-                <AvatarFallback>
-                  {user.email?.slice(0, 2).toUpperCase() || "U"}
+                <AvatarFallback className="text-lg sm:text-xl">
+                  {user?.email?.slice(0, 2).toUpperCase() || "U"}
                 </AvatarFallback>
               </Avatar>
-              <p className="text-sm text-muted-foreground">{user.email}</p>
+              <p className="text-sm text-muted-foreground">{user?.email}</p>
             </div>
 
-            <FormField
-              control={form.control}
-              name="username"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Username *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="johndoe" {...field} required />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Username *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="johndoe" {...field} required />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="full_name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Full Name *</FormLabel>
-                  <FormControl>
-                    <Input placeholder="John Doe" {...field} required />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="full_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Full Name *</FormLabel>
+                    <FormControl>
+                      <Input placeholder="John Doe" {...field} required />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <FormField
               control={form.control}
@@ -243,8 +237,13 @@ export function UserOnboardingWizard() {
               )}
             />
 
-            <div className="flex justify-end space-x-2 pt-2">
-              <Button type="submit" className="w-full" disabled={loading}>
+            <div className="sticky bottom-0 bg-background pt-4 pb-2 -mx-2 px-2 sm:static sm:mx-0 sm:px-0">
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={loading}
+                size="lg"
+              >
                 {loading ? "Saving..." : "Complete Profile"}
               </Button>
             </div>
