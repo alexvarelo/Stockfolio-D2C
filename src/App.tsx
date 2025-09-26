@@ -20,6 +20,7 @@ import { UserProfile } from "./pages/UserProfile";
 import EditProfilePage from "./pages/EditProfilePage";
 import { Analytics } from "@vercel/analytics/next";
 import { DashboardSkeleton } from "./components/dashboard/DashboardSkeleton";
+import DiscoverPage from "./pages/Discover";
 // CreateEditWatchlist component has been replaced with dialogs
 
 const queryClient = new QueryClient({
@@ -162,26 +163,11 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/watchlist/:id"
-                  element={
-                    <ProtectedRoute>
-                      <MainLayout>
-                        <WatchlistDetail />
-                      </MainLayout>
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
                   path="/discover"
                   element={
                     <ProtectedRoute>
                       <MainLayout>
-                        <div className="text-center py-12">
-                          <h2 className="text-2xl font-bold mb-4">Discover</h2>
-                          <p className="text-muted-foreground">
-                            Coming soon...
-                          </p>
-                        </div>
+                        <DiscoverPage />
                       </MainLayout>
                     </ProtectedRoute>
                   }

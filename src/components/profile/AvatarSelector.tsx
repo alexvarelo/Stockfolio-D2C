@@ -19,7 +19,7 @@ export const AvatarSelector = ({ onSelect, currentAvatarUrl }: AvatarSelectorPro
       setIsLoading(true);
       try {
         // Try both bucket names
-        const bucketNames = ['Stocky Avatars', 'Avatars'];
+        const bucketNames = ['stocky avatars', 'avatars'];
         let allAvatarUrls: string[] = [];
 
         for (const bucketName of bucketNames) {
