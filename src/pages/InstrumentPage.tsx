@@ -1,21 +1,24 @@
 import { useParams } from "react-router-dom";
+import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
+import { Card, CardContent, CardHeader, CardTitle,
   CardDescription,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import {
   ArrowUp,
   ArrowDown,
   ExternalLink,
   BarChart2,
-  MessageSquare,
   Calculator,
+  Bot,
+  MessageCircle,
+  MessageSquare,
 } from "lucide-react";
+import { InstrumentChatbot } from "@/components/chat/InstrumentChatbot";
+import { DrawerTrigger } from "@/components/ui/drawer";
+import { StockyChatDrawer } from "@/components/chat/StockyChatDrawer";
 import { useGetStockInfoApiV1StockTickerGet } from "@/api/stock/stock";
 import type { StockInfo, CompanyInfo } from "@/api/financialDataApi.schemas";
 import { PriceChart } from "@/components/charts/PriceChart";
@@ -65,6 +68,8 @@ interface AdditionalData {
 
 export function InstrumentPage() {
   const { ticker } = useParams<{ ticker: string }>();
+  const [showChatbot, setShowChatbot] = useState(false);
+  
   const {
     data: response,
     isLoading,
@@ -134,24 +139,49 @@ export function InstrumentPage() {
     );
   };
 
+  // Mock portfolios - replace with actual portfolio data from your app
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  
+  const userPortfolios = [
+    { id: 'portfolio1', name: 'My Portfolio' },
+    { id: 'portfolio3', name: 'Growth' },
+  ];
+
   return (
     <div className="space-y-6">
+      <StockyChatDrawer 
+        ticker={ticker || ''} 
+        isOpen={isChatOpen} 
+        onOpenChange={setIsChatOpen}
+        portfolios={userPortfolios}
+      />
       {/* Header Section */}
       <div className="space-y-2">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
           <h1 className="text-3xl font-bold">
             {stockInfo.company_info?.name || ticker} ({stockInfo.symbol})
           </h1>
-          {additionalData.website && (
-            <a
-              href={additionalData.website}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center text-sm text-blue-500 hover:underline"
+          <div className="flex flex-col items-end gap-2">
+            {additionalData.website && (
+              <a
+                href={additionalData.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center text-sm text-blue-500 hover:underline"
+              >
+                Company Website <ExternalLink className="ml-1 h-4 w-4" />
+              </a>
+            )}
+            <Button 
+              variant="outline"
+              size="sm"
+              className="gap-2 text-sm text-muted-foreground hover:text-foreground"
+              onClick={() => setIsChatOpen(true)}
             >
-              Company Website <ExternalLink className="ml-1 h-4 w-4" />
-            </a>
-          )}
+              <MessageCircle className="h-4 w-4" />
+              <span>Ask Stocky</span>
+            </Button>
+          </div>
         </div>
         <div className="flex items-center gap-4">
           <span className="text-2xl font-bold">
