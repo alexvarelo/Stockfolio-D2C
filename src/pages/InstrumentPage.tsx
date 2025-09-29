@@ -68,7 +68,7 @@ interface AdditionalData {
 
 export function InstrumentPage() {
   const { ticker } = useParams<{ ticker: string }>();
-  const [showChatbot, setShowChatbot] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   
   const {
     data: response,
@@ -140,13 +140,12 @@ export function InstrumentPage() {
   };
 
   // Mock portfolios - replace with actual portfolio data from your app
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  
   const userPortfolios = [
     { id: 'portfolio1', name: 'My Portfolio' },
     { id: 'portfolio3', name: 'Growth' },
   ];
 
+  // The StockyChatDrawer is always rendered but controlled by isChatOpen
   return (
     <div className="space-y-6">
       <StockyChatDrawer 
