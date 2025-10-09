@@ -6,21 +6,27 @@
  * OpenAPI spec version: 1.0.0
  */
 import {
+  useMutation,
   useQuery
 } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
+  MutationFunction,
   QueryClient,
   QueryFunction,
   QueryKey,
   UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult
 } from '@tanstack/react-query';
 
 import type {
+  BatchNewsRequest,
+  BatchNewsResponse,
   CompanyInfo,
   ErrorResponse,
   GetHistoricalDataApiV1StockTickerHistoryGetParams,
@@ -37,6 +43,75 @@ import { useSendRequest } from '.././orvalSendRequest';
 
 
 /**
+ * Get news articles for multiple stock tickers in a single request.
+    
+    - **tickers**: List of stock ticker symbols (max 50)
+    - **limit_per_ticker**: Maximum number of news items per ticker (1-20)
+    - **days**: Number of days to look back for news (1-30)
+ * @summary Get news for multiple tickers
+ */
+export const getBatchNewsApiV1NewsBatchPost = (
+    batchNewsRequest: BatchNewsRequest,
+ signal?: AbortSignal
+) => {
+      
+      
+      return useSendRequest<BatchNewsResponse>(
+      {url: `/api/v1/news/batch`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: batchNewsRequest, signal
+    },
+      );
+    }
+  
+
+
+export const getGetBatchNewsApiV1NewsBatchPostMutationOptions = <TError = ErrorResponse | HTTPValidationError | ErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof getBatchNewsApiV1NewsBatchPost>>, TError,{data: BatchNewsRequest}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof getBatchNewsApiV1NewsBatchPost>>, TError,{data: BatchNewsRequest}, TContext> => {
+
+const mutationKey = ['getBatchNewsApiV1NewsBatchPost'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof getBatchNewsApiV1NewsBatchPost>>, {data: BatchNewsRequest}> = (props) => {
+          const {data} = props ?? {};
+
+          return  getBatchNewsApiV1NewsBatchPost(data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GetBatchNewsApiV1NewsBatchPostMutationResult = NonNullable<Awaited<ReturnType<typeof getBatchNewsApiV1NewsBatchPost>>>
+    export type GetBatchNewsApiV1NewsBatchPostMutationBody = BatchNewsRequest
+    export type GetBatchNewsApiV1NewsBatchPostMutationError = ErrorResponse | HTTPValidationError | ErrorResponse
+
+    /**
+ * @summary Get news for multiple tickers
+ */
+export const useGetBatchNewsApiV1NewsBatchPost = <TError = ErrorResponse | HTTPValidationError | ErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof getBatchNewsApiV1NewsBatchPost>>, TError,{data: BatchNewsRequest}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof getBatchNewsApiV1NewsBatchPost>>,
+        TError,
+        {data: BatchNewsRequest},
+        TContext
+      > => {
+
+      const mutationOptions = getGetBatchNewsApiV1NewsBatchPostMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    /**
  * Get market overview data including:
     - Top gainers
     - Top losers

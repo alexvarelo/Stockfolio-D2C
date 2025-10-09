@@ -6,6 +6,44 @@
  * OpenAPI spec version: 1.0.0
  */
 /**
+ * Maximum number of news items per ticker
+ */
+export type BatchNewsRequestLimitPerTicker = number | null;
+
+/**
+ * Number of days to look back for news
+ */
+export type BatchNewsRequestDays = number | null;
+
+/**
+ * Schema for batch news request
+ */
+export interface BatchNewsRequest {
+  /**
+   * List of stock ticker symbols
+   * @minItems 1
+   * @maxItems 50
+   */
+  tickers: string[];
+  /** Maximum number of news items per ticker */
+  limit_per_ticker?: BatchNewsRequestLimitPerTicker;
+  /** Number of days to look back for news */
+  days?: BatchNewsRequestDays;
+}
+
+/**
+ * Schema for batch news response
+ */
+export interface BatchNewsResponse {
+  /** List of news by ticker */
+  results: TickerNews[];
+  /** Total number of articles returned */
+  total_articles: number;
+  /** Response timestamp */
+  timestamp?: string;
+}
+
+/**
  * Business sector
  */
 export type CompanyInfoSector = string | null;
@@ -98,6 +136,38 @@ export interface CreateClientResponse {
   description?: CreateClientResponseDescription;
   /** Creation timestamp */
   created_at: string;
+}
+
+/**
+ * The query that was executed (if custom query)
+ */
+export type EquityScreenResponseQuery = unknown | null;
+
+/**
+ * The predefined screener used (if predefined)
+ */
+export type EquityScreenResponseScreener = string | null;
+
+/**
+ * Schema for equity screening response
+ */
+export interface EquityScreenResponse {
+  /** Total number of matching instruments */
+  total: number;
+  /** Number of instruments in this page */
+  count: number;
+  /** Current page number */
+  page: number;
+  /** Number of items per page */
+  page_size: number;
+  /** Total number of pages */
+  total_pages: number;
+  /** Matching instruments */
+  results: SearchResult[];
+  /** The query that was executed (if custom query) */
+  query?: EquityScreenResponseQuery;
+  /** The predefined screener used (if predefined) */
+  screener?: EquityScreenResponseScreener;
 }
 
 /**
@@ -269,6 +339,11 @@ export interface MarketDataResponse {
 }
 
 /**
+ * Unique identifier for the article
+ */
+export type NewsArticleId = string | null;
+
+/**
  * News publisher
  */
 export type NewsArticlePublisher = string | null;
@@ -291,9 +366,26 @@ export type NewsArticleThumbnailAnyOf = { [key: string]: unknown };
 export type NewsArticleThumbnail = NewsArticleThumbnailAnyOf | null;
 
 /**
+ * Type of content (ARTICLE, VIDEO, etc.)
+ */
+export type NewsArticleContentType = string | null;
+
+/**
+ * Short summary of the article
+ */
+export type NewsArticleSummary = string | null;
+
+/**
+ * Full description or content preview
+ */
+export type NewsArticleDescription = string | null;
+
+/**
  * Schema for news articles related to stocks
  */
 export interface NewsArticle {
+  /** Unique identifier for the article */
+  id?: NewsArticleId;
   /** Article title */
   title: string;
   /** News publisher */
@@ -306,7 +398,40 @@ export interface NewsArticle {
   thumbnail?: NewsArticleThumbnail;
   /** List of related ticker symbols */
   related_tickers?: string[];
+  /** Type of content (ARTICLE, VIDEO, etc.) */
+  content_type?: NewsArticleContentType;
+  /** Short summary of the article */
+  summary?: NewsArticleSummary;
+  /** Full description or content preview */
+  description?: NewsArticleDescription;
+  /** Whether the content is a video */
+  is_video?: boolean;
 }
+
+/**
+ * Predefined screener options
+ */
+export type PredefinedScreener = typeof PredefinedScreener[keyof typeof PredefinedScreener];
+
+
+// eslint-disable-next-line @typescript-eslint/no-redeclare
+export const PredefinedScreener = {
+  aggressive_small_caps: 'aggressive_small_caps',
+  day_gainers: 'day_gainers',
+  day_losers: 'day_losers',
+  growth_technology_stocks: 'growth_technology_stocks',
+  most_actives: 'most_actives',
+  most_shorted_stocks: 'most_shorted_stocks',
+  small_cap_gainers: 'small_cap_gainers',
+  undervalued_growth_stocks: 'undervalued_growth_stocks',
+  undervalued_large_caps: 'undervalued_large_caps',
+  conservative_foreign_funds: 'conservative_foreign_funds',
+  high_yield_bond: 'high_yield_bond',
+  portfolio_anchors: 'portfolio_anchors',
+  solid_large_growth_funds: 'solid_large_growth_funds',
+  solid_midcap_growth_funds: 'solid_midcap_growth_funds',
+  top_mutual_funds: 'top_mutual_funds',
+} as const;
 
 /**
  * Current stock price
@@ -423,14 +548,124 @@ export type SearchResultExchange = string | null;
 export type SearchResultType = string | null;
 
 /**
- * ISIN code
+ * Currency
  */
-export type SearchResultIsin = string | null;
+export type SearchResultCurrency = string | null;
 
 /**
  * Country of listing
  */
 export type SearchResultCountry = string | null;
+
+/**
+ * Current regular market price
+ */
+export type SearchResultRegularMarketPrice = number | null;
+
+/**
+ * Price change
+ */
+export type SearchResultRegularMarketChange = number | null;
+
+/**
+ * Price change percentage
+ */
+export type SearchResultRegularMarketChangePercent = number | null;
+
+/**
+ * Intraday price change
+ */
+export type SearchResultIntradayPriceChange = number | null;
+
+/**
+ * Bid price
+ */
+export type SearchResultBid = number | null;
+
+/**
+ * Ask price
+ */
+export type SearchResultAsk = number | null;
+
+/**
+ * 52-week high
+ */
+export type SearchResultFiftyTwoWeekHigh = number | null;
+
+/**
+ * 52-week low
+ */
+export type SearchResultFiftyTwoWeekLow = number | null;
+
+/**
+ * 52-week change percentage
+ */
+export type SearchResultFiftyTwoWeekChangePercent = number | null;
+
+/**
+ * Business sector
+ */
+export type SearchResultSector = string | null;
+
+/**
+ * Industry
+ */
+export type SearchResultIndustry = string | null;
+
+/**
+ * Market capitalization
+ */
+export type SearchResultMarketCap = number | null;
+
+/**
+ * Price-to-earnings ratio
+ */
+export type SearchResultPeRatio = number | null;
+
+/**
+ * Forward P/E ratio
+ */
+export type SearchResultForwardPe = number | null;
+
+/**
+ * Price-to-book ratio
+ */
+export type SearchResultPriceToBook = number | null;
+
+/**
+ * EPS (trailing 12 months)
+ */
+export type SearchResultEpsTrailingTwelveMonths = number | null;
+
+/**
+ * Forward EPS
+ */
+export type SearchResultEpsForward = number | null;
+
+/**
+ * EPS current year
+ */
+export type SearchResultEpsCurrentYear = number | null;
+
+/**
+ * Earnings growth rate
+ */
+export type SearchResultEarningsGrowth = number | null;
+
+/**
+ * Average analyst rating
+ */
+export type SearchResultAverageAnalystRating = string | null;
+
+/**
+ * Regular market volume
+ */
+export type SearchResultRegularMarketVolume = number | null;
+
+/**
+ * Average daily volume (3 months)
+ */
+export type SearchResultAverageDailyVolume3Month = number | null;
 
 /**
  * Schema for search results
@@ -444,10 +679,54 @@ export interface SearchResult {
   exchange?: SearchResultExchange;
   /** Instrument type */
   type?: SearchResultType;
-  /** ISIN code */
-  isin?: SearchResultIsin;
+  /** Currency */
+  currency?: SearchResultCurrency;
   /** Country of listing */
   country?: SearchResultCountry;
+  /** Current regular market price */
+  regular_market_price?: SearchResultRegularMarketPrice;
+  /** Price change */
+  regular_market_change?: SearchResultRegularMarketChange;
+  /** Price change percentage */
+  regular_market_change_percent?: SearchResultRegularMarketChangePercent;
+  /** Intraday price change */
+  intraday_price_change?: SearchResultIntradayPriceChange;
+  /** Bid price */
+  bid?: SearchResultBid;
+  /** Ask price */
+  ask?: SearchResultAsk;
+  /** 52-week high */
+  fifty_two_week_high?: SearchResultFiftyTwoWeekHigh;
+  /** 52-week low */
+  fifty_two_week_low?: SearchResultFiftyTwoWeekLow;
+  /** 52-week change percentage */
+  fifty_two_week_change_percent?: SearchResultFiftyTwoWeekChangePercent;
+  /** Business sector */
+  sector?: SearchResultSector;
+  /** Industry */
+  industry?: SearchResultIndustry;
+  /** Market capitalization */
+  market_cap?: SearchResultMarketCap;
+  /** Price-to-earnings ratio */
+  pe_ratio?: SearchResultPeRatio;
+  /** Forward P/E ratio */
+  forward_pe?: SearchResultForwardPe;
+  /** Price-to-book ratio */
+  price_to_book?: SearchResultPriceToBook;
+  /** EPS (trailing 12 months) */
+  eps_trailing_twelve_months?: SearchResultEpsTrailingTwelveMonths;
+  /** Forward EPS */
+  eps_forward?: SearchResultEpsForward;
+  /** EPS current year */
+  eps_current_year?: SearchResultEpsCurrentYear;
+  /** Earnings growth rate */
+  earnings_growth?: SearchResultEarningsGrowth;
+  /** Average analyst rating */
+  average_analyst_rating?: SearchResultAverageAnalystRating;
+  /** Regular market volume */
+  regular_market_volume?: SearchResultRegularMarketVolume;
+  /** Average daily volume (3 months) */
+  average_daily_volume_3_month?: SearchResultAverageDailyVolume3Month;
 }
 
 export type StockInfoAdditionalDataAnyOf = { [key: string]: unknown };
@@ -471,6 +750,16 @@ export interface StockInfo {
   news?: NewsArticle[];
   /** Additional financial data */
   additional_data?: StockInfoAdditionalData;
+}
+
+/**
+ * Schema for news related to a specific ticker
+ */
+export interface TickerNews {
+  /** Stock ticker symbol */
+  ticker: string;
+  /** List of news articles */
+  news: NewsArticle[];
 }
 
 /**
@@ -504,6 +793,36 @@ export interface ValidationError {
   msg: string;
   type: string;
 }
+
+export type ScreenEquitiesApiV1ScreenPostParams = {
+/**
+ * Page number (1-indexed)
+ * @minimum 1
+ */
+page?: number;
+/**
+ * Number of results per page
+ * @minimum 1
+ * @maximum 100
+ */
+page_size?: number;
+};
+
+export type ScreenEquitiesApiV1ScreenPostBody = { [key: string]: unknown };
+
+export type ScreenPredefinedApiV1ScreenPredefinedScreenerNameGetParams = {
+/**
+ * Page number (1-indexed)
+ * @minimum 1
+ */
+page?: number;
+/**
+ * Number of results per page
+ * @minimum 1
+ * @maximum 100
+ */
+page_size?: number;
+};
 
 export type SearchInstrumentsApiV1SearchGetParams = {
 /**

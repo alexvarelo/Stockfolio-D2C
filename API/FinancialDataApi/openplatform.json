@@ -45,22 +45,22 @@
               }
             }
           },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -100,22 +100,22 @@
           "201": {
             "description": "Client created successfully"
           },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -136,9 +136,7 @@
             "description": "Client information",
             "content": {
               "application/json": {
-                "schema": {
-
-                }
+                "schema": {}
               }
             }
           },
@@ -168,6 +166,215 @@
             "HTTPBearer": []
           }
         ]
+      }
+    },
+    "/api/v1/screen": {
+      "post": {
+        "tags": [
+          "search"
+        ],
+        "summary": "Screen equities based on complex criteria",
+        "description": "Screen for stocks and other financial instruments based on complex filtering criteria.\n    \n    ## Supported Operators:\n    - **eq**: equals\n    - **ne**: not equals\n    - **gt**: greater than\n    - **lt**: less than\n    - **gte**: greater than or equal to\n    - **lte**: less than or equal to\n    - **contains**: string contains\n    - **is-in**: value is in a list\n    - **starts-with**: string starts with\n    - **ends-with**: string ends with\n    - **and**: logical AND (combine multiple conditions)\n    - **or**: logical OR (combine multiple conditions)\n    \n    ## Common Filter Fields:\n    \n    ### Region:\n    ar, at, au, be, br, ca, ch, cl, cn, co, cz, de, dk, ee, eg, es, fi, fr, gb, gr, hk, hu, id, ie, il, in, is, it, jp, kr, kw, lk, lt, lv, mx, my, nl, no, nz, pe, ph, pk, pl, pt, qa, ro, ru, sa, se, sg, sr, sw, th, tr, tw, us, ve, vn, za\n    \n    ### Exchange (by region):\n    - **US**: ASE, BTS, CXI, NCM, NGM, NMS, NYQ, OEM, OQB, OQX, PCX, PNK, YHD\n    - **CA**: CNQ, NEO, TOR, VAN\n    - **GB**: AQS, IOB, LSE\n    - **DE**: BER, DUS, FRA, GER, HAM, MUN, STU\n    - **JP**: FKA, JPX, SAP\n    - **CN**: SHH, SHZ\n    - **HK**: HKG\n    - **AU**: ASX\n    - **IN**: BSE, NSI\n    - **KR**: KOE, KSC\n    - **TW**: TAI, TWO\n    - And many more...\n    \n    ### Sector:\n    - Basic Materials\n    - Communication Services\n    - Consumer Cyclical\n    - Consumer Defensive\n    - Energy\n    - Financial Services\n    - Healthcare\n    - Industrials\n    - Real Estate\n    - Technology\n    - Utilities\n    \n    ### Industry (examples by sector):\n    - **Basic Materials**: Agricultural Inputs, Aluminum, Chemicals, Copper, Gold, Steel\n    - **Technology**: Software Application, Semiconductors, Computer Hardware, Consumer Electronics\n    - **Healthcare**: Biotechnology, Drug Manufacturers, Medical Devices, Pharmaceutical Retailers\n    - **Financial Services**: Banks Regional, Asset Management, Insurance, Capital Markets\n    - **Energy**: Oil Gas E P, Oil Gas Refining Marketing, Solar\n    - And many more...\n    \n    ### Financial Metrics:\n    - **epsgrowth.lasttwelvemonths**: EPS growth (trailing 12 months)\n    - **intradaymarketcap**: Market capitalization\n    - **peratio.lasttwelvemonths**: P/E ratio (TTM)\n    - **pricebookratio.quarterly**: Price-to-book ratio\n    - **returnonequity.lasttwelvemonths**: ROE (TTM)\n    - **totalrevenues.lasttwelvemonths**: Total revenues (TTM)\n    - **avgdailyvol3m**: Average daily volume (3 months)\n    - **beta**: Stock beta\n    \n    ## Example Query:\n    ```json\n    {\n      \"operator\": \"and\",\n      \"conditions\": [\n        {\"operator\": \"is-in\", \"field\": \"exchange\", \"value\": [\"NMS\", \"NYQ\"]},\n        {\"operator\": \"eq\", \"field\": \"sector\", \"value\": \"Technology\"},\n        {\"operator\": \"lt\", \"field\": \"epsgrowth.lasttwelvemonths\", \"value\": 15},\n        {\"operator\": \"gt\", \"field\": \"intradaymarketcap\", \"value\": 1000000000}\n      ]\n    }\n    ```",
+        "operationId": "screen_equities_api_v1_screen_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Page number (1-indexed)",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Page number (1-indexed)"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Number of results per page",
+              "default": 20,
+              "title": "Page Size"
+            },
+            "description": "Number of results per page"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "title": "Query"
+              },
+              "example": {
+                "operator": "and",
+                "conditions": [
+                  {
+                    "operator": "is-in",
+                    "field": "exchange",
+                    "value": [
+                      "NMS",
+                      "NYQ"
+                    ]
+                  },
+                  {
+                    "operator": "lt",
+                    "field": "epsgrowth.lasttwelvemonths",
+                    "value": 15
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Screening results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EquityScreenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Screening service error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/screen/predefined/{screener_name}": {
+      "get": {
+        "tags": [
+          "search"
+        ],
+        "summary": "Use predefined equity screeners",
+        "description": "Use Yahoo Finance's predefined screeners to find stocks.\n    \n    Available screeners:\n    - **aggressive_small_caps**: Small cap stocks with high growth potential\n    - **day_gainers**: Stocks with the highest percentage gains today\n    - **day_losers**: Stocks with the highest percentage losses today\n    - **growth_technology_stocks**: Technology stocks with strong growth metrics\n    - **most_actives**: Most actively traded stocks by volume\n    - **most_shorted_stocks**: Stocks with the highest short interest\n    - **small_cap_gainers**: Small cap stocks with recent gains\n    - **undervalued_growth_stocks**: Growth stocks trading below their intrinsic value\n    - **undervalued_large_caps**: Large cap stocks trading below their intrinsic value\n    - **conservative_foreign_funds**: Conservative international mutual funds\n    - **high_yield_bond**: High yield bond funds\n    - **portfolio_anchors**: Stable, dividend-paying stocks\n    - **solid_large_growth_funds**: Large cap growth mutual funds\n    - **solid_midcap_growth_funds**: Mid cap growth mutual funds\n    - **top_mutual_funds**: Top performing mutual funds",
+        "operationId": "screen_predefined_api_v1_screen_predefined__screener_name__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "screener_name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/PredefinedScreener"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Page number (1-indexed)",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Page number (1-indexed)"
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "description": "Number of results per page",
+              "default": 20,
+              "title": "Page Size"
+            },
+            "description": "Number of results per page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Screening results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EquityScreenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid screener name",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Screening service error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/search": {
@@ -232,22 +439,22 @@
               }
             }
           },
-          "500": {
-            "description": "Search service error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Search service error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -341,8 +548,60 @@
               }
             }
           },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
           "500": {
             "description": "Search service error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/news/batch": {
+      "post": {
+        "tags": [
+          "stock"
+        ],
+        "summary": "Get news for multiple tickers",
+        "description": "Get news articles for multiple stock tickers in a single request.\n    \n    - **tickers**: List of stock ticker symbols (max 50)\n    - **limit_per_ticker**: Maximum number of news items per ticker (1-20)\n    - **days**: Number of days to look back for news (1-30)",
+        "operationId": "get_batch_news_api_v1_news_batch_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchNewsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "News articles for the requested tickers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchNewsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters",
             "content": {
               "application/json": {
                 "schema": {
@@ -360,8 +619,23 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "YFinance service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/market": {
@@ -448,22 +722,22 @@
               }
             }
           },
-          "503": {
-            "description": "YFinance service unavailable",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "YFinance service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -518,22 +792,22 @@
               }
             }
           },
-          "503": {
-            "description": "YFinance service unavailable",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "YFinance service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -590,22 +864,22 @@
               }
             }
           },
-          "503": {
-            "description": "YFinance service unavailable",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "YFinance service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -660,22 +934,22 @@
               }
             }
           },
-          "503": {
-            "description": "YFinance service unavailable",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "YFinance service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -752,22 +1026,22 @@
               }
             }
           },
-          "503": {
-            "description": "YFinance service unavailable",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
           "422": {
             "description": "Validation Error",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "YFinance service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -797,6 +1071,86 @@
   },
   "components": {
     "schemas": {
+      "BatchNewsRequest": {
+        "properties": {
+          "tickers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 50,
+            "minItems": 1,
+            "title": "Tickers",
+            "description": "List of stock ticker symbols"
+          },
+          "limit_per_ticker": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 20,
+                "minimum": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limit Per Ticker",
+            "description": "Maximum number of news items per ticker",
+            "default": 5
+          },
+          "days": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 30,
+                "minimum": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days",
+            "description": "Number of days to look back for news",
+            "default": 7
+          }
+        },
+        "type": "object",
+        "required": [
+          "tickers"
+        ],
+        "title": "BatchNewsRequest",
+        "description": "Schema for batch news request"
+      },
+      "BatchNewsResponse": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/TickerNews"
+            },
+            "type": "array",
+            "title": "Results",
+            "description": "List of news by ticker"
+          },
+          "total_articles": {
+            "type": "integer",
+            "title": "Total Articles",
+            "description": "Total number of articles returned"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "description": "Response timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "results",
+          "total_articles"
+        ],
+        "title": "BatchNewsResponse",
+        "description": "Schema for batch news response"
+      },
       "CompanyInfo": {
         "properties": {
           "symbol": {
@@ -974,6 +1328,76 @@
         ],
         "title": "CreateClientResponse",
         "description": "Schema for client creation response"
+      },
+      "EquityScreenResponse": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "description": "Total number of matching instruments"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "Number of instruments in this page"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page",
+            "description": "Current page number"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size",
+            "description": "Number of items per page"
+          },
+          "total_pages": {
+            "type": "integer",
+            "title": "Total Pages",
+            "description": "Total number of pages"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/SearchResult"
+            },
+            "type": "array",
+            "title": "Results",
+            "description": "Matching instruments"
+          },
+          "query": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Query",
+            "description": "The query that was executed (if custom query)"
+          },
+          "screener": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Screener",
+            "description": "The predefined screener used (if predefined)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "count",
+          "page",
+          "page_size",
+          "total_pages",
+          "results"
+        ],
+        "title": "EquityScreenResponse",
+        "description": "Schema for equity screening response"
       },
       "ErrorResponse": {
         "properties": {
@@ -1317,6 +1741,18 @@
       },
       "NewsArticle": {
         "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id",
+            "description": "Unique identifier for the article"
+          },
           "title": {
             "type": "string",
             "title": "Title",
@@ -1378,6 +1814,48 @@
             "type": "array",
             "title": "Related Tickers",
             "description": "List of related ticker symbols"
+          },
+          "content_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Type",
+            "description": "Type of content (ARTICLE, VIDEO, etc.)"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary",
+            "description": "Short summary of the article"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description",
+            "description": "Full description or content preview"
+          },
+          "is_video": {
+            "type": "boolean",
+            "title": "Is Video",
+            "description": "Whether the content is a video",
+            "default": false
           }
         },
         "type": "object",
@@ -1386,6 +1864,28 @@
         ],
         "title": "NewsArticle",
         "description": "Schema for news articles related to stocks"
+      },
+      "PredefinedScreener": {
+        "type": "string",
+        "enum": [
+          "aggressive_small_caps",
+          "day_gainers",
+          "day_losers",
+          "growth_technology_stocks",
+          "most_actives",
+          "most_shorted_stocks",
+          "small_cap_gainers",
+          "undervalued_growth_stocks",
+          "undervalued_large_caps",
+          "conservative_foreign_funds",
+          "high_yield_bond",
+          "portfolio_anchors",
+          "solid_large_growth_funds",
+          "solid_midcap_growth_funds",
+          "top_mutual_funds"
+        ],
+        "title": "PredefinedScreener",
+        "description": "Predefined screener options"
       },
       "PriceData": {
         "properties": {
@@ -1613,7 +2113,7 @@
             "title": "Type",
             "description": "Instrument type"
           },
-          "isin": {
+          "currency": {
             "anyOf": [
               {
                 "type": "string"
@@ -1622,8 +2122,8 @@
                 "type": "null"
               }
             ],
-            "title": "Isin",
-            "description": "ISIN code"
+            "title": "Currency",
+            "description": "Currency"
           },
           "country": {
             "anyOf": [
@@ -1636,6 +2136,270 @@
             ],
             "title": "Country",
             "description": "Country of listing"
+          },
+          "regular_market_price": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Regular Market Price",
+            "description": "Current regular market price"
+          },
+          "regular_market_change": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Regular Market Change",
+            "description": "Price change"
+          },
+          "regular_market_change_percent": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Regular Market Change Percent",
+            "description": "Price change percentage"
+          },
+          "intraday_price_change": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intraday Price Change",
+            "description": "Intraday price change"
+          },
+          "bid": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bid",
+            "description": "Bid price"
+          },
+          "ask": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ask",
+            "description": "Ask price"
+          },
+          "fifty_two_week_high": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fifty Two Week High",
+            "description": "52-week high"
+          },
+          "fifty_two_week_low": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fifty Two Week Low",
+            "description": "52-week low"
+          },
+          "fifty_two_week_change_percent": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fifty Two Week Change Percent",
+            "description": "52-week change percentage"
+          },
+          "sector": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sector",
+            "description": "Business sector"
+          },
+          "industry": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Industry",
+            "description": "Industry"
+          },
+          "market_cap": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Market Cap",
+            "description": "Market capitalization"
+          },
+          "pe_ratio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pe Ratio",
+            "description": "Price-to-earnings ratio"
+          },
+          "forward_pe": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Forward Pe",
+            "description": "Forward P/E ratio"
+          },
+          "price_to_book": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Price To Book",
+            "description": "Price-to-book ratio"
+          },
+          "eps_trailing_twelve_months": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eps Trailing Twelve Months",
+            "description": "EPS (trailing 12 months)"
+          },
+          "eps_forward": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eps Forward",
+            "description": "Forward EPS"
+          },
+          "eps_current_year": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eps Current Year",
+            "description": "EPS current year"
+          },
+          "earnings_growth": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Earnings Growth",
+            "description": "Earnings growth rate"
+          },
+          "average_analyst_rating": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Analyst Rating",
+            "description": "Average analyst rating"
+          },
+          "regular_market_volume": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Regular Market Volume",
+            "description": "Regular market volume"
+          },
+          "average_daily_volume_3_month": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Average Daily Volume 3 Month",
+            "description": "Average daily volume (3 months)"
           }
         },
         "type": "object",
@@ -1698,6 +2462,30 @@
         ],
         "title": "StockInfo",
         "description": "Schema for comprehensive stock information"
+      },
+      "TickerNews": {
+        "properties": {
+          "ticker": {
+            "type": "string",
+            "title": "Ticker",
+            "description": "Stock ticker symbol"
+          },
+          "news": {
+            "items": {
+              "$ref": "#/components/schemas/NewsArticle"
+            },
+            "type": "array",
+            "title": "News",
+            "description": "List of news articles"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ticker",
+          "news"
+        ],
+        "title": "TickerNews",
+        "description": "Schema for news related to a specific ticker"
       },
       "TokenRequest": {
         "properties": {

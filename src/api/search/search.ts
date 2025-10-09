@@ -6,23 +6,32 @@
  * OpenAPI spec version: 1.0.0
  */
 import {
+  useMutation,
   useQuery
 } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
+  MutationFunction,
   QueryClient,
   QueryFunction,
   QueryKey,
   UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult
 } from '@tanstack/react-query';
 
 import type {
+  EquityScreenResponse,
   ErrorResponse,
   HTTPValidationError,
+  PredefinedScreener,
+  ScreenEquitiesApiV1ScreenPostBody,
+  ScreenEquitiesApiV1ScreenPostParams,
+  ScreenPredefinedApiV1ScreenPredefinedScreenerNameGetParams,
   SearchInstrumentsApiV1SearchGetParams,
   SearchResponse,
   SearchResult
@@ -30,6 +39,263 @@ import type {
 
 import { useSendRequest } from '.././orvalSendRequest';
 
+
+
+
+/**
+ * Screen for stocks and other financial instruments based on complex filtering criteria.
+    
+    ## Supported Operators:
+    - **eq**: equals
+    - **ne**: not equals
+    - **gt**: greater than
+    - **lt**: less than
+    - **gte**: greater than or equal to
+    - **lte**: less than or equal to
+    - **contains**: string contains
+    - **is-in**: value is in a list
+    - **starts-with**: string starts with
+    - **ends-with**: string ends with
+    - **and**: logical AND (combine multiple conditions)
+    - **or**: logical OR (combine multiple conditions)
+    
+    ## Common Filter Fields:
+    
+    ### Region:
+    ar, at, au, be, br, ca, ch, cl, cn, co, cz, de, dk, ee, eg, es, fi, fr, gb, gr, hk, hu, id, ie, il, in, is, it, jp, kr, kw, lk, lt, lv, mx, my, nl, no, nz, pe, ph, pk, pl, pt, qa, ro, ru, sa, se, sg, sr, sw, th, tr, tw, us, ve, vn, za
+    
+    ### Exchange (by region):
+    - **US**: ASE, BTS, CXI, NCM, NGM, NMS, NYQ, OEM, OQB, OQX, PCX, PNK, YHD
+    - **CA**: CNQ, NEO, TOR, VAN
+    - **GB**: AQS, IOB, LSE
+    - **DE**: BER, DUS, FRA, GER, HAM, MUN, STU
+    - **JP**: FKA, JPX, SAP
+    - **CN**: SHH, SHZ
+    - **HK**: HKG
+    - **AU**: ASX
+    - **IN**: BSE, NSI
+    - **KR**: KOE, KSC
+    - **TW**: TAI, TWO
+    - And many more...
+    
+    ### Sector:
+    - Basic Materials
+    - Communication Services
+    - Consumer Cyclical
+    - Consumer Defensive
+    - Energy
+    - Financial Services
+    - Healthcare
+    - Industrials
+    - Real Estate
+    - Technology
+    - Utilities
+    
+    ### Industry (examples by sector):
+    - **Basic Materials**: Agricultural Inputs, Aluminum, Chemicals, Copper, Gold, Steel
+    - **Technology**: Software Application, Semiconductors, Computer Hardware, Consumer Electronics
+    - **Healthcare**: Biotechnology, Drug Manufacturers, Medical Devices, Pharmaceutical Retailers
+    - **Financial Services**: Banks Regional, Asset Management, Insurance, Capital Markets
+    - **Energy**: Oil Gas E P, Oil Gas Refining Marketing, Solar
+    - And many more...
+    
+    ### Financial Metrics:
+    - **epsgrowth.lasttwelvemonths**: EPS growth (trailing 12 months)
+    - **intradaymarketcap**: Market capitalization
+    - **peratio.lasttwelvemonths**: P/E ratio (TTM)
+    - **pricebookratio.quarterly**: Price-to-book ratio
+    - **returnonequity.lasttwelvemonths**: ROE (TTM)
+    - **totalrevenues.lasttwelvemonths**: Total revenues (TTM)
+    - **avgdailyvol3m**: Average daily volume (3 months)
+    - **beta**: Stock beta
+    
+    ## Example Query:
+    ```json
+    {
+      "operator": "and",
+      "conditions": [
+        {"operator": "is-in", "field": "exchange", "value": ["NMS", "NYQ"]},
+        {"operator": "eq", "field": "sector", "value": "Technology"},
+        {"operator": "lt", "field": "epsgrowth.lasttwelvemonths", "value": 15},
+        {"operator": "gt", "field": "intradaymarketcap", "value": 1000000000}
+      ]
+    }
+    ```
+ * @summary Screen equities based on complex criteria
+ */
+export const screenEquitiesApiV1ScreenPost = (
+    screenEquitiesApiV1ScreenPostBody: ScreenEquitiesApiV1ScreenPostBody,
+    params?: ScreenEquitiesApiV1ScreenPostParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return useSendRequest<EquityScreenResponse>(
+      {url: `/api/v1/screen`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: screenEquitiesApiV1ScreenPostBody,
+        params, signal
+    },
+      );
+    }
+  
+
+
+export const getScreenEquitiesApiV1ScreenPostMutationOptions = <TError = ErrorResponse | HTTPValidationError | ErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof screenEquitiesApiV1ScreenPost>>, TError,{data: ScreenEquitiesApiV1ScreenPostBody;params?: ScreenEquitiesApiV1ScreenPostParams}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof screenEquitiesApiV1ScreenPost>>, TError,{data: ScreenEquitiesApiV1ScreenPostBody;params?: ScreenEquitiesApiV1ScreenPostParams}, TContext> => {
+
+const mutationKey = ['screenEquitiesApiV1ScreenPost'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof screenEquitiesApiV1ScreenPost>>, {data: ScreenEquitiesApiV1ScreenPostBody;params?: ScreenEquitiesApiV1ScreenPostParams}> = (props) => {
+          const {data,params} = props ?? {};
+
+          return  screenEquitiesApiV1ScreenPost(data,params,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ScreenEquitiesApiV1ScreenPostMutationResult = NonNullable<Awaited<ReturnType<typeof screenEquitiesApiV1ScreenPost>>>
+    export type ScreenEquitiesApiV1ScreenPostMutationBody = ScreenEquitiesApiV1ScreenPostBody
+    export type ScreenEquitiesApiV1ScreenPostMutationError = ErrorResponse | HTTPValidationError | ErrorResponse
+
+    /**
+ * @summary Screen equities based on complex criteria
+ */
+export const useScreenEquitiesApiV1ScreenPost = <TError = ErrorResponse | HTTPValidationError | ErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof screenEquitiesApiV1ScreenPost>>, TError,{data: ScreenEquitiesApiV1ScreenPostBody;params?: ScreenEquitiesApiV1ScreenPostParams}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof screenEquitiesApiV1ScreenPost>>,
+        TError,
+        {data: ScreenEquitiesApiV1ScreenPostBody;params?: ScreenEquitiesApiV1ScreenPostParams},
+        TContext
+      > => {
+
+      const mutationOptions = getScreenEquitiesApiV1ScreenPostMutationOptions(options);
+
+      return useMutation(mutationOptions , queryClient);
+    }
+    /**
+ * Use Yahoo Finance's predefined screeners to find stocks.
+    
+    Available screeners:
+    - **aggressive_small_caps**: Small cap stocks with high growth potential
+    - **day_gainers**: Stocks with the highest percentage gains today
+    - **day_losers**: Stocks with the highest percentage losses today
+    - **growth_technology_stocks**: Technology stocks with strong growth metrics
+    - **most_actives**: Most actively traded stocks by volume
+    - **most_shorted_stocks**: Stocks with the highest short interest
+    - **small_cap_gainers**: Small cap stocks with recent gains
+    - **undervalued_growth_stocks**: Growth stocks trading below their intrinsic value
+    - **undervalued_large_caps**: Large cap stocks trading below their intrinsic value
+    - **conservative_foreign_funds**: Conservative international mutual funds
+    - **high_yield_bond**: High yield bond funds
+    - **portfolio_anchors**: Stable, dividend-paying stocks
+    - **solid_large_growth_funds**: Large cap growth mutual funds
+    - **solid_midcap_growth_funds**: Mid cap growth mutual funds
+    - **top_mutual_funds**: Top performing mutual funds
+ * @summary Use predefined equity screeners
+ */
+export const screenPredefinedApiV1ScreenPredefinedScreenerNameGet = (
+    screenerName: PredefinedScreener,
+    params?: ScreenPredefinedApiV1ScreenPredefinedScreenerNameGetParams,
+ signal?: AbortSignal
+) => {
+      
+      
+      return useSendRequest<EquityScreenResponse>(
+      {url: `/api/v1/screen/predefined/${screenerName}`, method: 'GET',
+        params, signal
+    },
+      );
+    }
+  
+
+export const getScreenPredefinedApiV1ScreenPredefinedScreenerNameGetQueryKey = (screenerName?: PredefinedScreener,
+    params?: ScreenPredefinedApiV1ScreenPredefinedScreenerNameGetParams,) => {
+    return [`/api/v1/screen/predefined/${screenerName}`, ...(params ? [params]: [])] as const;
+    }
+
+    
+export const getScreenPredefinedApiV1ScreenPredefinedScreenerNameGetQueryOptions = <TData = Awaited<ReturnType<typeof screenPredefinedApiV1ScreenPredefinedScreenerNameGet>>, TError = ErrorResponse | HTTPValidationError | ErrorResponse>(screenerName: PredefinedScreener,
+    params?: ScreenPredefinedApiV1ScreenPredefinedScreenerNameGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof screenPredefinedApiV1ScreenPredefinedScreenerNameGet>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getScreenPredefinedApiV1ScreenPredefinedScreenerNameGetQueryKey(screenerName,params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof screenPredefinedApiV1ScreenPredefinedScreenerNameGet>>> = ({ signal }) => screenPredefinedApiV1ScreenPredefinedScreenerNameGet(screenerName,params, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(screenerName), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof screenPredefinedApiV1ScreenPredefinedScreenerNameGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+}
+
+export type ScreenPredefinedApiV1ScreenPredefinedScreenerNameGetQueryResult = NonNullable<Awaited<ReturnType<typeof screenPredefinedApiV1ScreenPredefinedScreenerNameGet>>>
+export type ScreenPredefinedApiV1ScreenPredefinedScreenerNameGetQueryError = ErrorResponse | HTTPValidationError | ErrorResponse
+
+
+export function useScreenPredefinedApiV1ScreenPredefinedScreenerNameGet<TData = Awaited<ReturnType<typeof screenPredefinedApiV1ScreenPredefinedScreenerNameGet>>, TError = ErrorResponse | HTTPValidationError | ErrorResponse>(
+ screenerName: PredefinedScreener,
+    params: undefined |  ScreenPredefinedApiV1ScreenPredefinedScreenerNameGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof screenPredefinedApiV1ScreenPredefinedScreenerNameGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof screenPredefinedApiV1ScreenPredefinedScreenerNameGet>>,
+          TError,
+          Awaited<ReturnType<typeof screenPredefinedApiV1ScreenPredefinedScreenerNameGet>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useScreenPredefinedApiV1ScreenPredefinedScreenerNameGet<TData = Awaited<ReturnType<typeof screenPredefinedApiV1ScreenPredefinedScreenerNameGet>>, TError = ErrorResponse | HTTPValidationError | ErrorResponse>(
+ screenerName: PredefinedScreener,
+    params?: ScreenPredefinedApiV1ScreenPredefinedScreenerNameGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof screenPredefinedApiV1ScreenPredefinedScreenerNameGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof screenPredefinedApiV1ScreenPredefinedScreenerNameGet>>,
+          TError,
+          Awaited<ReturnType<typeof screenPredefinedApiV1ScreenPredefinedScreenerNameGet>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useScreenPredefinedApiV1ScreenPredefinedScreenerNameGet<TData = Awaited<ReturnType<typeof screenPredefinedApiV1ScreenPredefinedScreenerNameGet>>, TError = ErrorResponse | HTTPValidationError | ErrorResponse>(
+ screenerName: PredefinedScreener,
+    params?: ScreenPredefinedApiV1ScreenPredefinedScreenerNameGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof screenPredefinedApiV1ScreenPredefinedScreenerNameGet>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+/**
+ * @summary Use predefined equity screeners
+ */
+
+export function useScreenPredefinedApiV1ScreenPredefinedScreenerNameGet<TData = Awaited<ReturnType<typeof screenPredefinedApiV1ScreenPredefinedScreenerNameGet>>, TError = ErrorResponse | HTTPValidationError | ErrorResponse>(
+ screenerName: PredefinedScreener,
+    params?: ScreenPredefinedApiV1ScreenPredefinedScreenerNameGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof screenPredefinedApiV1ScreenPredefinedScreenerNameGet>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
+
+  const queryOptions = getScreenPredefinedApiV1ScreenPredefinedScreenerNameGetQueryOptions(screenerName,params,options)
+
+  const query = useQuery(queryOptions , queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
 
 
 
