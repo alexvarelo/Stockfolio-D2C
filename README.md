@@ -1,10 +1,16 @@
-# Stockfolio - Social Stock Portfolio Manager
+<div align="center">
+  <img src="public/stocky_blue_background.png" alt="Stocky Logo" width="100">
+  
+  # 📈 Stocky - Social Stock Portfolio Manager
+</div>
 
 ## Overview
 
-Stockfolio is a comprehensive stock portfolio management platform that combines portfolio tracking with social features, allowing users to manage their investments, research stocks, and connect with other investors. The platform provides detailed stock market data, portfolio analytics, and a social layer for users to follow and learn from other investors' portfolios.
+Stocky is a comprehensive stock portfolio management platform that combines portfolio tracking with social features, allowing users to manage their investments, research stocks, and connect with other investors. The platform provides detailed stock market data, portfolio analytics, and a social layer for users to follow and learn from other investors' portfolios.
 
-## Features
+> **Note**: 🚀 Stocky was previously known as Stockfolio. We've rebranded to better reflect our focus on simplicity and efficiency in stock portfolio management.
+
+## ✨ Features
 
 - **Portfolio Management**: Track your stock investments with real-time performance metrics
 - **Social Integration**: Follow other investors and discover their portfolios
@@ -12,7 +18,7 @@ Stockfolio is a comprehensive stock portfolio management platform that combines 
 - **Performance Tracking**: Monitor your portfolio's performance with interactive charts
 - **User Profiles**: Create and customize your investor profile
 
-## Tech Stack
+## 🛠️ Tech Stack
 
 ### Frontend
 - **Framework**: React 18 with TypeScript
@@ -34,7 +40,7 @@ Stockfolio is a comprehensive stock portfolio management platform that combines 
 - **Authentication**: Supabase Auth
 - **Real-time Updates**: Supabase Realtime
 
-## Getting Started
+## 🚀 Getting Started
 
 ### Prerequisites
 
@@ -46,8 +52,8 @@ Stockfolio is a comprehensive stock portfolio management platform that combines 
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/alexvarelo/Stockfolio.Web.git
-   cd Stockfolio.Web
+   git clone https://github.com/alexvarelo/Stocky.Web.git
+   cd Stocky.Web
    ```
 
 2. Install dependencies:
@@ -61,6 +67,7 @@ Stockfolio is a comprehensive stock portfolio management platform that combines 
    VITE_SUPABASE_URL=your_supabase_url
    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
    VITE_API_BASE_URL=your_api_base_url
+   # Make sure to update any API endpoints that might still reference 'stockfolio' to 'stocky'
    ```
 
 4. Start the development server:
@@ -68,7 +75,7 @@ Stockfolio is a comprehensive stock portfolio management platform that combines 
    npm run dev
    ```
 
-## Project Structure
+## 📁 Project Structure
 
 ```
 src/
@@ -86,11 +93,11 @@ src/
   └── utils/            # Utility functions
 ```
 
-## Development Guidelines
+## 📚 Development Guidelines
 
 Please refer to our [DEVELOPMENT_GUIDELINES.md](DEVELOPMENT_GUIDELINES.md) for coding standards, component architecture, and best practices.
 
-## Contributing
+## 🤝 Contributing
 
 Contributions are welcome! Please follow these steps:
 
