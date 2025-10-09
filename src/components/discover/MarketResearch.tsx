@@ -128,27 +128,29 @@ export function MarketResearch() {
       >
         {/* Header with icon and symbol */}
         <div className="relative p-4 pb-2">
-          <div className="flex items-start justify-between mb-3">
-            <div className="flex items-center space-x-3">
+          <div className="flex items-start justify-between mb-3 gap-3">
+            <div className="flex items-center space-x-3 min-w-0 flex-1">
               <div
                 className={cn(
-                  "p-2 rounded-xl shadow-sm transition-all duration-300 group-hover:scale-110",
+                  "p-2 rounded-xl shadow-sm transition-all duration-300 group-hover:scale-110 flex-shrink-0",
                   config.bgColor
                 )}
               >
                 <Icon className={cn("w-5 h-5", config.color)} />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="font-bold text-lg truncate">{stock.name}</div>
-                <div className="text-sm truncate max-w-[140px]">
+                <div className="font-bold text-lg truncate pr-2">
+                  {stock.name}
+                </div>
+                <div className="text-sm truncate max-w-[120px]">
                   {stock.symbol}
                 </div>
               </div>
             </div>
 
             {/* Price and change indicator */}
-            <div className="text-right">
-              <div className="font-bold text-lg ">
+            <div className="text-right flex-shrink-0 min-w-[100px]">
+              <div className="font-bold text-lg">
                 {formatCurrency(
                   stock.regular_market_price ?? 0,
                   stock.currency ?? "USD"
@@ -161,11 +163,11 @@ export function MarketResearch() {
                 )}
               >
                 {isPositive ? (
-                  <ArrowUp className="w-4 h-4" />
+                  <ArrowUp className="w-4 h-4 flex-shrink-0" />
                 ) : (
-                  <ArrowDown className="w-4 h-4" />
+                  <ArrowDown className="w-4 h-4 flex-shrink-0" />
                 )}
-                <span>
+                <span className="min-w-[35px] text-right">
                   {Math.abs(stock.regular_market_change_percent ?? 0).toFixed(
                     2
                   )}
@@ -416,7 +418,7 @@ export function MarketResearch() {
   return (
     <div>
       {renderViewToggle()}
-      <Card className="w-full">
+      <Card className="w-full mt-5">
         <CardContent>
           <Tabs
             value={activeTab}

@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -11,13 +10,11 @@ import {
   Search,
   UserPlus,
   UserCheck,
-  TrendingUp,
-  Users
+  Users,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { MarketResearch } from "@/components/discover/MarketResearch";
 import { motion } from "framer-motion";
 
 type UserProfile = {
@@ -37,7 +34,6 @@ export default function DiscoverPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
   const [followingMap, setFollowingMap] = useState<Record<string, boolean>>({});
-  const [activeTab, setActiveTab] = useState("market-research");
 
   // Debounce search input
   useEffect(() => {
@@ -172,137 +168,107 @@ export default function DiscoverPage() {
     >
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Discover</h1>
-        {activeTab === "market-research" ? (
-          <div className="flex items-center space-x-2 mb-2">
-            <p className="text-muted-foreground">
-              Real-time market insights and trending stocks with comprehensive financial data
-            </p>
-          </div>
-        ) : (
-          <p className="text-muted-foreground">
-            Explore market insights and connect with other investors
-          </p>
-        )}
+        <p className="text-muted-foreground">
+          Find and connect with other investors in the community
+        </p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-8">
-          <TabsTrigger
-            value="market-research"
-            className="flex items-center space-x-2"
-          >
-            <TrendingUp className="w-4 h-4" />
-            <span>Market Research</span>
-          </TabsTrigger>
-          <TabsTrigger value="people" className="flex items-center space-x-2">
-            <Users className="w-4 h-4" />
-            <span>People</span>
-          </TabsTrigger>
-        </TabsList>
+      <div className="space-y-6">
 
-        <TabsContent value="market-research" className="mt-0">
-          <MarketResearch />
-        </TabsContent>
+        <div className="max-w-md">
+          <form onSubmit={(e) => e.preventDefault()} className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search by name or username..."
+              className="pl-10"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </form>
+        </div>
 
-        <TabsContent value="people" className="mt-0">
-          <div className="space-y-6">
-            
-            <div className="max-w-md">
-              <form onSubmit={(e) => e.preventDefault()} className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Search by name or username..."
-                  className="pl-10"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </form>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {users.map((userProfile) => (
-                <Card
-                  key={userProfile.id}
-                  className="overflow-hidden hover:shadow-md transition-shadow"
-                >
-                  <CardContent className="p-6">
-                    <div className="flex items-start space-x-4">
-                      <Link
-                        to={`/user/${userProfile.id}`}
-                        className="flex-shrink-0"
-                      >
-                        <Avatar className="h-12 w-12 hover:opacity-90 transition-opacity">
-                          <AvatarImage
-                            src={userProfile.avatar_url || ""}
-                            alt={userProfile.full_name || "User"}
-                          />
-                          <AvatarFallback>
-                            {userProfile.full_name
-                              ? userProfile.full_name
-                                  .split(" ")
-                                  .map((n) => n[0])
-                                  .join("")
-                              : "U"}
-                          </AvatarFallback>
-                        </Avatar>
-                      </Link>
-                      <Link
-                        to={`/user/${userProfile.id}`}
-                        className="flex-1 min-w-0 hover:opacity-90 transition-opacity"
-                      >
-                        <div className="flex items-center justify-between">
-                          <h3 className="font-semibold truncate hover:underline">
-                            {userProfile.full_name || "User"}
-                          </h3>
-                        </div>
-                        <p className="text-sm text-muted-foreground truncate">
-                          @{userProfile.username || "user"}
-                        </p>
-                        {userProfile.bio && (
-                          <p className="text-sm mt-1 text-muted-foreground line-clamp-2">
-                            {userProfile.bio}
-                          </p>
-                        )}
-                      </Link>
-                      <Button
-                        variant={
-                          followingMap[userProfile.id] ? "outline" : "default"
-                        }
-                        size="sm"
-                        className="ml-auto"
-                        onClick={() =>
-                          handleFollowToggle(
-                            userProfile.id,
-                            !!followingMap[userProfile.id]
-                          )
-                        }
-                      >
-                        {followingMap[userProfile.id] ? (
-                          <UserCheck className="h-4 w-4 mr-2" />
-                        ) : (
-                          <UserPlus className="h-4 w-4 mr-2" />
-                        )}
-                        {followingMap[userProfile.id] ? "Following" : "Follow"}
-                      </Button>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {users.map((userProfile) => (
+            <Card
+              key={userProfile.id}
+              className="overflow-hidden hover:shadow-md transition-shadow"
+            >
+              <CardContent className="p-6">
+                <div className="flex items-start space-x-4">
+                  <Link
+                    to={`/user/${userProfile.id}`}
+                    className="flex-shrink-0"
+                  >
+                    <Avatar className="h-12 w-12 hover:opacity-90 transition-opacity">
+                      <AvatarImage
+                        src={userProfile.avatar_url || ""}
+                        alt={userProfile.full_name || "User"}
+                      />
+                      <AvatarFallback>
+                        {userProfile.full_name
+                          ? userProfile.full_name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                          : "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Link>
+                  <Link
+                    to={`/user/${userProfile.id}`}
+                    className="flex-1 min-w-0 hover:opacity-90 transition-opacity"
+                  >
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold truncate hover:underline">
+                        {userProfile.full_name || "User"}
+                      </h3>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                    <p className="text-sm text-muted-foreground truncate">
+                      @{userProfile.username || "user"}
+                    </p>
+                    {userProfile.bio && (
+                      <p className="text-sm mt-1 text-muted-foreground line-clamp-2">
+                        {userProfile.bio}
+                      </p>
+                    )}
+                  </Link>
+                  <Button
+                    variant={
+                      followingMap[userProfile.id] ? "outline" : "default"
+                    }
+                    size="sm"
+                    className="ml-auto"
+                    onClick={() =>
+                      handleFollowToggle(
+                        userProfile.id,
+                        !!followingMap[userProfile.id]
+                      )
+                    }
+                  >
+                    {followingMap[userProfile.id] ? (
+                      <UserCheck className="h-4 w-4 mr-2" />
+                    ) : (
+                      <UserPlus className="h-4 w-4 mr-2" />
+                    )}
+                    {followingMap[userProfile.id] ? "Following" : "Follow"}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
-            {users.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">
-                  {searchQuery
-                    ? "No users found matching your search."
-                    : "No public users found."}
-                </p>
-              </div>
-            )}
+        {users.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">
+              {searchQuery
+                ? "No users found matching your search."
+                : "No public users found."}
+            </p>
           </div>
-        </TabsContent>
-      </Tabs>
+        )}
+      </div>
     </motion.div>
   );
 }

@@ -21,6 +21,7 @@ import EditProfilePage from "./pages/EditProfilePage";
 import { Analytics } from "@vercel/analytics/next";
 import { DashboardSkeleton } from "./components/dashboard/DashboardSkeleton";
 import DiscoverPage from "./pages/Discover";
+import MarketResearchPage from "./pages/MarketResearch";
 // CreateEditWatchlist component has been replaced with dialogs
 
 const queryClient = new QueryClient({
@@ -168,6 +169,16 @@ const App = () => (
                     <ProtectedRoute>
                       <MainLayout>
                         <DiscoverPage />
+                      </MainLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/market-research"
+                  element={
+                    <ProtectedRoute>
+                      <MainLayout>
+                        <MarketResearchPage />
                       </MainLayout>
                     </ProtectedRoute>
                   }

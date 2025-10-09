@@ -38,7 +38,8 @@ export const Navbar = () => {
     { href: "/", label: "Dashboard" },
     { href: "/portfolios", label: "Portfolios" },
     { href: "/watchlists", label: "Watchlists" },
-    { href: "/discover", label: "Discover" },
+    { href: "/market-research", label: "Market Research" },
+    { href: "/discover", label: "Discovery" },
   ];
 
   return (
