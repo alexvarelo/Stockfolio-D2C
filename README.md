@@ -1,13 +1,12 @@
 <div align="center">
-  <img src="public/stocky_blue_background.png" alt="Stocky Logo" width="100">
-  
-  # 📈 Stocky - Social Stock Portfolio Manager
+  <img src="public/stocky-app-icon.png" alt="Stocky Logo" width="100" style="border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+
+  # Stocky - Social Stock Portfolio Manager
 </div>
 
 ## Overview
 
 Stocky is a comprehensive stock portfolio management platform that combines portfolio tracking with social features, allowing users to manage their investments, research stocks, and connect with other investors. The platform provides detailed stock market data, portfolio analytics, and a social layer for users to follow and learn from other investors' portfolios.
-
 > **Note**: 🚀 Stocky was previously known as Stockfolio. We've rebranded to better reflect our focus on simplicity and efficiency in stock portfolio management.
 
 ## ✨ Features
