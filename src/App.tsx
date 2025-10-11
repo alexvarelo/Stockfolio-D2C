@@ -18,7 +18,7 @@ import Watchlists from "./pages/Watchlists";
 import WatchlistDetail from "./pages/WatchlistDetail";
 import { UserProfile } from "./pages/UserProfile";
 import EditProfilePage from "./pages/EditProfilePage";
-import { Analytics } from "@vercel/analytics/next";
+import { inject } from "@vercel/analytics"
 import { DashboardSkeleton } from "./components/dashboard/DashboardSkeleton";
 import DiscoverPage from "./pages/Discover";
 import MarketResearchPage from "./pages/MarketResearch";
@@ -54,6 +54,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 // Main Layout Component
 function MainLayout({ children }: { children: React.ReactNode }) {
+  inject();
   return (
     <div className="min-h-screen flex flex-col w-full">
       <Navbar />
@@ -247,7 +248,6 @@ const App = () => (
         </SidebarProvider>
       </ThemeProvider>
     </AuthProvider>
-    <Analytics />
   </QueryClientProvider>
 );
 
