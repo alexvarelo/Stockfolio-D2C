@@ -1,7 +1,11 @@
 import { useParams } from "react-router-dom";
 import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardHeader, CardTitle,
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
   CardDescription,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,6 +19,8 @@ import {
   Bot,
   MessageCircle,
   MessageSquare,
+  Star,
+  Plus,
 } from "lucide-react";
 import { InstrumentChatbot } from "@/components/chat/InstrumentChatbot";
 import { DrawerTrigger } from "@/components/ui/drawer";
@@ -26,6 +32,7 @@ import { NewsSection } from "@/components/news/NewsSection";
 import { InstrumentPosts } from "@/components/instruments/InstrumentPosts";
 import { InstrumentPostsCarousel } from "@/components/instruments/InstrumentPostsCarousel";
 import { InvestmentSimulator } from "@/components/instruments/InvestmentSimulator";
+import { TransactionDrawer } from "@/components/transactions/TransactionDrawer";
 
 // Formatter components
 import {
@@ -69,7 +76,7 @@ interface AdditionalData {
 export function InstrumentPage() {
   const { ticker } = useParams<{ ticker: string }>();
   const [isChatOpen, setIsChatOpen] = useState(false);
-  
+
   const {
     data: response,
     isLoading,
@@ -141,68 +148,66 @@ export function InstrumentPage() {
 
   // Mock portfolios - replace with actual portfolio data from your app
   const userPortfolios = [
-    { id: 'portfolio1', name: 'My Portfolio' },
-    { id: 'portfolio3', name: 'Growth' },
+    { id: "portfolio1", name: "My Portfolio" },
+    { id: "portfolio3", name: "Growth" },
   ];
 
   // The StockyChatDrawer is always rendered but controlled by isChatOpen
   return (
     <div className="space-y-6">
-      <StockyChatDrawer 
-        ticker={ticker || ''} 
-        isOpen={isChatOpen} 
+      <StockyChatDrawer
+        ticker={ticker || ""}
+        isOpen={isChatOpen}
         onOpenChange={setIsChatOpen}
         portfolios={userPortfolios}
       />
       {/* Header Section */}
-      <div className="space-y-2">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-          <h1 className="text-3xl font-bold">
-            {stockInfo.company_info?.name || ticker} ({stockInfo.symbol})
-          </h1>
-          <div className="flex flex-col items-end gap-2">
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-bold break-words">
+              {stockInfo.company_info?.name || ticker} ({stockInfo.symbol})
+            </h1>
+          </div>
+          <div className="flex flex-col items-start sm:items-end gap-2">
             {additionalData.website && (
               <a
                 href={additionalData.website}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center text-sm text-blue-500 hover:underline"
+                className="inline-flex items-center text-sm text-blue-500 hover:underline break-all"
               >
-                Company Website <ExternalLink className="ml-1 h-4 w-4" />
+                <span className="hidden sm:inline">Company Website </span>
+                <ExternalLink className="ml-1 h-4 w-4 flex-shrink-0" />
               </a>
             )}
-            <Button 
-              variant="outline"
-              size="sm"
-              className="gap-2 text-sm text-muted-foreground hover:text-foreground"
-              onClick={() => setIsChatOpen(true)}
-            >
-              <MessageCircle className="h-4 w-4" />
-              <span>Ask Stocky</span>
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <TransactionDrawer
+                showPortfolioSelector={true}
+                instrumentTicker={ticker || ""}
+                instrumentName={stockInfo.company_info?.name || ""}
+                currentPrice={priceData?.current_price || 0}
+              >
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 text-sm text-muted-foreground hover:text-foreground justify-start sm:justify-center w-full sm:w-auto"
+                >
+                  <Plus className="h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">New Transaction</span>
+                </Button>
+              </TransactionDrawer>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2 text-sm text-muted-foreground hover:text-foreground justify-start sm:justify-center w-full sm:w-auto"
+                onClick={() => setIsChatOpen(true)}
+              >
+                <MessageCircle className="h-4 w-4 flex-shrink-0" />
+                <span className="truncate">Ask Stocky</span>
+              </Button>
+            </div>
           </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <span className="text-2xl font-bold">
-            <MoneyDisplay
-              value={priceData.current_price}
-              currency={companyInfo.currency}
-            />
-          </span>
-          <span
-            className={`flex items-center text-sm ${
-              (priceData.change_percent || 0) >= 0
-                ? "text-green-500"
-                : "text-red-500"
-            }`}
-          >
-            {(priceData.change_percent || 0) >= 0 ? (
-              <ArrowUp className="h-4 w-4" />
-            ) : (
-              <ArrowDown className="h-4 w-4" />
-            )}
-            <PriceChangeDisplay value={priceData.change_percent} /> Today
-          </span>
         </div>
       </div>
 
@@ -363,6 +368,14 @@ export function InstrumentPage() {
                           value={additionalData.profitMargins}
                         />
                       )}
+                    {additionalData?.averageAnalystRating !== undefined &&
+                      renderInfoCard(
+                        "Analyst Rating",
+                        <div className="flex items-center gap-1">
+                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                          <span>{additionalData.averageAnalystRating}</span>
+                        </div>
+                      )}
                   </div>
                 </CardContent>
               </Card>
@@ -416,10 +429,10 @@ export function InstrumentPage() {
           <Card>
             <CardContent className="pt-6">
               {ticker && (
-                <InvestmentSimulator 
-                  ticker={ticker} 
+                <InvestmentSimulator
+                  ticker={ticker}
                   currentPrice={priceData?.current_price || 0}
-                  currency={companyInfo?.currency || 'USD'}
+                  currency={companyInfo?.currency || "USD"}
                 />
               )}
             </CardContent>

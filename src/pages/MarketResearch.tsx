@@ -6,7 +6,7 @@ export default function MarketResearchPage() {
   return (
     <div className="min-h-screen">
       {/* World Map Landing Section */}
-      <div className="py-5 md:py-10 w-full">
+      {/* <div className="py-5 md:py-10 w-full">
         <div className="max-w-7xl mx-auto text-center px-4">
           <p className="font-extrabold text-4xl md:text-6xl mb-2">
             Global{" "}
@@ -54,7 +54,7 @@ export default function MarketResearchPage() {
             { start: { lat: 51.5074, lng: -0.1278 }, end: { lat: 28.6139, lng: 77.2090 } }, // London to Delhi
           ]}
         />
-      </div>
+      </div> */}
 
       {/* Market Research Component */}
       <div className="bg-background">

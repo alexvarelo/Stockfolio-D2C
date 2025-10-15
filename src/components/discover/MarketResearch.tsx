@@ -1,7 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -23,10 +22,14 @@ import {
     Building2,
     Globe, Activity as ActivityIcon,
     Grid3X3,
-    List
+    List,
+    MapPin,
+    Crown,
+    Zap,
+    Award
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useScreenPredefinedApiV1ScreenPredefinedScreenerNameGet } from "@/api/search/search";
+import { useScreenEquitiesApiV1ScreenPost, useScreenPredefinedApiV1ScreenPredefinedScreenerNameGet } from "@/api/search/search";
 import { formatCurrency } from "@/lib/formatters";
 import { SearchResult } from "@/api/financialDataApi.schemas";
 
@@ -36,7 +39,13 @@ type ScreenerType =
   | "most_actives"
   | "most_shorted_stocks"
   | "portfolio_anchors"
-  | "undervalued_large_caps";
+  | "undervalued_large_caps"
+  | "european_gainers"
+  | "european_blue_chips"
+  | "uk_stocks"
+  | "spanish_stocks"
+  | "german_stocks"
+  | "french_stocks";
 
 const screenerConfig = {
   day_gainers: {
@@ -44,50 +53,115 @@ const screenerConfig = {
     icon: TrendingUp,
     color: "text-green-600",
     bgColor: "bg-green-50 border-green-200",
+    format: "mini-cards"
   },
   day_losers: {
     title: "Top Losers",
     icon: TrendingDown,
     color: "text-red-600",
     bgColor: "bg-red-50 border-red-200",
+    format: "mini-cards"
   },
   most_actives: {
     title: "Most Active",
     icon: Activity,
     color: "text-blue-600",
     bgColor: "bg-blue-50 border-blue-200",
+    format: "mini-table"
   },
   most_shorted_stocks: {
     title: "Most Shorted",
     icon: Target,
     color: "text-purple-600",
     bgColor: "bg-purple-50 border-purple-200",
+    format: "mini-cards"
   },
   portfolio_anchors: {
     title: "Stable Stocks",
     icon: BarChart3,
     color: "text-indigo-600",
     bgColor: "bg-indigo-50 border-indigo-200",
+    format: "mini-cards"
   },
   undervalued_large_caps: {
     title: "Undervalued Large Caps",
     icon: DollarSign,
     color: "text-emerald-600",
     bgColor: "bg-emerald-50 border-emerald-200",
+    format: "mini-table"
+  },
+  european_gainers: {
+    title: "European Gainers",
+    icon: Globe,
+    color: "text-green-600",
+    bgColor: "bg-green-50 border-green-200",
+    format: "mini-cards"
+  },
+  european_blue_chips: {
+    title: "European Blue Chips",
+    icon: Crown,
+    color: "text-blue-600",
+    bgColor: "bg-blue-50 border-blue-200",
+    format: "mini-cards"
+  },
+  uk_stocks: {
+    title: "UK Stocks",
+    icon: MapPin,
+    color: "text-red-600",
+    bgColor: "bg-red-50 border-red-200",
+    format: "mini-cards"
+  },
+  spanish_stocks: {
+    title: "Spanish Stocks",
+    icon: MapPin,
+    color: "text-yellow-600",
+    bgColor: "bg-yellow-50 border-yellow-200",
+    format: "mini-cards"
+  },
+  german_stocks: {
+    title: "German Stocks",
+    icon: Grid3X3,
+    color: "text-purple-600",
+    bgColor: "bg-purple-50 border-purple-200",
+    format: "mini-cards"
+  },
+  french_stocks: {
+    title: "French Stocks",
+    icon: List,
+    color: "text-indigo-600",
+    bgColor: "bg-indigo-50 border-indigo-200",
+    format: "mini-cards"
   },
 };
 
+// Widget categories for the dashboard layout
+const widgetCategories = {
+  "market-overview": ["day_gainers", "day_losers", "most_actives"],
+  "value-stocks": ["undervalued_large_caps", "portfolio_anchors"],
+  "special-focus": ["most_shorted_stocks", "european_gainers"],
+  "regional-markets": ["uk_stocks", "spanish_stocks", "german_stocks", "french_stocks", "european_blue_chips"]
+};
+
+// Check if a screener type is a predefined screener
+const isPredefinedScreener = (type: ScreenerType): type is "day_gainers" | "day_losers" | "most_actives" | "most_shorted_stocks" | "portfolio_anchors" | "undervalued_large_caps" => {
+  return ["day_gainers", "day_losers", "most_actives", "most_shorted_stocks", "portfolio_anchors", "undervalued_large_caps"].includes(type);
+};
+
+// Check if a screener type is a European screener
+const isEuropeanScreener = (type: ScreenerType): type is "european_gainers" | "european_blue_chips" | "uk_stocks" | "spanish_stocks" | "german_stocks" | "french_stocks" => {
+  return ["european_gainers", "european_blue_chips", "uk_stocks", "spanish_stocks", "german_stocks", "french_stocks"].includes(type);
+};
+
 export function MarketResearch() {
-  const [activeTab, setActiveTab] = useState<ScreenerType>("day_gainers");
-  const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
   const navigate = useNavigate();
 
+  // Hook for predefined screeners (US stocks)
   const {
-    data: marketData,
-    isLoading,
-    error,
+    data: predefinedData,
+    isLoading: isPredefinedLoading,
+    error: predefinedError,
   } = useScreenPredefinedApiV1ScreenPredefinedScreenerNameGet(
-    activeTab,
+    "day_gainers", // Default for initial load
     undefined,
     {
       query: {
@@ -97,7 +171,115 @@ export function MarketResearch() {
     }
   );
 
-  const stocks = marketData?.data?.results ?? [];
+  // Hook for European screeners (custom queries)
+  const europeanScreenMutation = useScreenEquitiesApiV1ScreenPost();
+
+  // European screening queries
+  const europeanQueries = {
+    european_gainers: {
+      operator: "and",
+      conditions: [
+        { operator: "is-in", field: "region", value: ["gb", "de", "fr", "it", "es", "nl", "be", "at", "se", "dk", "no", "fi", "pt", "ie", "gr", "cz", "pl", "hu"] },
+        { operator: "gt", field: "percentchange", value: 0 }
+      ],
+      sort_by: "percentChange",
+      sort_order: "desc"
+    },
+    european_blue_chips: {
+      operator: "and",
+      conditions: [
+        { operator: "is-in", field: "region", value: ["gb", "de", "fr", "it", "es", "nl", "be", "at", "se", "dk", "no", "fi", "pt", "ie", "gr", "cz", "pl", "hu"] },
+        { operator: "gt", field: "intradaymarketcap", value: 10000000000 } // > $10B market cap
+      ],
+      sort_by: "intradaymarketcap",
+      sort_order: "desc"
+    },
+    uk_stocks: {
+      operator: "and",
+      conditions: [
+        { operator: "eq", field: "region", value: "gb" },
+        { operator: "is-in", field: "exchange", value: ["LSE", "AQS", "IOB"] }
+      ],
+      sort_by: "intradaymarketcap",
+      sort_order: "desc"
+    },
+    spanish_stocks: {
+      operator: "and",
+      conditions: [
+        { operator: "eq", field: "region", value: "es" },
+        { operator: "is-in", field: "exchange", value: ["MCE"] }
+      ],
+      sort_by: "intradaymarketcap",
+      sort_order: "desc"
+    },
+    german_stocks: {
+      operator: "and",
+      conditions: [
+        { operator: "eq", field: "region", value: "de" },
+        { operator: "is-in", field: "exchange", value: ["FRA", "BER", "DUS", "HAM", "MUN", "STU"] }
+      ],
+      sort_by: "intradaymarketcap",
+      sort_order: "desc"
+    },
+    french_stocks: {
+      operator: "and",
+      conditions: [
+        { operator: "eq", field: "region", value: "fr" },
+        { operator: "is-in", field: "exchange", value: ["PAR"] }
+      ],
+      sort_by: "intradaymarketcap",
+      sort_order: "desc"
+    }
+  };
+
+  // Get data for a specific screener type
+  const getScreenerData = (type: ScreenerType) => {
+    if (isPredefinedScreener(type)) {
+      // For now, use the same data for all predefined screeners
+      // In a more complete implementation, you'd call the hook for each specific type
+      return predefinedData;
+    } else if (isEuropeanScreener(type)) {
+      return europeanScreenMutation.data;
+    }
+    return null;
+  };
+
+  // Get loading state for a specific screener type
+  const getScreenerLoading = (type: ScreenerType) => {
+    if (isPredefinedScreener(type)) {
+      return isPredefinedLoading;
+    } else if (isEuropeanScreener(type)) {
+      return europeanScreenMutation.isPending;
+    }
+    return false;
+  };
+
+  // Get error state for a specific screener type
+  const getScreenerError = (type: ScreenerType) => {
+    if (isPredefinedScreener(type)) {
+      return predefinedError;
+    } else if (isEuropeanScreener(type)) {
+      return europeanScreenMutation.error;
+    }
+    return null;
+  };
+
+  // Trigger European screening for all European types
+  useEffect(() => {
+    const europeanTypes = Object.keys(europeanQueries) as ScreenerType[];
+    europeanTypes.forEach(type => {
+      if (isEuropeanScreener(type)) {
+        europeanScreenMutation.mutate(
+          { data: europeanQueries[type] },
+          {
+            onSuccess: (data) => {
+              // Handle success if needed
+            }
+          }
+        );
+      }
+    });
+  }, []); // Only run once on mount
 
   const handleStockClick = (symbol: string) => {
     navigate(`/instrument/${symbol}`);
@@ -116,261 +298,58 @@ export function MarketResearch() {
     if (marketCap >= 1e6) return `$${(marketCap / 1e6).toFixed(1)}M`;
   };
 
-  const renderStockCard = (stock: SearchResult) => {
-    const config = screenerConfig[activeTab];
+  // Mini card component for widgets
+  const renderMiniStockCard = (stock: SearchResult, config: any) => {
     const Icon = config.icon;
     const isPositive = (stock.regular_market_change ?? 0) >= 0;
 
     return (
-      <Card
-        className="group relative overflow-hidden hover:shadow-lg transition-all duration-300 hover:scale-[1.02] hover:-translate-y-1 cursor-pointer"
-        onClick={() => handleStockClick(stock.symbol)}
-      >
-        {/* Header with icon and symbol */}
-        <div className="relative p-4 pb-2">
-          <div className="flex items-start justify-between mb-3 gap-3">
-            <div className="flex items-center space-x-3 min-w-0 flex-1">
-              <div
-                className={cn(
-                  "p-2 rounded-xl shadow-sm transition-all duration-300 group-hover:scale-110 flex-shrink-0",
-                  config.bgColor
-                )}
-              >
-                <Icon className={cn("w-5 h-5", config.color)} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="font-bold text-lg truncate pr-2">
-                  {stock.name}
-                </div>
-                <div className="text-sm truncate max-w-[120px]">
-                  {stock.symbol}
-                </div>
-              </div>
+      <Card className="p-3 hover:shadow-md transition-all duration-200 cursor-pointer group" onClick={() => handleStockClick(stock.symbol)}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2 min-w-0 flex-1">
+            <div className={cn("p-1.5 rounded-lg", config.bgColor)}>
+              <Icon className={cn("w-3 h-3", config.color)} />
             </div>
-
-            {/* Price and change indicator */}
-            <div className="text-right flex-shrink-0 min-w-[100px]">
-              <div className="font-bold text-lg">
-                {formatCurrency(
-                  stock.regular_market_price ?? 0,
-                  stock.currency ?? "USD"
-                )}
-              </div>
-              <div
-                className={cn(
-                  "flex items-center justify-end space-x-1 text-sm font-medium transition-colors duration-200",
-                  isPositive ? "text-green-600" : "text-red-600"
-                )}
-              >
-                {isPositive ? (
-                  <ArrowUp className="w-4 h-4 flex-shrink-0" />
-                ) : (
-                  <ArrowDown className="w-4 h-4 flex-shrink-0" />
-                )}
-                <span className="min-w-[35px] text-right">
-                  {Math.abs(stock.regular_market_change_percent ?? 0).toFixed(
-                    2
-                  )}
-                  %
-                </span>
-              </div>
+            <div className="min-w-0 flex-1">
+              <div className="font-semibold text-sm truncate">{stock.symbol}</div>
+              <div className="text-xs text-muted-foreground truncate">{stock.name}</div>
             </div>
           </div>
-
-          {/* Key metrics row */}
-          <div className="grid grid-cols-2 gap-3 mb-3">
-            {stock.market_cap && (
-              <div className="rounded-lg p-2">
-                <div className="text-xs font-medium">Market Cap</div>
-                <div className="font-semibold text-sm">
-                  {formatMarketCap(stock.market_cap)}
-                </div>
-              </div>
-            )}
-
-            {stock.pe_ratio && stock.pe_ratio > 0 && (
-              <div className="rounded-lg p-2">
-                <div className="text-xs font-medium">P/E Ratio</div>
-                <div className="font-semibold text-sm">
-                  {stock.pe_ratio.toFixed(1)}
-                </div>
-              </div>
-            )}
-
-            {stock.average_daily_volume_3_month &&
-              stock.average_daily_volume_3_month > 0 && (
-                <div className="rounded-lg p-2">
-                  <div className="text-xs font-medium">Avg Volume</div>
-                  <div className="font-semibold text-sm">
-                    {formatVolume(stock.average_daily_volume_3_month)}
-                  </div>
-                </div>
-              )}
-
-            {stock.average_analyst_rating && (
-              <div className="rounded-lg p-2">
-                <div className="text-xs font-medium">Rating</div>
-                <div className="flex items-center space-x-1">
-                  <Star className="w-3 h-3 text-yellow-500 fill-current" />
-                  <span className="font-semibold text-sm">
-                    {stock.average_analyst_rating}
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Additional info */}
-          <div className="flex items-center justify-between text-xs">
-            <div className="flex items-center space-x-3">
-              {stock.exchange && (
-                <div className="flex items-center space-x-1">
-                  <Globe className="w-3 h-3" />
-                  <span className="truncate max-w-[80px]">
-                    {stock.exchange}
-                  </span>
-                </div>
-              )}
-              {stock.country && (
-                <div className="flex items-center space-x-1">
-                  <Building2 className="w-3 h-3" />
-                  <span>{stock.country}</span>
-                </div>
-              )}
+          <div className="text-right flex-shrink-0">
+            <div className="font-bold text-sm">
+              {formatCurrency(stock.regular_market_price ?? 0, stock.currency ?? "USD")}
             </div>
-
-            {stock.fifty_two_week_change_percent && (
-              <div
-                className={cn(
-                  "font-medium",
-                  (stock.fifty_two_week_change_percent ?? 0) >= 0
-                    ? "text-green-600"
-                    : "text-red-600"
-                )}
-              >
-                52W: {stock.fifty_two_week_change_percent.toFixed(1)}%
-              </div>
-            )}
+            <div className={cn("text-xs font-medium", isPositive ? "text-green-600" : "text-red-600")}>
+              {isPositive ? "+" : ""}{stock.regular_market_change_percent?.toFixed(1)}%
+            </div>
           </div>
         </div>
       </Card>
     );
   };
 
-  const renderSkeletonCards = () =>
-    Array(6)
-      .fill(0)
-      .map((_, i) => (
-        <Card key={i} className="animate-pulse overflow-hidden">
-          <div className="p-4 pb-2">
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center space-x-3">
-                <Skeleton className="w-10 h-10 rounded-xl" />
-                <div className="space-y-2">
-                  <Skeleton className="w-16 h-5" />
-                  <Skeleton className="w-24 h-4" />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Skeleton className="w-20 h-5 ml-auto" />
-                <Skeleton className="w-16 h-4 ml-auto" />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              {Array(4)
-                .fill(0)
-                .map((_, j) => (
-                  <div key={j} className="rounded-lg p-2">
-                    <Skeleton className="w-16 h-3 mb-1" />
-                    <Skeleton className="w-12 h-4" />
-                  </div>
-                ))}
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <Skeleton className="w-16 h-3" />
-                <Skeleton className="w-12 h-3" />
-              </div>
-              <Skeleton className="w-16 h-3" />
-            </div>
-          </div>
-        </Card>
-      ));
-
-  const renderTableView = (stocks: SearchResult[]) => (
+  // Mini table component for widgets
+  const renderMiniTable = (stocks: SearchResult[], config: any) => (
     <div className="rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="font-semibold">Symbol</TableHead>
-            <TableHead className="font-semibold">Name</TableHead>
-            <TableHead className="font-semibold text-right">Price</TableHead>
-            <TableHead className="font-semibold text-right">Change</TableHead>
-            <TableHead className="font-semibold text-right">
-              Market Cap
-            </TableHead>
-            <TableHead className="font-semibold text-right">
-              P/E Ratio
-            </TableHead>
-            <TableHead className="font-semibold text-right">Volume</TableHead>
-            <TableHead className="font-semibold text-right">Exchange</TableHead>
+            <TableHead className="text-xs font-semibold py-2">Symbol</TableHead>
+            <TableHead className="text-xs font-semibold text-right py-2">Price</TableHead>
+            <TableHead className="text-xs font-semibold text-right py-2">Change</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {stocks.slice(0, 20).map((stock) => (
-            <TableRow
-              key={stock.symbol}
-              className="transition-colors cursor-pointer hover:bg-gray-50"
-              onClick={() => handleStockClick(stock.symbol)}
-            >
-              <TableCell className="font-medium">{stock.symbol}</TableCell>
-              <TableCell className="max-w-xs truncate">{stock.name}</TableCell>
-              <TableCell className="text-right font-semibold">
-                {formatCurrency(
-                  stock.regular_market_price ?? 0,
-                  stock.currency ?? "USD"
-                )}
+          {stocks.slice(0, 5).map((stock) => (
+            <TableRow key={stock.symbol} className="cursor-pointer hover:bg-gray-50" onClick={() => handleStockClick(stock.symbol)}>
+              <TableCell className="text-xs font-medium py-2">{stock.symbol}</TableCell>
+              <TableCell className="text-xs text-right py-2">
+                {formatCurrency(stock.regular_market_price ?? 0, stock.currency ?? "USD")}
               </TableCell>
-              <TableCell
-                className={cn(
-                  "text-right font-medium",
-                  (stock.regular_market_change ?? 0) >= 0
-                    ? "text-green-600"
-                    : "text-red-600"
-                )}
-              >
-                <div className="flex items-center justify-end space-x-1">
-                  {(stock.regular_market_change ?? 0) >= 0 ? (
-                    <ArrowUp className="w-4 h-4" />
-                  ) : (
-                    <ArrowDown className="w-4 h-4" />
-                  )}
-                  <span>
-                    {Math.abs(stock.regular_market_change_percent ?? 0).toFixed(
-                      2
-                    )}
-                    %
-                  </span>
-                </div>
-              </TableCell>
-              <TableCell className="text-right">
-                {stock.market_cap ? formatMarketCap(stock.market_cap) : "-"}
-              </TableCell>
-              <TableCell className="text-right">
-                {stock.pe_ratio && stock.pe_ratio > 0
-                  ? stock.pe_ratio.toFixed(1)
-                  : "-"}
-              </TableCell>
-              <TableCell className="text-right">
-                {stock.average_daily_volume_3_month &&
-                stock.average_daily_volume_3_month > 0
-                  ? formatVolume(stock.average_daily_volume_3_month)
-                  : "-"}
-              </TableCell>
-              <TableCell className="text-right text-sm text-gray-600">
-                {stock.exchange || "-"}
+              <TableCell className={cn("text-xs text-right font-medium py-2",
+                (stock.regular_market_change ?? 0) >= 0 ? "text-green-600" : "text-red-600"
+              )}>
+                {stock.regular_market_change_percent?.toFixed(1)}%
               </TableCell>
             </TableRow>
           ))}
@@ -379,110 +358,150 @@ export function MarketResearch() {
     </div>
   );
 
-  const renderViewToggle = () => (
-    <div className="flex items-center">
-      <div className="flex rounded-lg">
-        <Button
-          variant={viewMode === "cards" ? "default" : "ghost"}
-          size="sm"
-          onClick={() => setViewMode("cards")}
-          className={cn("px-2 py-1 text-xs font-medium transition-all")}
-        >
-          <Grid3X3 className="w-3 h-3 mr-1" />
-          Card
-        </Button>
-        <Button
-          variant={viewMode === "table" ? "default" : "ghost"}
-          size="sm"
-          onClick={() => setViewMode("table")}
-          className={cn("px-2 py-1 text-xs font-medium transition-all")}
-        >
-          <List className="w-3 h-3 mr-1" />
-          Table
-        </Button>
-      </div>
-    </div>
-  );
-  if (error) {
+  // Widget component
+  const renderWidget = (type: ScreenerType, title: string, size: "normal" | "large" = "normal") => {
+    const config = screenerConfig[type];
+    const data = getScreenerData(type);
+    const isLoading = getScreenerLoading(type);
+    const error = getScreenerError(type);
+    const stocks = data?.data?.results ?? [];
+
     return (
-      <Card className="w-full">
-        <CardContent className="p-6 text-center">
-          <p className="text-muted-foreground">
-            Failed to load market data. Please try again later.
-          </p>
+      <Card className={cn("h-full", size === "large" && "md:col-span-2")}>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center space-x-2 text-lg">
+            <div className={cn("p-2 rounded-lg", config.bgColor)}>
+              <config.icon className={cn("w-5 h-5", config.color)} />
+            </div>
+            <span>{config.title}</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-0">
+          {error ? (
+            <div className="text-center text-sm text-muted-foreground py-4">
+              Failed to load data
+            </div>
+          ) : isLoading ? (
+            <div className="space-y-2">
+              {Array(3).fill(0).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          ) : (
+            <>
+              {config.format === "mini-cards" ? (
+                <div className="grid gap-2">
+                  {stocks.slice(0, size === "large" ? 8 : 4).map(stock =>
+                    renderMiniStockCard(stock, config)
+                  )}
+                </div>
+              ) : (
+                renderMiniTable(stocks, config)
+              )}
+              {stocks.length > (size === "large" ? 8 : 4) && (
+                <div className="text-center mt-3">
+                  <Button variant="outline" size="sm">
+                    View All ({stocks.length})
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
         </CardContent>
       </Card>
     );
-  }
+  };
+
+  // Render skeleton for widgets
+  const renderWidgetSkeleton = (size: "normal" | "large" = "normal") => (
+    <Card className={cn("h-full", size === "large" && "md:col-span-2")}>
+      <CardHeader className="pb-3">
+        <div className="flex items-center space-x-2">
+          <Skeleton className="w-8 h-8 rounded-lg" />
+          <Skeleton className="w-24 h-5" />
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <div className="space-y-2">
+          {Array(3).fill(0).map((_, i) => (
+            <Skeleton key={i} className="h-12 w-full" />
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
 
   return (
-    <div>
-      {renderViewToggle()}
-      <Card className="w-full mt-5">
-        <CardContent>
-          <Tabs
-            value={activeTab}
-            onValueChange={(value) => setActiveTab(value as ScreenerType)}
-          >
-            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 mb-6 h-auto p-1 mt-5">
-              {Object.entries(screenerConfig).map(([key, config]) => {
-                const Icon = config.icon;
-                return (
-                  <TabsTrigger
-                    key={key}
-                    value={key}
-                    className={cn(
-                      "flex items-center space-x-1 text-xs py-2 px-3 transition-all duration-200"
-                    )}
-                  >
-                    <Icon
-                      className={cn("w-3 h-3 transition-colors duration-200")}
-                    />
-                    <span className="hidden sm:inline font-medium">
-                      {config.title}
-                    </span>
-                    <span className="sm:hidden font-medium">
-                      {config.title.split(" ")[0]}
-                    </span>
-                  </TabsTrigger>
-                );
-              })}
-            </TabsList>
+    <div className="space-y-6">
+      {/* Market Overview Section */}
+      <div>
+        <h2 className="text-2xl font-bold mb-4 flex items-center space-x-2">
+          <ActivityIcon className="w-6 h-6" />
+          <span>Market Overview</span>
+        </h2>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {widgetCategories["market-overview"].map(type =>
+            isPredefinedScreener(type as ScreenerType) || isEuropeanScreener(type as ScreenerType) ?
+              renderWidget(type as ScreenerType, screenerConfig[type as ScreenerType].title) :
+              renderWidgetSkeleton()
+          )}
+        </div>
+      </div>
 
-            {Object.entries(screenerConfig).map(([key, config]) => (
-              <TabsContent key={key} value={key} className="mt-0">
-                {isLoading ? (
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {renderSkeletonCards()}
-                  </div>
-                ) : (
-                  <>
-                    {viewMode === "cards" ? (
-                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {stocks?.slice(0, 12).map(renderStockCard) || []}
-                      </div>
-                    ) : (
-                      <div className="overflow-x-auto">
-                        {renderTableView(stocks || [])}
-                      </div>
-                    )}
-                  </>
-                )}
-              </TabsContent>
-            ))}
-          </Tabs>
+      {/* Value Stocks Section */}
+      <div>
+        <h2 className="text-2xl font-bold mb-4 flex items-center space-x-2">
+          <Award className="w-6 h-6" />
+          <span>Value & Quality Stocks</span>
+        </h2>
+        <div className="grid gap-4 md:grid-cols-2">
+          {widgetCategories["value-stocks"].map(type =>
+            isPredefinedScreener(type as ScreenerType) || isEuropeanScreener(type as ScreenerType) ?
+              renderWidget(type as ScreenerType, screenerConfig[type as ScreenerType].title, "large") :
+              renderWidgetSkeleton("large")
+          )}
+        </div>
+      </div>
 
-          <div className="mt-6 text-xs text-muted-foreground text-center">
-            <div className="flex items-center justify-center space-x-2">
-              <ActivityIcon className="w-4 h-4" />
-              <span>
-                Data refreshes every 5 minutes • Last updated:{" "}
-                {new Date().toLocaleTimeString()}
-              </span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Special Focus Section */}
+      <div>
+        <h2 className="text-2xl font-bold mb-4 flex items-center space-x-2">
+          <Zap className="w-6 h-6" />
+          <span>Special Focus</span>
+        </h2>
+        <div className="grid gap-4 md:grid-cols-2">
+          {widgetCategories["special-focus"].map(type =>
+            isPredefinedScreener(type as ScreenerType) || isEuropeanScreener(type as ScreenerType) ?
+              renderWidget(type as ScreenerType, screenerConfig[type as ScreenerType].title) :
+              renderWidgetSkeleton()
+          )}
+        </div>
+      </div>
+
+      {/* Regional Markets Section */}
+      <div>
+        <h2 className="text-2xl font-bold mb-4 flex items-center space-x-2">
+          <Globe className="w-6 h-6" />
+          <span>Regional Markets</span>
+        </h2>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {widgetCategories["regional-markets"].map(type =>
+            isPredefinedScreener(type as ScreenerType) || isEuropeanScreener(type as ScreenerType) ?
+              renderWidget(type as ScreenerType, screenerConfig[type as ScreenerType].title) :
+              renderWidgetSkeleton()
+          )}
+        </div>
+      </div>
+
+      <div className="mt-6 text-xs text-muted-foreground text-center">
+        <div className="flex items-center justify-center space-x-2">
+          <ActivityIcon className="w-4 h-4" />
+          <span>
+            Data refreshes every 5 minutes • Last updated:{" "}
+            {new Date().toLocaleTimeString()}
+          </span>
+        </div>
+      </div>
     </div>
   );
 }

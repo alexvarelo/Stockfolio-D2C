@@ -4,6 +4,9 @@ import { useGetTokenApiV1TokenPost } from './authentication';
 const CLIENT_ID = import.meta.env.VITE_API_CLIENT_ID || process.env.VITE_API_CLIENT_ID;
 const CLIENT_SECRET = import.meta.env.VITE_API_CLIENT_SECRET || process.env.VITE_API_CLIENT_SECRET;
 
+// Use internal API for token requests, fallback to external API
+const API_BASE_URL = import.meta.env.VITE_INTERNAL_API_ORIGIN || process.env.VITE_INTERNAL_API_ORIGIN || import.meta.env.VITE_API_ORIGIN || process.env.VITE_API_ORIGIN;
+
 // In-memory cache (module scope)
 let cachedToken: string | null = null;
 let tokenExpiry: number | null = null;
@@ -18,9 +21,6 @@ export async function getCachedAccessToken(): Promise<string> {
     return cachedToken;
   }
 
-  let currentClientId = CLIENT_ID;
-  let currentClientSecret = CLIENT_SECRET;
-  
   const fetchToken = async (clientId: string, clientSecret: string) => {
     const tokenRequest = {
       client_id: clientId,
@@ -28,54 +28,23 @@ export async function getCachedAccessToken(): Promise<string> {
       grant_type: 'client_credentials',
     };
 
-    const res = await fetch(`${import.meta.env.VITE_API_ORIGIN || process.env.VITE_API_ORIGIN}api/v1/token`, {
+    const res = await fetch(`${API_BASE_URL}api/v1/token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(tokenRequest),
     });
 
-    return { response: res, usedDefaultCredentials: clientId === CLIENT_ID };
+    return res;
   };
 
-  // First try with current credentials
-  let tokenResponse = await fetchToken(currentClientId, currentClientSecret);
-  
-  // If unauthorized, try to get new client credentials
-  if (tokenResponse.response.status === 401 && tokenResponse.usedDefaultCredentials) {
-    try {
-      const clientRes = await fetch(`${import.meta.env.VITE_API_ORIGIN || process.env.VITE_API_ORIGIN}api/v1/clients`, {
-        method: 'POST',
-        headers: { 
-          'accept': 'application/json',
-          'Content-Type': 'application/json' 
-        },
-        body: JSON.stringify({
-          name: 'Stockfolio Web Client',
-          description: 'Automatically generated client for Stockfolio web application'
-        })
-      });
-      
-      if (clientRes.ok) {
-        const clientData = await clientRes.json();
-        if (clientData.client_id && clientData.client_secret) {
-          // Update environment variables for future use
-          process.env.VITE_CLIENT_ID = clientData.client_id;
-          process.env.VITE_CLIENT_SECRET = clientData.client_secret;
-          
-          // Retry with new credentials
-          tokenResponse = await fetchToken(clientData.client_id, clientData.client_secret);
-        }
-      }
-    } catch (error) {
-      console.error('Failed to refresh client credentials:', error);
-    }
+  // Always use the configured credentials
+  const tokenResponse = await fetchToken(CLIENT_ID, CLIENT_SECRET);
+
+  if (!tokenResponse.ok) {
+    throw new Error(`Token request failed: ${tokenResponse.status}`);
   }
 
-  if (!tokenResponse.response.ok) {
-    throw new Error(`Token request failed: ${tokenResponse.response.status}`);
-  }
-
-  const data = await tokenResponse.response.json();
+  const data = await tokenResponse.json();
   if (!data.access_token || !data.expires_in) {
     throw new Error('Malformed token response');
   }
