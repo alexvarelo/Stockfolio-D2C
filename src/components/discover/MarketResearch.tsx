@@ -1,32 +1,28 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import {
-    TrendingUp,
-    TrendingDown,
-    Activity,
-    Target, BarChart3,
-    DollarSign,
-    ArrowUp,
-    ArrowDown, Star,
-    Building2,
-    Globe, Activity as ActivityIcon,
-    Grid3X3,
-    List,
-    MapPin,
-    Crown,
-    Zap,
-    Award
+  TrendingUp,
+  TrendingDown,
+  Activity,
+  Target, BarChart3,
+  DollarSign, Globe, Activity as ActivityIcon,
+  Grid3X3,
+  List,
+  MapPin,
+  Crown,
+  Zap,
+  Award
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useScreenEquitiesApiV1ScreenPost, useScreenPredefinedApiV1ScreenPredefinedScreenerNameGet } from "@/api/search/search";

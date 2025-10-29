@@ -9,6 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 
 type AddToWatchlistProps = {
   ticker: string;
+  watchlistId?: string; // If provided, add directly to this watchlist
   buttonVariant?: 'default' | 'outline' | 'ghost' | 'link';
   buttonSize?: 'default' | 'sm' | 'lg' | 'icon';
   className?: string;
@@ -17,6 +18,7 @@ type AddToWatchlistProps = {
 
 export function AddToWatchlist({ 
   ticker, 
+  watchlistId,
   buttonVariant = 'outline',
   buttonSize = 'default',
   className = '',
@@ -28,8 +30,48 @@ export function AddToWatchlist({
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   
   const { data: watchlists, isLoading, refetch } = useWatchlists();
-  const { mutateAsync: addToWatchlist, isPending } = useAddToWatchlist();
-  
+  const { mutateAsync: addToWatchlist, isPending } = useAddToWatchlist(watchlistId || '');
+
+  // If watchlistId is provided, add directly without showing popover
+  const handleDirectAdd = async () => {
+    if (!watchlistId) return;
+    
+    try {
+      await addToWatchlist(
+        {
+          ticker,
+          notes: null
+        },
+        {
+          onSuccess: () => {
+            toast({
+              title: 'Added to watchlist',
+              description: `${ticker} has been added to your watchlist.`,
+            });
+            if (onAdded) {
+              onAdded();
+            }
+          },
+          onError: (error) => {
+            console.error('Error adding to watchlist:', error);
+            toast({
+              title: 'Error',
+              description: error instanceof Error ? error.message : 'Failed to add to watchlist. Please try again.',
+              variant: 'destructive',
+            });
+          }
+        }
+      );
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   useEffect(() => {
     if (!isOpen) {
       setSelectedWatchlistId(null);
@@ -44,7 +86,6 @@ export function AddToWatchlist({
       await addToWatchlist(
         {
           ticker,
-          watchlistId: watchlistId,
           notes: null
 
         },
@@ -83,7 +124,27 @@ export function AddToWatchlist({
     setIsCreatingNew(true);
     console.log('Navigate to create watchlist with ticker:', ticker);
   };
-  
+
+  // If watchlistId is provided, add directly without popover
+  if (watchlistId) {
+    return (
+      <Button 
+        variant={buttonVariant} 
+        size={buttonSize}
+        className={`gap-2 ${className}`}
+        onClick={handleDirectAdd}
+        disabled={isPending}
+      >
+        {isPending ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <Plus className="h-4 w-4" />
+        )}
+        <span>Add to Watchlist</span>
+      </Button>
+    );
+  }
+
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>

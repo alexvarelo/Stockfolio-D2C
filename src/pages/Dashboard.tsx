@@ -22,6 +22,7 @@ import { DashboardPosts } from "@/components/dashboard/DashboardPosts";
 import { CreatePost } from "@/components/social/CreatePost";
 import { useQueryClient } from "@tanstack/react-query";
 import { TopInvestments } from "@/components/portfolio/TopInvestments";
+import { ArticlesSection } from "@/components/articles/ArticlesSection";
 import { useNavigate } from "react-router-dom";
 import {
   DashboardSkeleton,
@@ -268,11 +269,9 @@ const Dashboard = () => {
                   </Card>
                 </motion.div>
                 <motion.div
-                  whileHover={cardHover}
-                  whileTap={cardTap}
                   className="pb-6"
                 >
-                  <TopInvestments />
+                  <ArticlesSection />
                 </motion.div>
               </motion.div>
             </div>

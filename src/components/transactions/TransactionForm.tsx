@@ -1,12 +1,10 @@
 import { useState, useEffect } from "react";
-import { useForm, Controller, useFormContext, useWatch } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useCustomerHoldings } from "@/api/portfolio/useCustomerHoldings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -31,9 +29,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
-  TransactionType,
   useCreateTransaction,
-  type TransactionFormData,
+  type TransactionFormData
 } from "@/api/transaction/transaction";
 import { useGetStockPriceApiV1StockTickerPriceGet } from "@/api/stock/stock";
 import type { PortfolioHolding } from "@/api/portfolio/portfolio";

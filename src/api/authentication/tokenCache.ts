@@ -1,5 +1,4 @@
 // Utility for fetching and caching the API access token
-import { useGetTokenApiV1TokenPost } from './authentication';
 
 const CLIENT_ID = import.meta.env.VITE_API_CLIENT_ID || process.env.VITE_API_CLIENT_ID;
 const CLIENT_SECRET = import.meta.env.VITE_API_CLIENT_SECRET || process.env.VITE_API_CLIENT_SECRET;

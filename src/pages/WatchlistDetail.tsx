@@ -123,6 +123,7 @@ export default function WatchlistDetail() {
                       <div className="flex-shrink-0 ml-2">
                         <AddToWatchlist 
                           ticker={instrument.ticker}
+                          watchlistId={id}
                           buttonVariant="outline"
                           buttonSize="sm"
                           onAdded={() => {

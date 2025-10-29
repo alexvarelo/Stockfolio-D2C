@@ -22,6 +22,7 @@ import { inject } from "@vercel/analytics"
 import { DashboardSkeleton } from "./components/dashboard/DashboardSkeleton";
 import DiscoverPage from "./pages/Discover";
 import MarketResearchPage from "./pages/MarketResearch";
+import { ArticlePage } from "./pages/ArticlePage";
 // CreateEditWatchlist component has been replaced with dialogs
 
 const queryClient = new QueryClient({
@@ -135,6 +136,26 @@ const App = () => (
                   }
                 />
                 <Route
+                  path="/watchlist/:id"
+                  element={
+                    <ProtectedRoute>
+                      <MainLayout>
+                        <WatchlistDetail />
+                      </MainLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                 <Route
+                  path="/article/:id"
+                  element={
+                    <ProtectedRoute>
+                      <MainLayout>
+                        <ArticlePage />
+                      </MainLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/watchlists"
                   element={
                     <ProtectedRoute>
@@ -232,11 +253,16 @@ const App = () => (
                   }
                 />
                 <Route
-                  path="/instrument/:ticker"
+                  path="/articles/:slug"
                   element={
                     <ProtectedRoute>
                       <MainLayout>
-                        <InstrumentPage />
+                        <div className="text-center py-12">
+                          <h2 className="text-2xl font-bold mb-4">Article Detail</h2>
+                          <p className="text-muted-foreground">
+                            Coming soon...
+                          </p>
+                        </div>
                       </MainLayout>
                     </ProtectedRoute>
                   }

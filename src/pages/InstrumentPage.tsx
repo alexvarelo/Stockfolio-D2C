@@ -11,19 +11,13 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import {
-  ArrowUp,
-  ArrowDown,
   ExternalLink,
   BarChart2,
-  Calculator,
-  Bot,
-  MessageCircle,
+  Calculator, MessageCircle,
   MessageSquare,
   Star,
-  Plus,
+  Plus
 } from "lucide-react";
-import { InstrumentChatbot } from "@/components/chat/InstrumentChatbot";
-import { DrawerTrigger } from "@/components/ui/drawer";
 import { StockyChatDrawer } from "@/components/chat/StockyChatDrawer";
 import { useGetStockInfoApiV1StockTickerGet } from "@/api/stock/stock";
 import type { StockInfo, CompanyInfo } from "@/api/financialDataApi.schemas";
@@ -37,10 +31,7 @@ import { TransactionDrawer } from "@/components/transactions/TransactionDrawer";
 // Formatter components
 import {
   MoneyDisplay,
-  PercentageDisplay,
-  LargeNumberDisplay,
-  PriceChangeDisplay,
-  FormattedNumber,
+  PercentageDisplay, FormattedNumber
 } from "@/components/formatters";
 
 // Extended CompanyInfo with additional properties

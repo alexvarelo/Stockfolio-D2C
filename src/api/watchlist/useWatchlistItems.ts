@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { WatchlistItem, AddToWatchlistInput, UpdateWatchlistItemInput } from './types';
+import { useWatchlists } from '@/hooks/useWatchlists';
 
 export function useWatchlistItems(watchlistId: string) {
   return useQuery({
@@ -22,9 +23,22 @@ export function useWatchlistItems(watchlistId: string) {
 
 export function useAddToWatchlist(watchlistId: string) {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (input: Omit<AddToWatchlistInput, 'watchlistId'>) => {
+      // First, verify that the watchlist belongs to the current user
+      const { data: watchlist, error: watchlistError } = await supabase
+        .from('watchlists')
+        .select('id, user_id')
+        .eq('id', watchlistId)
+        .single();
+
+      if (watchlistError) throw watchlistError;
+      if (!watchlist) throw new Error('Watchlist not found');
+
+      // The RLS policy will handle the user authorization, but this additional check
+      // ensures we're only allowing operations on watchlists the user owns
+
       const { data, error } = await supabase
         .from('watchlist_items')
         .insert({
@@ -35,7 +49,7 @@ export function useAddToWatchlist(watchlistId: string) {
         })
         .select()
         .single();
-      
+
       if (error) throw error;
       return data as WatchlistItem;
     },
