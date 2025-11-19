@@ -1,5 +1,22 @@
 import type { Config } from "tailwindcss";
 
+// Generate color shades based on a base color
+const generateColorScale = (baseColor: string) => ({
+	50: `hsl(var(--${baseColor}-50))`,
+	100: `hsl(var(--${baseColor}-100))`,
+	200: `hsl(var(--${baseColor}-200))`,
+	300: `hsl(var(--${baseColor}-300))`,
+	400: `hsl(var(--${baseColor}-400))`,
+	500: `hsl(var(--${baseColor}-500))`,
+	600: `hsl(var(--${baseColor}-600))`,
+	700: `hsl(var(--${baseColor}-700))`,
+	800: `hsl(var(--${baseColor}-800))`,
+	900: `hsl(var(--${baseColor}-900))`,
+	950: `hsl(var(--${baseColor}-950))`,
+	DEFAULT: `hsl(var(--${baseColor}-500))`,
+	foreground: `hsl(var(--${baseColor}-foreground))`,
+});
+
 export default {
 	darkMode: ["class"],
 	content: [
@@ -26,8 +43,7 @@ export default {
 				foreground: 'hsl(var(--foreground))',
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
-					foreground: 'hsl(var(--primary-foreground))',
-					hover: 'hsl(var(--primary-hover))'
+					foreground: 'hsl(var(--primary-foreground))'
 				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
@@ -66,18 +82,20 @@ export default {
 				success: {
 					DEFAULT: 'hsl(var(--success))',
 					foreground: 'hsl(var(--success-foreground))',
-					light: 'hsl(var(--success-light))'
 				},
 				danger: {
 					DEFAULT: 'hsl(var(--danger))',
 					foreground: 'hsl(var(--danger-foreground))',
-					light: 'hsl(var(--danger-light))'
 				},
 				warning: {
 					DEFAULT: 'hsl(var(--warning))',
 					foreground: 'hsl(var(--warning-foreground))',
-					light: 'hsl(var(--warning-light))'
-				}
+				},
+				blue: generateColorScale('blue'),
+				emerald: generateColorScale('emerald'),
+				rose: generateColorScale('rose'),
+				violet: generateColorScale('violet'),
+				orange: generateColorScale('orange')
 			},
 			backgroundImage: {
 				'gradient-primary': 'var(--gradient-primary)',

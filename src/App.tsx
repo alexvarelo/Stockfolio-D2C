@@ -13,7 +13,7 @@ import { InstrumentPage } from "./pages/InstrumentPage";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import { Navbar } from "@/components/navigation/Navbar";
-import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import Watchlists from "./pages/Watchlists";
 import WatchlistDetail from "./pages/WatchlistDetail";
 import { UserProfile } from "./pages/UserProfile";
@@ -69,12 +69,7 @@ function MainLayout({ children }: { children: React.ReactNode }) {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="system"
-        enableSystem
-        disableTransitionOnChange
-      >
+      <ThemeProvider>
         <SidebarProvider>
           <TooltipProvider>
             <PostNotifications />
@@ -145,7 +140,7 @@ const App = () => (
                     </ProtectedRoute>
                   }
                 />
-                 <Route
+                <Route
                   path="/article/:id"
                   element={
                     <ProtectedRoute>
@@ -201,6 +196,16 @@ const App = () => (
                     <ProtectedRoute>
                       <MainLayout>
                         <MarketResearchPage />
+                      </MainLayout>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/instrument/:ticker"
+                  element={
+                    <ProtectedRoute>
+                      <MainLayout>
+                        <InstrumentPage />
                       </MainLayout>
                     </ProtectedRoute>
                   }

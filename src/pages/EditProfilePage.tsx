@@ -11,8 +11,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Pencil, ArrowLeft } from 'lucide-react';
+import { Pencil, ArrowLeft, Paintbrush } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
+import { ThemeSelector } from '@/components/theme/ThemeSelector';
 
 const profileFormSchema = z.object({
   username: z.string().min(2, {
@@ -33,7 +34,7 @@ export const EditProfilePage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string>('');
-  
+
   const { data: profile, isLoading: isProfileLoading } = useUserProfile(user?.id || '');
   const updateProfile = useUpdateProfile();
 
@@ -76,9 +77,9 @@ export const EditProfilePage = () => {
 
   const onSubmit = async (data: ProfileFormValues) => {
     if (!user) return;
-    
+
     setIsLoading(true);
-    
+
     try {
       const formData = new FormData();
       formData.append('username', data.username);
@@ -88,17 +89,17 @@ export const EditProfilePage = () => {
       if (avatarFile) {
         formData.append('avatar', avatarFile);
       }
-      
+
       await updateProfile.mutateAsync({
         userId: user.id,
         data: formData,
       });
-      
+
       toast({
         title: 'Profile updated',
         description: 'Your profile has been updated successfully.',
       });
-      
+
       // Navigate back to profile using the new /user/:userId format
       navigate(`/user/${user.id}`);
     } catch (error) {
@@ -124,9 +125,9 @@ export const EditProfilePage = () => {
   return (
     <div className="max-w-4xl mx-auto p-4">
       <div className="flex items-center mb-8">
-        <Button 
-          variant="ghost" 
-          size="icon" 
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={() => navigate(-1)}
           className="mr-4"
         >
@@ -145,16 +146,16 @@ export const EditProfilePage = () => {
                   {profile?.full_name?.charAt(0) || profile?.username?.charAt(0) || 'U'}
                 </AvatarFallback>
               </Avatar>
-              <label 
-                htmlFor="avatar-upload" 
+              <label
+                htmlFor="avatar-upload"
                 className="absolute bottom-0 right-0 bg-primary text-white p-2 rounded-full cursor-pointer hover:bg-primary/90 transition-colors"
               >
                 <Pencil className="h-4 w-4" />
-                <input 
-                  id="avatar-upload" 
-                  type="file" 
-                  accept="image/*" 
-                  className="hidden" 
+                <input
+                  id="avatar-upload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
                   onChange={handleAvatarChange}
                 />
               </label>
@@ -196,11 +197,11 @@ export const EditProfilePage = () => {
               <FormItem>
                 <FormLabel>Bio</FormLabel>
                 <FormControl>
-                  <Textarea 
-                    placeholder="Tell us a little bit about yourself" 
-                    className="resize-none" 
-                    rows={4} 
-                    {...field} 
+                  <Textarea
+                    placeholder="Tell us a little bit about yourself"
+                    className="resize-none"
+                    rows={4}
+                    {...field}
                   />
                 </FormControl>
                 <FormMessage />
@@ -222,10 +223,35 @@ export const EditProfilePage = () => {
             )}
           />
 
-          <div className="flex justify-end space-x-4 pt-4">
-            <Button 
-              type="button" 
-              variant="outline" 
+          <div className="space-y-8 pt-6">
+            <div>
+              <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
+                <Paintbrush className="h-5 w-5" />
+                Theme Preferences
+              </h3>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Choose your preferred color scheme and theme settings.
+                  </p>
+                  <div className="flex items-center justify-between p-4 border rounded-lg bg-card">
+                    <div>
+                      <p className="font-medium">Theme</p>
+                      <p className="text-sm text-muted-foreground">
+                        Customize the look and feel of the application
+                      </p>
+                    </div>
+                    <ThemeSelector />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-4 pt-8">
+            <Button
+              type="button"
+              variant="outline"
               onClick={() => navigate(-1)}
               disabled={isLoading}
             >
