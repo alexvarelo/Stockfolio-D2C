@@ -46,11 +46,17 @@ export interface Portfolio extends Omit<PortfolioBase, "portfolio_followers"> {
 
 // Get portfolio data with current prices and performance
 // This is a combination of basic portfolio data and current market data
+// Get portfolio data with current prices and performance
+// This is a combination of basic portfolio data and current market data
 export const usePortfolio = (portfolioId: string, includePrices = true) => {
-  return useQuery<Portfolio, Error>({
-    queryKey: ["portfolio", portfolioId],
+  // 1. Fetch basic portfolio data (Fast)
+  const {
+    data: basicPortfolio,
+    isLoading: isLoadingBasic,
+    error: basicError
+  } = useQuery<Portfolio, Error>({
+    queryKey: ["portfolio-basic", portfolioId],
     queryFn: async () => {
-      // First, get basic portfolio data
       const { data, error } = await supabase
         .from("portfolios")
         .select(
@@ -71,21 +77,26 @@ export const usePortfolio = (portfolioId: string, includePrices = true) => {
       if (error) throw error;
       if (!data) throw new Error("Portfolio not found");
 
-      // Create initial portfolio object
-      const portfolio: Portfolio = {
+      return {
         ...data,
         holdings: data.holdings || [],
         followers_count: data.portfolio_followers?.[0]?.count || 0,
       };
+    },
+    enabled: !!portfolioId,
+  });
 
-      // If we don't need prices or there are no holdings, return early
-      if (!includePrices || !portfolio.holdings.length) {
-        return portfolio;
-      }
+  // 2. Fetch live prices for holdings (Slower)
+  const {
+    data: prices,
+    isLoading: isLoadingPrices
+  } = useQuery<Record<string, PriceData>, Error>({
+    queryKey: ["portfolio-prices", portfolioId],
+    queryFn: async () => {
+      if (!basicPortfolio?.holdings?.length) return {};
 
-      // Get current prices for all holdings
-      const tickers = portfolio.holdings.map((h) => h.ticker);
-      const prices: Record<string, PriceData> = {};
+      const tickers = basicPortfolio.holdings.map((h) => h.ticker);
+      const pricesMap: Record<string, PriceData> = {};
 
       try {
         const pricesResponse =
@@ -96,7 +107,7 @@ export const usePortfolio = (portfolioId: string, includePrices = true) => {
         if (Array.isArray(pricesResponse?.data)) {
           pricesResponse.data.forEach((priceData) => {
             if (priceData?.symbol) {
-              prices[priceData.symbol] = {
+              pricesMap[priceData.symbol] = {
                 current: priceData.current_price || 0,
                 change: priceData.change,
                 changePercent: priceData.change_percent,
@@ -106,59 +117,80 @@ export const usePortfolio = (portfolioId: string, includePrices = true) => {
         }
       } catch (error) {
         console.error("Error fetching current prices:", error);
-        // Continue without prices rather than failing the whole query
-        return portfolio;
       }
 
-      let totalTodayChange = 0;
-      let totalInvested = 0;
-
-      portfolio.holdings = portfolio.holdings.map((holding) => {
-        const priceData = prices[holding.ticker];
-        const priceInfo = priceData || { current: holding.current_price || 0 };
-        const currentPrice = priceInfo.current;
-        const investedValue = (holding.average_price || 0) * holding.quantity;
-        const currentValue = currentPrice * holding.quantity;
-
-        // Calculate today's value change based on 24h change percentage
-        const todayChangePercent = priceInfo.changePercent || 0;
-        const todayValueChange = todayChangePercent
-          ? (todayChangePercent / 100) *
-            (currentValue / (1 + todayChangePercent / 100))
-          : 0;
-
-        totalTodayChange += todayValueChange;
-        totalInvested += investedValue;
-
-        return {
-          ...holding,
-          current_price: currentPrice,
-          change_percent:
-            holding.average_price > 0
-              ? ((currentPrice - holding.average_price) /
-                  holding.average_price) *
-                100
-              : 0,
-          total_value: currentValue,
-          total_invested: investedValue,
-          today_change: priceInfo.change || 0,
-          today_change_percent: todayChangePercent,
-          today_value_change: todayValueChange,
-        };
-      });
-
-      // Add today's performance to the portfolio
-      portfolio.today_change = totalTodayChange;
-      portfolio.today_change_percent =
-        totalInvested > 0 ? (totalTodayChange / totalInvested) * 100 : 0;
-
-      return portfolio;
+      return pricesMap;
     },
-    enabled: !!portfolioId,
-    retry: 1,
-    refetchOnWindowFocus: false,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: !!portfolioId && includePrices && !!basicPortfolio?.holdings?.length,
+    staleTime: 60 * 1000, // 1 minute for prices
+    refetchInterval: 60 * 1000, // Auto-refresh prices every minute
   });
+
+  // 3. Merge data
+  if (!basicPortfolio) {
+    return {
+      data: undefined,
+      isLoading: isLoadingBasic,
+      isLoadingPrices: false,
+      error: basicError
+    };
+  }
+
+  // If we have basic data but prices are loading or disabled, return basic data
+  // We'll calculate derived values based on what we have
+  let totalTodayChange = 0;
+  let totalInvested = 0;
+
+  const holdingsWithPrices = basicPortfolio.holdings.map((holding) => {
+    // Use fetched price if available, otherwise fall back to stored current_price or 0
+    // If prices are loading, this might be undefined initially, which is fine
+    const priceData = prices?.[holding.ticker];
+    const priceInfo = priceData || { current: holding.current_price || 0 };
+    const currentPrice = priceInfo.current;
+
+    const investedValue = (holding.average_price || 0) * holding.quantity;
+    const currentValue = currentPrice * holding.quantity;
+
+    // Calculate today's value change based on 24h change percentage
+    const todayChangePercent = priceInfo.changePercent || 0;
+    const todayValueChange = todayChangePercent
+      ? (todayChangePercent / 100) *
+      (currentValue / (1 + todayChangePercent / 100))
+      : 0;
+
+    totalTodayChange += todayValueChange;
+    totalInvested += investedValue;
+
+    return {
+      ...holding,
+      current_price: currentPrice,
+      change_percent:
+        holding.average_price > 0
+          ? ((currentPrice - holding.average_price) /
+            holding.average_price) *
+          100
+          : 0,
+      total_value: currentValue,
+      total_invested: investedValue,
+      today_change: priceInfo.change || 0,
+      today_change_percent: todayChangePercent,
+      today_value_change: todayValueChange,
+    };
+  });
+
+  const portfolioWithPrices: Portfolio = {
+    ...basicPortfolio,
+    holdings: holdingsWithPrices,
+    today_change: totalTodayChange,
+    today_change_percent: totalInvested > 0 ? (totalTodayChange / totalInvested) * 100 : 0,
+  };
+
+  return {
+    data: portfolioWithPrices,
+    isLoading: isLoadingBasic,
+    isLoadingPrices: isLoadingPrices && includePrices, // Only true if we actually wanted prices
+    error: basicError
+  };
 };
 
 // Get portfolio performance data (prices, etc.)
@@ -231,7 +263,7 @@ export const usePortfolioPerformance = (
         const changePercent =
           holding.average_price > 0
             ? ((currentPrice - holding.average_price) / holding.average_price) *
-              100
+            100
             : 0;
 
         return {

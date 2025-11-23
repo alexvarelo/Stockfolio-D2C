@@ -17,13 +17,13 @@ import { EvolutionChart } from "@/components/portfolio/portfolioDetails/Evolutio
 import { PortfolioActions } from "@/components/portfolio/portfolioDetails/PortfolioActions";
 import { AISummaryDrawer } from "@/components/portfolio/portfolioDetails/AISummaryDrawer";
 import { PortfolioHeaderSection } from "@/components/portfolio/PortfolioHeaderSection";
-import { 
-  PortfolioLayout, 
-  PortfolioGrid, 
-  PortfolioMainContent, 
-  PortfolioSidebar, 
-  PortfolioSection, 
-  PortfolioLoadingSkeleton 
+import {
+  PortfolioLayout,
+  PortfolioGrid,
+  PortfolioMainContent,
+  PortfolioSidebar,
+  PortfolioSection,
+  PortfolioLoadingSkeleton
 } from "@/components/portfolio/portfolioDetails/PortfolioLayout";
 
 // Add custom animation keyframes for the spinning gradient
@@ -49,30 +49,35 @@ export const PortfolioDetail = () => {
   const [aiSummaryOpen, setAISummaryOpen] = useState(false);
 
   // Load portfolio data
-  const { data: portfolio, isLoading: isLoadingPortfolio, error } = usePortfolio(portfolioId);
+  const {
+    data: portfolio,
+    isLoading: isLoadingPortfolio,
+    isLoadingPrices, // New loading state for prices
+    error
+  } = usePortfolio(portfolioId);
   const { mutateAsync: deletePortfolio } = useDeletePortfolio();
-  
+
   // Load transactions in parallel
   const { data: transactions, isLoading: isLoadingTransactions } = usePortfolioTransactions(portfolioId);
-  
+
   // Calculate derived values
   const holdingsCount = portfolio?.holdings?.length || 0;
   const totalValue = portfolio?.holdings?.reduce(
     (sum, h) => sum + ((h.current_price || 0) * h.quantity),
     0
   ) || 0;
-  
+
   const totalInvested = portfolio?.holdings?.reduce(
     (sum, h) => sum + h.total_invested,
     0
   ) || 0;
-  
+
   const totalReturn = totalValue - totalInvested;
   const returnPercentage = totalInvested > 0 ? (totalReturn / totalInvested) * 100 : 0;
 
   const handleDelete = async () => {
     if (!portfolioId) return;
-    
+
     try {
       await deletePortfolio(portfolioId);
       toast({
@@ -142,18 +147,21 @@ export const PortfolioDetail = () => {
       />
 
       {/* AI Summary Drawer */}
-      <AISummaryDrawer 
-        isOpen={aiSummaryOpen} 
-        onOpenChange={setAISummaryOpen} 
-        portfolioId={portfolioId} 
+      <AISummaryDrawer
+        isOpen={aiSummaryOpen}
+        onOpenChange={setAISummaryOpen}
+        portfolioId={portfolioId}
       />
 
       <PortfolioSection>
         <PortfolioGrid>
           <PortfolioMainContent>
-            <EvolutionChart holdings={portfolio.holdings || []} />
+            <EvolutionChart
+              holdings={portfolio.holdings || []}
+              isLoading={isLoadingPrices} // Pass loading state to chart
+            />
           </PortfolioMainContent>
-          
+
           <PortfolioSidebar>
             <PortfolioStats
               totalValue={totalValue}
@@ -162,19 +170,21 @@ export const PortfolioDetail = () => {
               returnPercentage={returnPercentage}
               holdingsCount={holdingsCount}
               className="w-full"
+              isLoading={isLoadingPrices} // Pass loading state to stats
             />
           </PortfolioSidebar>
         </PortfolioGrid>
 
         {/* Holdings and Transactions section */}
         <PortfolioSection>
-          <PortfolioHoldings 
-            holdings={portfolio.holdings || []} 
-            isLoading={isLoadingPortfolio}
+          <PortfolioHoldings
+            holdings={portfolio.holdings || []}
+            isLoading={isLoadingPortfolio} // Initial loading
+            isLoadingPrices={isLoadingPrices} // Price loading
           />
-          
-          <TransactionsCard 
-            transactions={transactions || []} 
+
+          <TransactionsCard
+            transactions={transactions || []}
             isLoading={isLoadingTransactions}
           />
         </PortfolioSection>
@@ -189,7 +199,7 @@ export const PortfolioDetail = () => {
         confirmText="Delete Portfolio"
       />
 
-      <PortfolioEditDialog 
+      <PortfolioEditDialog
         isOpen={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         portfolio={portfolio}

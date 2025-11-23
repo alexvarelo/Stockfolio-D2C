@@ -15,6 +15,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { usePortfolioFollows } from '@/api/portfolio/usePortfolioFollows';
 import { usePortfolio } from '@/api/portfolio/portfolio';
 import { formatCurrency } from '@/lib/formatters';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export interface Holding {
   ticker: string;
@@ -67,20 +68,20 @@ export const PortfolioCard: React.FC<PortfolioCardProps> = ({
   const handleFollowClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (!user) {
       navigate('/auth/signin');
       return;
     }
-    
+
     if (isProcessing) return;
-    
+
     setIsProcessing(true);
     try {
       await toggleFollow();
       toast({
         title: isFollowing ? 'Unfollowed portfolio' : 'Following portfolio',
-        description: isFollowing 
+        description: isFollowing
           ? `You've unfollowed ${name}`
           : `You're now following ${name}`,
       });
@@ -96,7 +97,8 @@ export const PortfolioCard: React.FC<PortfolioCardProps> = ({
   };
 
   // Get portfolio data with metrics
-  const { data: portfolioData, isLoading: isLoadingPrices } = usePortfolio(id, true);
+  const { data: portfolioData, isLoading: isBasicLoading, isLoadingPrices: isPricesLoading } = usePortfolio(id, true);
+  const isLoadingPrices = isBasicLoading || isPricesLoading;
 
   // Calculate portfolio metrics from portfolio data
   const portfolioMetrics = useMemo(() => {
@@ -137,7 +139,7 @@ export const PortfolioCard: React.FC<PortfolioCardProps> = ({
   // Calculate total number of holdings
   const totalHoldings = holdings?.length || 0;
   const hasHoldings = totalHoldings > 0;
-  
+
   // Format creation date
   const formattedDate = useMemo(() => {
     try {
@@ -148,39 +150,41 @@ export const PortfolioCard: React.FC<PortfolioCardProps> = ({
   }, [created_at]);
 
   return (
-    <Card className={`hover:shadow-lg transition-shadow group h-full flex flex-col ${className}`}>
-      <Link to={`/portfolio/${id}`} className="block h-full">
-        <CardHeader className="pb-3">
+    <Card className={`hover:shadow-xl transition-all duration-300 group h-full flex flex-col border-border/50 bg-gradient-to-br from-white to-slate-50 dark:from-slate-950 dark:to-slate-900/50 ${className}`}>
+      <Link to={`/portfolio/${id}`} className="block h-full flex flex-col">
+        <CardHeader className="pb-4">
           <div className="flex justify-between items-start">
-            <div>
-              <CardTitle className="text-xl">{name}</CardTitle>
+            <div className="space-y-1.5">
+              <CardTitle className="text-xl font-bold tracking-tight">{name}</CardTitle>
               {showOwner && user_name && user_id && (
-                <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-                  <Link 
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Link
                     to={`/user/${user_id}`}
                     onClick={(e) => e.stopPropagation()}
-                    className="flex items-center gap-2 hover:underline"
+                    className="flex items-center gap-2 hover:text-primary transition-colors"
                   >
                     {user_avatar_url ? (
-                      <img 
-                        src={user_avatar_url} 
+                      <img
+                        src={user_avatar_url}
                         alt={user_name}
-                        className="h-4 w-4 rounded-full"
+                        className="h-5 w-5 rounded-full ring-1 ring-border"
                       />
                     ) : (
-                      <User className="h-4 w-4" />
+                      <div className="h-5 w-5 rounded-full bg-muted flex items-center justify-center">
+                        <User className="h-3 w-3" />
+                      </div>
                     )}
-                    <span>{user_name}</span>
+                    <span className="font-medium">{user_name}</span>
                   </Link>
                 </div>
               )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               {!isOwnPortfolio ? (
                 <Button
                   variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+                  size="icon"
+                  className="h-8 w-8 rounded-full hover:bg-muted/80"
                   onClick={handleFollowClick}
                   disabled={isFollowLoading || isProcessing}
                 >
@@ -191,118 +195,121 @@ export const PortfolioCard: React.FC<PortfolioCardProps> = ({
                   )}
                 </Button>
               ) : (
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <Users className="h-4 w-4" />
+                <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-muted/50 text-xs font-medium text-muted-foreground">
+                  <Users className="h-3.5 w-3.5" />
                   <span>{followersCount || 0}</span>
                 </div>
               )}
-              {is_public ? (
-                <Eye className="h-4 w-4 text-muted-foreground" />
-              ) : (
-                <Lock className="h-4 w-4 text-muted-foreground" />
-              )}
+              <div className="h-8 w-8 flex items-center justify-center rounded-full bg-muted/50">
+                {is_public ? (
+                  <Eye className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <Lock className="h-4 w-4 text-muted-foreground" />
+                )}
+              </div>
             </div>
           </div>
           {description && (
-            <CardDescription className="line-clamp-2 mt-2">
+            <CardDescription className="line-clamp-2 mt-3 text-sm leading-relaxed">
               {description}
             </CardDescription>
           )}
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-4">
+
+        <CardContent className="space-y-6 flex-1 flex flex-col">
+          <div className="grid grid-cols-2 gap-4">
             {/* Portfolio Value and Today's Performance */}
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Portfolio Value</p>
-                <p className="text-2xl font-semibold">
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Portfolio Value</p>
+              <div className="space-y-1">
+                <p className="text-2xl font-bold tracking-tight">
                   {isLoadingPrices ? (
-                    <span className="inline-block h-8 w-24 bg-muted rounded animate-pulse"></span>
+                    <Skeleton className="h-8 w-32" />
                   ) : (
                     formatCurrency(portfolioMetrics.currentValue)
                   )}
                 </p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm text-muted-foreground">Today</p>
-                <p className={`text-sm ${
-                  isLoadingPrices ? '' : (portfolioData?.today_change_percent || 0) >= 0 ? 'text-green-500' : 'text-red-500'
-                }`}>
+                <div className="flex items-center">
                   {isLoadingPrices ? (
-                    <span className="inline-block h-4 w-24 bg-muted rounded animate-pulse"></span>
+                    <Skeleton className="h-5 w-20 rounded-full" />
                   ) : (
-                    `${(portfolioData?.today_change_percent || 0).toFixed(2)}% • ${formatCurrency(portfolioData?.today_change || 0)}`
+                    <div className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${(portfolioData?.today_change_percent || 0) >= 0
+                      ? 'bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-400'
+                      : 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400'
+                      }`}>
+                      {(portfolioData?.today_change_percent || 0) >= 0 ? '+' : ''}
+                      {(portfolioData?.today_change_percent || 0).toFixed(2)}%
+                      <span className="mx-1 opacity-50">•</span>
+                      {formatCurrency(portfolioData?.today_change || 0)}
+                    </div>
                   )}
-                </p>
+                </div>
               </div>
             </div>
 
-            {/* Total Invested and Total Return */}
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total Invested</p>
-                <p className="text-sm">
+            {/* Total Return */}
+            <div className="space-y-1 text-right">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Return</p>
+              <div className="space-y-1 flex flex-col items-end">
+                <p className={`text-lg font-semibold ${!isLoadingPrices && (portfolioMetrics.earnedLost >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400')
+                  }`}>
                   {isLoadingPrices ? (
-                    <span className="inline-block h-4 w-20 bg-muted rounded animate-pulse"></span>
+                    <Skeleton className="h-7 w-24" />
                   ) : (
-                    formatCurrency(portfolioMetrics.costBasis)
+                    formatCurrency(portfolioMetrics.earnedLost)
                   )}
                 </p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm text-muted-foreground">Total Return</p>
-                <p className={`text-sm ${
-                  !isLoadingPrices && (portfolioMetrics.earnedLost >= 0 ? 'text-green-500' : 'text-red-500')
-                }`}>
-                  {isLoadingPrices ? (
-                    <span className="inline-block h-4 w-24 bg-muted rounded animate-pulse"></span>
-                  ) : (
-                    `${portfolioMetrics.formattedPerformance}% • ${formatCurrency(portfolioMetrics.earnedLost)}`
-                  )}
-                </p>
+                {isLoadingPrices ? (
+                  <Skeleton className="h-5 w-16 rounded-full" />
+                ) : (
+                  <div className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${portfolioMetrics.earnedLost >= 0
+                    ? 'bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-400'
+                    : 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400'
+                    }`}>
+                    {portfolioMetrics.earnedLost >= 0 ? '+' : ''}
+                    {portfolioMetrics.formattedPerformance}%
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
-          <div className="pt-4 border-t">
-            <div className="flex justify-between text-sm mb-2">
-              <span className="font-medium">Holdings</span>
-              {isLoadingPrices ? (
-                <span className="inline-block h-4 w-12 bg-muted rounded animate-pulse"></span>
-              ) : (
-                <span>{totalHoldings} {totalHoldings === 1 ? 'asset' : 'assets'}</span>
-              )}
+          <div className="pt-4 border-t border-border/50 mt-auto">
+            <div className="flex justify-between items-center text-sm mb-3">
+              <span className="font-medium text-muted-foreground">Holdings</span>
+              <span className="font-semibold bg-muted/50 px-2 py-0.5 rounded text-xs">
+                {totalHoldings} {totalHoldings === 1 ? 'asset' : 'assets'}
+              </span>
             </div>
-            
-            {hasHoldings && (
-            <div className="space-y-2">
-              <div className="space-y-1">
+
+            {hasHoldings ? (
+              <div className="space-y-2">
                 {holdings.slice(0, 3).map((holding, index) => (
-                  <div key={`${holding.ticker}-${index}`} className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">
-                      {holding.ticker}
-                    </span>
-                    <span>{holding.quantity} shares</span>
+                  <div key={`${holding.ticker}-${index}`} className="flex justify-between items-center text-sm group/holding">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium bg-muted/30 px-1.5 py-0.5 rounded text-xs group-hover/holding:bg-muted/60 transition-colors">
+                        {holding.ticker}
+                      </span>
+                    </div>
+                    <span className="text-muted-foreground text-xs">{holding.quantity} shares</span>
                   </div>
                 ))}
                 {holdings.length > 3 && (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground pl-1">
                     +{holdings.length - 3} more
                   </p>
                 )}
               </div>
+            ) : (
+              <div className="text-sm text-muted-foreground italic py-2">No holdings yet</div>
+            )}
+          </div>
+
+          <div className="pt-4 flex items-center justify-between text-xs text-muted-foreground border-t border-border/50">
+            <span>Created {formattedDate}</span>
+            <div className="flex items-center text-primary font-medium group-hover:translate-x-1 transition-transform duration-300">
+              Details <ArrowRight className="ml-1 h-3.5 w-3.5" />
             </div>
-          )}
-          </div>
-          
-          <div className="pt-2 border-t">
-            <p className="text-xs text-muted-foreground">
-              Created {formattedDate}
-            </p>
-          </div>
-          
-          <div className="pt-2 flex items-center justify-end text-sm text-primary font-medium">
-            View details <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
           </div>
         </CardContent>
       </Link>
