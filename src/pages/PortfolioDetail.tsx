@@ -4,7 +4,6 @@ import { usePortfolioTransactions } from "@/api/transaction/usePortfolioTransact
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/auth";
 import { PortfolioHoldings } from "@/components/portfolio/PortfolioHoldings";
-import { PortfolioStats } from "@/components/portfolio/PortfolioStats";
 import { TransactionsCard } from "@/components/transactions/TransactionsCard";
 import { PortfolioEditDialog } from "@/components/portfolio/edit/PortfolioEditDialog";
 import { DeleteConfirmationDialog } from "@/components/portfolio/delete/DeleteConfirmationDialog";
@@ -14,17 +13,16 @@ import { ArrowLeft } from "lucide-react";
 
 // Import from portfolioDetails folder
 import { EvolutionChart } from "@/components/portfolio/portfolioDetails/EvolutionChart";
-import { PortfolioActions } from "@/components/portfolio/portfolioDetails/PortfolioActions";
 import { AISummaryDrawer } from "@/components/portfolio/portfolioDetails/AISummaryDrawer";
-import { PortfolioHeaderSection } from "@/components/portfolio/PortfolioHeaderSection";
+import { PortfolioHero } from "@/components/portfolio/portfolioDetails/PortfolioHero";
 import {
   PortfolioLayout,
-  PortfolioGrid,
-  PortfolioMainContent,
-  PortfolioSidebar,
   PortfolioSection,
   PortfolioLoadingSkeleton
 } from "@/components/portfolio/portfolioDetails/PortfolioLayout";
+import { AllocationChart } from "@/components/portfolio/portfolioDetails/AllocationChart";
+import { TopMovers } from "@/components/portfolio/portfolioDetails/TopMovers";
+import { KeyMetrics } from "@/components/portfolio/portfolioDetails/KeyMetrics";
 
 // Add custom animation keyframes for the spinning gradient
 const style = document.createElement('style');
@@ -61,7 +59,6 @@ export const PortfolioDetail = () => {
   const { data: transactions, isLoading: isLoadingTransactions } = usePortfolioTransactions(portfolioId);
 
   // Calculate derived values
-  const holdingsCount = portfolio?.holdings?.length || 0;
   const totalValue = portfolio?.holdings?.reduce(
     (sum, h) => sum + ((h.current_price || 0) * h.quantity),
     0
@@ -124,26 +121,22 @@ export const PortfolioDetail = () => {
 
   return (
     <PortfolioLayout>
-      {/* Header Section */}
-      <PortfolioHeaderSection
-        onBack={() => navigate(-1)}
+      {/* Hero Section */}
+      <PortfolioHero
         name={portfolio.name}
-        description={portfolio.description || ''}
-        isPublic={portfolio.is_public || false}
-        followersCount={portfolio.followers_count || 0}
+        description={portfolio.description}
+        isPublic={portfolio.is_public}
+        followersCount={portfolio.followers_count}
         createdAt={portfolio.created_at}
-        actions={
-          <PortfolioActions
-            portfolioId={portfolioId}
-            isOwner={isOwner}
-            isPublic={portfolio.is_public || false}
-            followersCount={portfolio.followers_count || 0}
-            onEdit={() => setIsEditDialogOpen(true)}
-            onDelete={() => setIsDeleteDialogOpen(true)}
-            onAISummary={() => setAISummaryOpen(true)}
-            holdings={portfolio.holdings || []}
-          />
-        }
+        totalValue={totalValue}
+        totalReturn={totalReturn}
+        returnPercentage={returnPercentage}
+        onBack={() => navigate("/dashboard")}
+        onEdit={() => setIsEditDialogOpen(true)}
+        onDelete={() => setIsDeleteDialogOpen(true)}
+        onAISummary={() => setAISummaryOpen(true)}
+        isOwner={isOwner}
+        isLoading={isLoadingPortfolio}
       />
 
       {/* AI Summary Drawer */}
@@ -154,40 +147,50 @@ export const PortfolioDetail = () => {
       />
 
       <PortfolioSection>
-        <PortfolioGrid>
-          <PortfolioMainContent>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Column (2/3) */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Evolution Chart */}
             <EvolutionChart
               holdings={portfolio.holdings || []}
-              isLoading={isLoadingPrices} // Pass loading state to chart
+              isLoading={isLoadingPrices}
             />
-          </PortfolioMainContent>
 
-          <PortfolioSidebar>
-            <PortfolioStats
-              totalValue={totalValue}
-              totalInvested={totalInvested}
-              totalReturn={totalReturn}
-              returnPercentage={returnPercentage}
-              holdingsCount={holdingsCount}
-              className="w-full"
-              isLoading={isLoadingPrices} // Pass loading state to stats
+            {/* Holdings List */}
+            <PortfolioHoldings
+              holdings={portfolio.holdings || []}
+              isLoading={isLoadingPortfolio}
+              isLoadingPrices={isLoadingPrices}
             />
-          </PortfolioSidebar>
-        </PortfolioGrid>
 
-        {/* Holdings and Transactions section */}
-        <PortfolioSection>
-          <PortfolioHoldings
-            holdings={portfolio.holdings || []}
-            isLoading={isLoadingPortfolio} // Initial loading
-            isLoadingPrices={isLoadingPrices} // Price loading
-          />
+            {/* Transactions */}
+            <TransactionsCard
+              transactions={transactions || []}
+              isLoading={isLoadingTransactions}
+            />
+          </div>
 
-          <TransactionsCard
-            transactions={transactions || []}
-            isLoading={isLoadingTransactions}
-          />
-        </PortfolioSection>
+          {/* Sidebar Column (1/3) */}
+          <div className="lg:col-span-1 space-y-8">
+            {/* Allocation Chart */}
+            <AllocationChart
+              holdings={portfolio.holdings || []}
+              isLoading={isLoadingPrices}
+            />
+
+            {/* Top Movers */}
+            <TopMovers
+              holdings={portfolio.holdings || []}
+              isLoading={isLoadingPrices}
+            />
+
+            {/* Key Metrics */}
+            <KeyMetrics
+              holdings={portfolio.holdings || []}
+              isLoading={isLoadingPrices}
+            />
+          </div>
+        </div>
       </PortfolioSection>
 
       <DeleteConfirmationDialog

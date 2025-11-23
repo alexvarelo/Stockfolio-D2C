@@ -1,0 +1,230 @@
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { ArrowLeft, MoreHorizontal, TrendingUp, TrendingDown, Edit, Trash2, Sparkles } from "lucide-react";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { formatCurrency } from "@/lib/utils";
+import { motion } from "framer-motion";
+
+interface PortfolioHeroProps {
+    name: string;
+    description?: string;
+    isPublic?: boolean;
+    followersCount?: number;
+    createdAt?: string;
+    totalValue: number;
+    totalReturn: number;
+    returnPercentage: number;
+    onBack: () => void;
+    onEdit: () => void;
+    onDelete: () => void;
+    onAISummary: () => void;
+    isOwner: boolean;
+    isLoading?: boolean;
+}
+
+export const PortfolioHero = ({
+    name,
+    description,
+    isPublic,
+    followersCount,
+    createdAt,
+    totalValue,
+    totalReturn,
+    returnPercentage,
+    onBack,
+    onEdit,
+    onDelete,
+    onAISummary,
+    isOwner,
+    isLoading = false,
+}: PortfolioHeroProps) => {
+    const isPositive = totalReturn >= 0;
+
+    if (isLoading) {
+        return (
+            <div className="relative w-full mb-8">
+                <div className="flex flex-col gap-6">
+                    <div className="flex items-center justify-between">
+                        <Skeleton className="h-9 w-20" />
+                        <div className="flex items-center gap-2">
+                            <Skeleton className="h-9 w-28 hidden sm:flex" />
+                            {isOwner && <Skeleton className="h-8 w-8" />}
+                        </div>
+                    </div>
+                    <div className="flex flex-col md:flex-row justify-between items-start gap-8">
+                        <div className="space-y-4 max-w-2xl w-full">
+                            <div className="space-y-2">
+                                <Skeleton className="h-10 w-64" />
+                                <Skeleton className="h-6 w-full max-w-md" />
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <Skeleton className="h-5 w-16" />
+                                <Skeleton className="h-5 w-24" />
+                                <Skeleton className="h-5 w-32" />
+                            </div>
+                        </div>
+                        <div className="flex flex-col items-start md:items-end space-y-2 min-w-[200px]">
+                            <Skeleton className="h-12 w-48" />
+                            <div className="flex items-center gap-3">
+                                <Skeleton className="h-7 w-32 rounded-full" />
+                                <Skeleton className="h-5 w-16" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="relative w-full mb-8">
+            {/* Background Gradient Mesh - Subtle & Premium */}
+            <div className="absolute inset-0 -z-10 overflow-hidden rounded-3xl opacity-20 dark:opacity-10 pointer-events-none">
+                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/30 via-transparent to-transparent blur-3xl" />
+                <div className="absolute bottom-0 right-0 w-2/3 h-2/3 bg-gradient-to-tl from-blue-500/20 via-transparent to-transparent blur-3xl" />
+            </div>
+
+            <div className="flex flex-col gap-6">
+                {/* Top Navigation Bar */}
+                <div className="flex items-center justify-between">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={onBack}
+                        className="text-muted-foreground hover:text-foreground transition-colors -ml-2"
+                    >
+                        <ArrowLeft className="mr-2 h-4 w-4" />
+                        Back
+                    </Button>
+
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={onAISummary}
+                            className="hidden sm:flex gap-2 border-primary/20 hover:bg-primary/5 hover:text-primary transition-colors"
+                        >
+                            <Sparkles className="h-4 w-4" />
+                            AI Insights
+                        </Button>
+
+                        {isOwner && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                                        <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-40">
+                                    <DropdownMenuItem onClick={onEdit}>
+                                        <Edit className="mr-2 h-4 w-4" />
+                                        Edit Portfolio
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Delete
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
+                    </div>
+                </div>
+
+                {/* Main Hero Content */}
+                <div className="flex flex-col md:flex-row justify-between items-start gap-8">
+                    {/* Left Side: Info */}
+                    <div className="space-y-4 max-w-2xl">
+                        <div className="space-y-2">
+                            <motion.h1
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="text-3xl md:text-4xl font-bold tracking-tight"
+                            >
+                                {name}
+                            </motion.h1>
+                            {description && (
+                                <motion.p
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.1 }}
+                                    className="text-muted-foreground text-lg leading-relaxed"
+                                >
+                                    {description}
+                                </motion.p>
+                            )}
+                        </div>
+
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                            className="flex items-center gap-4 text-sm text-muted-foreground"
+                        >
+                            {isPublic !== undefined && (
+                                <div className={`
+                                  px-2.5 py-0.5 rounded-full text-xs font-semibold border
+                                  ${isPublic
+                                        ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:text-emerald-400'
+                                        : 'bg-slate-500/10 text-slate-600 border-slate-500/20 dark:text-slate-400'}
+                                `}>
+                                    {isPublic ? 'Public' : 'Private'}
+                                </div>
+                            )}
+                            {followersCount !== undefined && followersCount > 0 && (
+                                <>
+                                    <div className="w-1 h-1 rounded-full bg-border" />
+                                    <div>{followersCount} {followersCount === 1 ? 'follower' : 'followers'}</div>
+                                </>
+                            )}
+                            {createdAt && (
+                                <>
+                                    <div className="w-1 h-1 rounded-full bg-border" />
+                                    <div>Created {new Date(createdAt).toLocaleDateString()}</div>
+                                </>
+                            )}
+                        </motion.div>
+                    </div>
+
+                    {/* Right Side: Stats */}
+                    <div className="flex flex-col items-start md:items-end space-y-2 min-w-[200px]">
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.1 }}
+                            className="flex items-baseline gap-1"
+                        >
+                            <span className="text-4xl md:text-5xl font-bold tracking-tight">
+                                {formatCurrency(totalValue)}
+                            </span>
+                        </motion.div>
+
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                            className="flex items-center gap-3"
+                        >
+                            <div className={`
+                flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium
+                ${isPositive
+                                    ? "bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20"
+                                    : "bg-red-500/10 text-red-500 dark:bg-red-500/20"}
+              `}>
+                                {isPositive ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
+                                <span>{isPositive ? "+" : ""}{formatCurrency(totalReturn)}</span>
+                                <span className="opacity-60">|</span>
+                                <span>{isPositive ? "+" : ""}{returnPercentage.toFixed(2)}%</span>
+                            </div>
+                            <span className="text-sm text-muted-foreground">All time</span>
+                        </motion.div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};

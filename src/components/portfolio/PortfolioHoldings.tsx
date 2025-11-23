@@ -6,7 +6,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatPercentage } from "@/lib/formatters";
 import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { PortfolioHolding } from "@/api/portfolio/portfolio";
@@ -33,16 +32,65 @@ export const PortfolioHoldings = ({
 }: PortfolioHoldingsProps) => {
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Holdings</CardTitle>
-          <CardDescription>Loading holdings...</CardDescription>
+      <Card className="flex flex-col border-none shadow-none bg-transparent">
+        <CardHeader className="pb-2 px-0">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg font-medium">Holdings</CardTitle>
+            <Skeleton className="h-4 w-20" />
+          </div>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-12 bg-muted/20 rounded-lg animate-pulse" />
-            ))}
+        <CardContent className="p-0">
+          <div className="rounded-3xl border border-border/50 bg-card/50 overflow-hidden shadow-sm">
+            <Table>
+              <TableHeader className="bg-muted/30">
+                <TableRow className="hover:bg-transparent border-b border-border/50">
+                  <TableHead className="w-[250px] pl-6 h-12 font-medium">Asset</TableHead>
+                  <TableHead className="text-right h-12 font-medium">Price</TableHead>
+                  <TableHead className="text-right h-12 font-medium">Shares</TableHead>
+                  <TableHead className="text-right h-12 font-medium">Balance</TableHead>
+                  <TableHead className="text-right h-12 font-medium">Return</TableHead>
+                  <TableHead className="text-right w-[150px] pr-6 h-12 font-medium">Allocation</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {[...Array(5)].map((_, i) => (
+                  <TableRow key={i} className="hover:bg-transparent border-b border-border/50 last:border-0">
+                    <TableCell className="pl-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="space-y-2">
+                          <Skeleton className="h-4 w-16" />
+                          <Skeleton className="h-3 w-24" />
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex flex-col items-end gap-1">
+                        <Skeleton className="h-4 w-16" />
+                        <Skeleton className="h-3 w-12" />
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Skeleton className="h-4 w-12 ml-auto" />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Skeleton className="h-4 w-20 ml-auto" />
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex flex-col items-end gap-1">
+                        <Skeleton className="h-4 w-16" />
+                        <Skeleton className="h-3 w-10" />
+                      </div>
+                    </TableCell>
+                    <TableCell className="pr-6">
+                      <div className="flex items-center gap-3 justify-end">
+                        <Skeleton className="h-1.5 w-24 rounded-full" />
+                        <Skeleton className="h-3 w-8" />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         </CardContent>
       </Card>
@@ -50,8 +98,8 @@ export const PortfolioHoldings = ({
   }
   if (holdings.length === 0) {
     return (
-      <Card>
-        <CardHeader>
+      <Card className="border-none shadow-none bg-transparent">
+        <CardHeader className="px-0">
           <CardTitle>Holdings</CardTitle>
           <CardDescription>
             This portfolio doesn't have any holdings yet.
@@ -62,126 +110,118 @@ export const PortfolioHoldings = ({
   }
 
   // Calculate total portfolio value for percentage calculations
-  // If loading prices, we can't calculate accurate total value for allocation
   const totalValue = holdings.reduce(
     (sum, holding) => sum + (isLoadingPrices ? holding.total_invested : (holding.current_price || 0) * holding.quantity),
     0
   );
 
   return (
-    <Card className="border-border/50 bg-gradient-to-br from-white to-slate-50 dark:from-slate-950 dark:to-slate-900/50">
-      <CardHeader className="pb-4">
+    <Card className="flex flex-col border-none shadow-none bg-transparent">
+      <CardHeader className="pb-2 px-0">
         <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-lg font-semibold tracking-tight">Holdings</CardTitle>
-            <CardDescription className="mt-1">
-              {holdings.length} {holdings.length === 1 ? "holding" : "holdings"}
-            </CardDescription>
-          </div>
+          <CardTitle className="text-lg font-medium">Holdings</CardTitle>
+          <CardDescription className="text-xs mr-4">
+            {holdings.length} {holdings.length === 1 ? "asset" : "assets"}
+          </CardDescription>
         </div>
       </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow className="hover:bg-transparent border-border/50">
-              <TableHead className="w-[200px]">Asset</TableHead>
-              <TableHead className="text-right">Price</TableHead>
-              <TableHead className="text-right">Quantity</TableHead>
-              <TableHead className="text-right">Avg. Cost</TableHead>
-              <TableHead className="text-right">Market Value</TableHead>
-              <TableHead className="text-right">P&L</TableHead>
-              <TableHead className="text-right w-[150px]">Allocation</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {holdings.map((holding) => {
-              const marketValue =
-                (holding.current_price || 0) * holding.quantity;
-              const pnl = marketValue - holding.total_invested;
-              const pnlPercentage = (pnl / holding.total_invested) * 100;
+      <CardContent className="p-0">
+        <div className="rounded-3xl border border-border/50 bg-card/50 overflow-hidden shadow-sm">
+          <Table>
+            <TableHeader className="bg-muted/30">
+              <TableRow className="hover:bg-transparent border-b border-border/50">
+                <TableHead className="w-[250px] pl-6 h-12 font-medium">Asset</TableHead>
+                <TableHead className="text-right h-12 font-medium">Price</TableHead>
+                <TableHead className="text-right h-12 font-medium">Return</TableHead>
+                <TableHead className="text-right w-[150px] pr-6 h-12 font-medium">Allocation</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {holdings.map((holding) => {
+                const marketValue =
+                  (holding.current_price || 0) * holding.quantity;
+                const pnl = marketValue - holding.total_invested;
+                const pnlPercentage = holding.total_invested > 0 ? (pnl / holding.total_invested) * 100 : 0;
+                const allocation = totalValue > 0 ? (marketValue / totalValue) * 100 : 0;
 
-              // If loading prices, allocation calculation might be off if we use total_invested as fallback for totalValue
-              // But for skeleton display it doesn't matter much
-              const allocation = totalValue > 0 ? (holding.total_invested / totalValue) * 100 : 0;
-
-              return (
-                <TableRow key={holding.ticker} className="group hover:bg-muted/30 border-border/50 transition-colors">
-                  <TableCell className="font-medium">
-                    <Link
-                      to={`/instrument/${holding.ticker}`}
-                      className="flex items-center gap-2 group/link"
-                    >
-                      <span className="bg-muted/50 px-2 py-1 rounded text-sm font-semibold group-hover/link:bg-primary/10 group-hover/link:text-primary transition-colors">
-                        {holding.ticker}
-                      </span>
-                      <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover/link:opacity-100 transition-all -translate-x-1 group-hover/link:translate-x-0" />
-                    </Link>
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {isLoadingPrices ? (
-                      <Skeleton className="h-4 w-16 ml-auto" />
-                    ) : (
-                      holding.current_price
-                        ? formatCurrency(holding.current_price)
-                        : "N/A"
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right text-muted-foreground">
-                    {holding.quantity.toLocaleString()}
-                  </TableCell>
-                  <TableCell className="text-right text-muted-foreground">
-                    {formatCurrency(holding.average_price)}
-                  </TableCell>
-                  <TableCell className="text-right font-semibold">
-                    {isLoadingPrices ? (
-                      <Skeleton className="h-4 w-20 ml-auto" />
-                    ) : (
-                      formatCurrency(marketValue)
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {isLoadingPrices ? (
-                      <Skeleton className="h-4 w-24 ml-auto" />
-                    ) : (
-                      <div className="flex justify-end">
-                        <div
-                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${pnl >= 0
-                            ? "bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-400"
-                            : "bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400"
-                            }`}
-                        >
-                          {pnl >= 0 ? (
-                            <ArrowUpRight className="h-3 w-3 mr-1" />
-                          ) : (
-                            <ArrowDownRight className="h-3 w-3 mr-1" />
-                          )}
-                          {formatCurrency(pnl)} ({formatPercentage(pnlPercentage)})
+                return (
+                  <TableRow key={holding.ticker} className="group hover:bg-muted/30 border-border/50 transition-colors">
+                    <TableCell className="pl-6 py-4">
+                      <Link
+                        to={`/instrument/${holding.ticker}`}
+                        className="flex items-center gap-3 group/link"
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-sm group-hover/link:text-primary transition-colors">
+                            {holding.ticker}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {holding.quantity.toLocaleString()} shares
+                          </span>
                         </div>
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {isLoadingPrices ? (
-                      <Skeleton className="h-4 w-full" />
-                    ) : (
-                      <div className="flex items-center gap-3">
-                        <div className="h-1.5 bg-muted rounded-full flex-1 overflow-hidden">
+                      </Link>
+                    </TableCell>
+                    <TableCell className="text-right font-medium">
+                      {isLoadingPrices ? (
+                        <Skeleton className="h-4 w-16 ml-auto" />
+                      ) : (
+                        <div className="flex flex-col items-end">
+                          <span>{holding.current_price ? formatCurrency(holding.current_price) : "N/A"}</span>
+                          <span className="text-xs text-muted-foreground">Avg: {formatCurrency(holding.average_price)}</span>
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right font-semibold">
+                      {isLoadingPrices ? (
+                        <Skeleton className="h-4 w-20 ml-auto" />
+                      ) : (
+                        formatCurrency(marketValue)
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {isLoadingPrices ? (
+                        <Skeleton className="h-4 w-24 ml-auto" />
+                      ) : (
+                        <div className="flex justify-end">
                           <div
-                            className="h-full bg-primary rounded-full"
-                            style={{ width: `${Math.min(100, allocation)}%` }}
-                          />
+                            className={`flex flex-col items-end ${pnl >= 0
+                              ? "text-emerald-500"
+                              : "text-red-500"
+                              }`}
+                          >
+                            <span className="font-medium text-sm">
+                              {pnl >= 0 ? "+" : ""}{formatCurrency(pnl)}
+                            </span>
+                            <span className="text-xs opacity-80 bg-current/10 px-1.5 py-0.5 rounded-md mt-0.5">
+                              {formatPercentage(pnlPercentage)}
+                            </span>
+                          </div>
                         </div>
-                        <span className="text-muted-foreground text-xs w-10 text-right font-medium">
-                          {formatPercentage(allocation)}
-                        </span>
-                      </div>
-                    )}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+                      )}
+                    </TableCell>
+                    <TableCell className="pr-6">
+                      {isLoadingPrices ? (
+                        <Skeleton className="h-4 w-full" />
+                      ) : (
+                        <div className="flex items-center gap-3 justify-end">
+                          <div className="w-24 h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-primary rounded-full"
+                              style={{ width: `${Math.min(100, allocation)}%` }}
+                            />
+                          </div>
+                          <span className="text-muted-foreground text-xs w-8 text-right font-medium">
+                            {Math.round(allocation)}%
+                          </span>
+                        </div>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );

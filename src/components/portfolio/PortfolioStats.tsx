@@ -49,8 +49,8 @@ export const PortfolioStats = ({
       name: "Total Return",
       value: (
         <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium ${isPositiveReturn
-            ? 'bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-400'
-            : 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400'
+          ? 'bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-400'
+          : 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400'
           }`}>
           {isPositiveReturn ? (
             <ArrowUpRight className="inline h-4 w-4 mr-1" />
@@ -76,20 +76,60 @@ export const PortfolioStats = ({
       <CardHeader className="pb-4">
         <CardTitle className="text-lg font-semibold tracking-tight">Overview</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {stats.map((stat) => (
-          <div key={stat.name} className="space-y-1.5">
-            <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{stat.name}</div>
-            {stat.isLoading ? (
-              <Skeleton className="h-8 w-32" />
+      <CardContent className="flex-1 flex flex-col justify-between gap-6">
+        <div>
+          <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Total Value</div>
+          <div className="text-4xl font-bold tracking-tight">
+            {isLoading ? <Skeleton className="h-10 w-48" /> : formatCurrency(totalValue)}
+          </div>
+          <div className="text-sm text-muted-foreground mt-1">Current value of your portfolio</div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Invested</div>
+            <div className="text-lg font-semibold">
+              {isLoading ? <Skeleton className="h-6 w-24" /> : formatCurrency(totalInvested)}
+            </div>
+          </div>
+          <div className="space-y-1">
+            <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Holdings</div>
+            <div className="text-lg font-semibold">
+              {isLoading ? <Skeleton className="h-6 w-12" /> : holdingsCount}
+            </div>
+          </div>
+        </div>
+
+        <div className="pt-4 border-t border-border/50">
+          <div className="flex items-center justify-between mb-1">
+            <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Total Return</div>
+            {isLoading ? (
+              <Skeleton className="h-6 w-24" />
             ) : (
-              <div className={stat.name === "Total Value" ? "text-3xl font-bold tracking-tight" : "text-xl font-semibold"}>
-                {stat.value}
+              <div className={`inline-flex items-center text-sm font-bold ${isPositiveReturn
+                ? 'text-green-600 dark:text-green-400'
+                : 'text-red-600 dark:text-red-400'
+                }`}>
+                {isPositiveReturn ? (
+                  <ArrowUpRight className="h-4 w-4 mr-1" />
+                ) : (
+                  <ArrowDownRight className="h-4 w-4 mr-1" />
+                )}
+                {formatPercentage(returnPercentage)}
               </div>
             )}
-            <div className="text-xs text-muted-foreground">{stat.description}</div>
           </div>
-        ))}
+          <div className={`text-xl font-bold ${isPositiveReturn
+            ? 'text-green-600 dark:text-green-400'
+            : 'text-red-600 dark:text-red-400'
+            }`}>
+            {isLoading ? <Skeleton className="h-7 w-32" /> : (
+              <>
+                {isPositiveReturn ? "+" : ""}{formatCurrency(totalReturn)}
+              </>
+            )}
+          </div>
+        </div>
       </CardContent>
     </Card>
   );

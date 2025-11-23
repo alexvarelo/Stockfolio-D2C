@@ -4,14 +4,13 @@ import {
   Line,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
   ResponsiveContainer,
   Area,
   AreaChart,
 } from "recharts";
 import { format } from "date-fns";
-import { formatCurrency } from "@/lib/formatters";
+import { formatCurrency } from "@/lib/utils";
 
 interface PortfolioPerformanceChartProps {
   dates: string[];
@@ -22,11 +21,13 @@ interface PortfolioPerformanceChartProps {
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-background border rounded-lg p-4 shadow-lg">
-        <p className="text-sm text-muted-foreground">
+      <div className="bg-popover/95 backdrop-blur-sm border border-border/50 rounded-xl p-3 shadow-xl">
+        <p className="text-xs text-muted-foreground mb-1">
           {format(new Date(label), "MMM d, yyyy")}
         </p>
-        <p className="font-semibold">{formatCurrency(payload[0].value)}</p>
+        <p className="font-bold text-lg tabular-nums tracking-tight">
+          {formatCurrency(payload[0].value)}
+        </p>
       </div>
     );
   }
@@ -79,69 +80,54 @@ export const PortfolioPerformanceChart = ({
         <AreaChart
           data={chartData}
           margin={{
-            top: 10,
-            right: 30,
+            top: 5,
+            right: 0,
             left: 0,
             bottom: 0
           }}
         >
-        <defs>
-          <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-            <stop
-              offset="5%"
-              stopColor="hsl(var(--primary))"
-              stopOpacity={0.2}
-            />
-            <stop
-              offset="95%"
-              stopColor="hsl(var(--primary))"
-              stopOpacity={0}
-            />
-          </linearGradient>
-        </defs>
-        <CartesianGrid
-          strokeDasharray="3 3"
-          vertical={false}
-          stroke="hsl(var(--muted))"
-        />
-        <XAxis
-          dataKey="date"
-          axisLine={false}
-          tickLine={false}
-          tickFormatter={formatXAxis}
-          tick={{
-            fill: "hsl(var(--muted-foreground))",
-            fontSize: "0.75rem",
-            fontFamily: "var(--font-sans)",
-          }}
-          tickMargin={10}
-        />
-        <YAxis
-          domain={[minValue, maxValue]}
-          axisLine={false}
-          tickLine={false}
-          tickFormatter={formatYAxis}
-          tick={{
-            fill: "hsl(var(--muted-foreground))",
-            fontSize: "0.75rem",
-            fontFamily: "var(--font-sans)",
-          }}
-          width={60}
-        />
-        <Tooltip
-          content={<CustomTooltip />}
-          cursor={{ stroke: "hsl(var(--primary))", strokeWidth: 1 }}
-        />
-        <Area
-          type="monotone"
-          dataKey="value"
-          stroke="hsl(var(--primary))"
-          strokeWidth={2}
-          fillOpacity={1}
-          fill="url(#colorValue)"
-        />
-      </AreaChart>
-    </ResponsiveContainer>
+          <defs>
+            <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+              <stop
+                offset="5%"
+                stopColor="hsl(var(--primary))"
+                stopOpacity={0.3}
+              />
+              <stop
+                offset="95%"
+                stopColor="hsl(var(--primary))"
+                stopOpacity={0}
+              />
+            </linearGradient>
+          </defs>
+          <XAxis
+            dataKey="date"
+            tickFormatter={(date) => format(new Date(date), "MMM d")}
+            stroke="hsl(var(--muted-foreground))"
+            fontSize={12}
+            tickLine={false}
+            axisLine={false}
+            minTickGap={30}
+          />
+          <YAxis
+            tickFormatter={(value) => `$${value}`}
+            stroke="hsl(var(--muted-foreground))"
+            fontSize={12}
+            tickLine={false}
+            axisLine={false}
+            width={60}
+          />
+          <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'hsl(var(--primary))', strokeWidth: 2, strokeDasharray: '5 5' }} />
+          <Area
+            type="monotone"
+            dataKey="value"
+            stroke="hsl(var(--primary))"
+            strokeWidth={3}
+            fillOpacity={1}
+            fill="url(#colorValue)"
+          />
+        </AreaChart>
+      </ResponsiveContainer>
     </div>
   );
 };
