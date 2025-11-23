@@ -21,7 +21,7 @@ export const EvolutionChart = ({ holdings, className = "", isLoading: isParentLo
         <CardHeader className="pb-2">
           <CardTitle>Evolution</CardTitle>
         </CardHeader>
-        <CardContent className="flex-1 p-0 flex items-center justify-center">
+        <CardContent className="flex-1 p-0 flex items-center justify-center min-h-[300px]">
           <p className="text-xs text-muted-foreground">Loading performance...</p>
         </CardContent>
       </Card>
