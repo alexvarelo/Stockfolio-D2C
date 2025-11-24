@@ -131,12 +131,15 @@ export const PortfolioDetail = () => {
         totalValue={totalValue}
         totalReturn={totalReturn}
         returnPercentage={returnPercentage}
+        todayChange={portfolio.today_change}
+        todayChangePercent={portfolio.today_change_percent}
         onBack={() => navigate("/dashboard")}
         onEdit={() => setIsEditDialogOpen(true)}
         onDelete={() => setIsDeleteDialogOpen(true)}
         onAISummary={() => setAISummaryOpen(true)}
         isOwner={isOwner}
         isLoading={isLoadingPortfolio}
+        isLoadingPrices={isLoadingPrices}
       />
 
       {/* AI Summary Drawer */}
@@ -187,6 +190,7 @@ export const PortfolioDetail = () => {
             {/* Key Metrics */}
             <KeyMetrics
               holdings={portfolio.holdings || []}
+              totalInvested={totalInvested}
               isLoading={isLoadingPrices}
             />
           </div>

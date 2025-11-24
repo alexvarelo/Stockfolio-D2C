@@ -2,19 +2,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PortfolioHolding } from "@/api/portfolio/portfolio";
 import { formatCurrency, formatPercentage } from "@/lib/formatters";
-import { Trophy, TrendingDown, PieChart, DollarSign } from "lucide-react";
+import { Trophy, TrendingDown, PieChart, DollarSign, Wallet } from "lucide-react";
 
 interface KeyMetricsProps {
     holdings: PortfolioHolding[];
+    totalInvested: number;
     className?: string;
     isLoading?: boolean;
 }
 
-export const KeyMetrics = ({ holdings, className = "", isLoading }: KeyMetricsProps) => {
+export const KeyMetrics = ({ holdings, totalInvested, className = "", isLoading }: KeyMetricsProps) => {
     if (isLoading) {
         return (
             <div className={`grid grid-cols-2 gap-4 ${className}`}>
-                {[...Array(4)].map((_, i) => (
+                {[...Array(5)].map((_, i) => (
                     <Card key={i} className="border-none shadow-none bg-transparent">
                         <CardContent className="p-4 bg-card/50 border border-border/50 rounded-3xl h-full flex flex-col justify-between">
                             <div className="flex justify-between items-start mb-2">
@@ -46,6 +47,15 @@ export const KeyMetrics = ({ holdings, className = "", isLoading }: KeyMetricsPr
     )[0];
 
     const metrics = [
+        {
+            label: "Total Invested",
+            value: formatCurrency(totalInvested),
+            subValue: "capital deployed",
+            icon: Wallet,
+            color: "text-blue-500",
+            bg: "bg-blue-500/10",
+            isPositive: true
+        },
         {
             label: "Best Performer",
             value: bestPerformer?.ticker,

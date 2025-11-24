@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, MoreHorizontal, TrendingUp, TrendingDown, Edit, Trash2, Sparkles } from "lucide-react";
 import {
     DropdownMenu,
@@ -19,12 +21,15 @@ interface PortfolioHeroProps {
     totalValue: number;
     totalReturn: number;
     returnPercentage: number;
+    todayChange?: number;
+    todayChangePercent?: number;
     onBack: () => void;
     onEdit: () => void;
     onDelete: () => void;
     onAISummary: () => void;
     isOwner: boolean;
     isLoading?: boolean;
+    isLoadingPrices?: boolean;
 }
 
 export const PortfolioHero = ({
@@ -36,14 +41,29 @@ export const PortfolioHero = ({
     totalValue,
     totalReturn,
     returnPercentage,
+    todayChange = 0,
+    todayChangePercent = 0,
     onBack,
     onEdit,
     onDelete,
     onAISummary,
     isOwner,
     isLoading = false,
+    isLoadingPrices = false,
 }: PortfolioHeroProps) => {
     const isPositive = totalReturn >= 0;
+    const isTodayPositive = todayChange >= 0;
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+
+    const handleEdit = () => {
+        setDropdownOpen(false);
+        onEdit();
+    };
+
+    const handleDelete = () => {
+        setDropdownOpen(false);
+        onDelete();
+    };
 
     if (isLoading) {
         return (
@@ -74,6 +94,7 @@ export const PortfolioHero = ({
                                 <Skeleton className="h-7 w-32 rounded-full" />
                                 <Skeleton className="h-5 w-16" />
                             </div>
+                            <Skeleton className="h-6 w-40" />
                         </div>
                     </div>
                 </div>
@@ -114,18 +135,18 @@ export const PortfolioHero = ({
                         </Button>
 
                         {isOwner && (
-                            <DropdownMenu>
+                            <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="icon" className="h-8 w-8">
                                         <MoreHorizontal className="h-4 w-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-40">
-                                    <DropdownMenuItem onClick={onEdit}>
+                                    <DropdownMenuItem onClick={handleEdit}>
                                         <Edit className="mr-2 h-4 w-4" />
                                         Edit Portfolio
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
+                                    <DropdownMenuItem onClick={handleDelete} className="text-destructive focus:text-destructive">
                                         <Trash2 className="mr-2 h-4 w-4" />
                                         Delete
                                     </DropdownMenuItem>
@@ -175,7 +196,7 @@ export const PortfolioHero = ({
                                     {isPublic ? 'Public' : 'Private'}
                                 </div>
                             )}
-                            {followersCount !== undefined && followersCount > 0 && (
+                            {followersCount !== undefined && (
                                 <>
                                     <div className="w-1 h-1 rounded-full bg-border" />
                                     <div>{followersCount} {followersCount === 1 ? 'follower' : 'followers'}</div>
@@ -198,9 +219,13 @@ export const PortfolioHero = ({
                             transition={{ delay: 0.1 }}
                             className="flex items-baseline gap-1"
                         >
-                            <span className="text-4xl md:text-5xl font-bold tracking-tight">
-                                {formatCurrency(totalValue)}
-                            </span>
+                            {isLoadingPrices ? (
+                                <Skeleton className="h-12 w-48" />
+                            ) : (
+                                <span className="text-4xl md:text-5xl font-bold tracking-tight">
+                                    {formatCurrency(totalValue)}
+                                </span>
+                            )}
                         </motion.div>
 
                         <motion.div
@@ -209,18 +234,54 @@ export const PortfolioHero = ({
                             transition={{ delay: 0.2 }}
                             className="flex items-center gap-3"
                         >
-                            <div className={`
-                flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium
-                ${isPositive
-                                    ? "bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20"
-                                    : "bg-red-500/10 text-red-500 dark:bg-red-500/20"}
-              `}>
-                                {isPositive ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
-                                <span>{isPositive ? "+" : ""}{formatCurrency(totalReturn)}</span>
-                                <span className="opacity-60">|</span>
-                                <span>{isPositive ? "+" : ""}{returnPercentage.toFixed(2)}%</span>
-                            </div>
-                            <span className="text-sm text-muted-foreground">All time</span>
+                            {isLoadingPrices ? (
+                                <>
+                                    <Skeleton className="h-7 w-32 rounded-full" />
+                                    <Skeleton className="h-5 w-16" />
+                                </>
+                            ) : (
+                                <>
+                                    <div className={`
+                                        flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium
+                                        ${isPositive
+                                            ? "bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20"
+                                            : "bg-red-500/10 text-red-500 dark:bg-red-500/20"}
+                                    `}>
+                                        {isPositive ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
+                                        <span>{isPositive ? "+" : ""}{formatCurrency(totalReturn)}</span>
+                                        <span className="opacity-60">|</span>
+                                        <span>{isPositive ? "+" : ""}{returnPercentage.toFixed(2)}%</span>
+                                    </div>
+                                    <span className="text-sm text-muted-foreground">All time</span>
+                                </>
+                            )}
+                        </motion.div>
+
+                        {/* Today's Performance */}
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.25 }}
+                            className="flex items-center gap-3"
+                        >
+                            {isLoadingPrices ? (
+                                <Skeleton className="h-6 w-40" />
+                            ) : (
+                                <>
+                                    <div className={`
+                                        flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium
+                                        ${isTodayPositive
+                                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                            : "bg-red-500/10 text-red-600 dark:text-red-400"}
+                                    `}>
+                                        {isTodayPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                                        <span>{isTodayPositive ? "+" : ""}{formatCurrency(todayChange)}</span>
+                                        <span className="opacity-60">|</span>
+                                        <span>{isTodayPositive ? "+" : ""}{todayChangePercent.toFixed(2)}%</span>
+                                    </div>
+                                    <span className="text-xs text-muted-foreground">Today</span>
+                                </>
+                            )}
                         </motion.div>
                     </div>
                 </div>

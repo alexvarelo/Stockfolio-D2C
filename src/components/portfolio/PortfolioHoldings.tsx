@@ -132,8 +132,8 @@ export const PortfolioHoldings = ({
               <TableRow className="hover:bg-transparent border-b border-border/50">
                 <TableHead className="w-[250px] pl-6 h-12 font-medium">Asset</TableHead>
                 <TableHead className="text-right h-12 font-medium">Price</TableHead>
-                <TableHead className="text-right h-12 font-medium">Return</TableHead>
-                <TableHead className="text-right w-[150px] pr-6 h-12 font-medium">Allocation</TableHead>
+                <TableHead className="text-right h-12 font-medium">Value</TableHead>
+                <TableHead className="text-right w-[150px] pr-6 h-12 font-medium">Gain/Loss</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

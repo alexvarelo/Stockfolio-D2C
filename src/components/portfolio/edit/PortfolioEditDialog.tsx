@@ -19,9 +19,9 @@ interface PortfolioEditDialogProps {
   onSaved?: () => void;
 }
 
-export const PortfolioEditDialog = ({ 
-  portfolio, 
-  isOpen, 
+export const PortfolioEditDialog = ({
+  portfolio,
+  isOpen,
   onOpenChange,
   onSaved
 }: PortfolioEditDialogProps) => {
@@ -30,7 +30,7 @@ export const PortfolioEditDialog = ({
   const [activeTab, setActiveTab] = useState<'details' | 'holdings' | 'import'>('details');
   const [holdings, setHoldings] = useState<PortfolioHolding[]>([]);
   const [isAddingHolding, setIsAddingHolding] = useState(false);
-  
+
   const queryClient = useQueryClient();
   const { mutateAsync: updateHolding } = useUpdatePortfolioHoldings();
   const { mutateAsync: deleteHolding } = useDeletePortfolioHolding();
@@ -42,18 +42,26 @@ export const PortfolioEditDialog = ({
     }
   }, [portfolio]);
 
+  // Reset state when dialog closes
+  useEffect(() => {
+    if (!isOpen) {
+      setActiveTab('details');
+      setIsAddingHolding(false);
+    }
+  }, [isOpen]);
+
   const handleSave = async (updatedData: Partial<Portfolio>) => {
     try {
       await updatePortfolio({
         portfolioId: portfolio.id,
         portfolioData: updatedData
       });
-      
+
       toast({
         title: 'Portfolio updated',
         description: 'Your portfolio has been successfully updated.',
       });
-      
+
       onOpenChange(false);
       onSaved?.();
     } catch (error) {
@@ -75,10 +83,10 @@ export const PortfolioEditDialog = ({
         current_price: holding.average_price, // Set current price to average price initially
         change_percent: 0, // No change initially
       };
-      
+
       // Update local state optimistically
       setHoldings(prev => [...prev, newHolding]);
-      
+
       // Call the API to add the holding
       await updateHolding({
         portfolioId: portfolio.id,
@@ -89,28 +97,28 @@ export const PortfolioEditDialog = ({
           total_invested: holding.total_invested || (holding.quantity * holding.average_price),
         }
       });
-      
+
       // Invalidate the portfolio query to refetch data
       await queryClient.invalidateQueries({ queryKey: ['portfolio', portfolio.id] });
-      
+
       // Update local state with the actual data from the server
       const updatedPortfolio = queryClient.getQueryData(['portfolio', portfolio.id]) as Portfolio | undefined;
       if (updatedPortfolio?.holdings) {
         setHoldings(updatedPortfolio.holdings);
       }
-      
+
       setIsAddingHolding(false);
-      
+
       toast({
         title: 'Holding added',
         description: `${holding.ticker} has been added to your portfolio.`,
       });
     } catch (error) {
       console.error('Error adding holding:', error);
-      
+
       // Revert optimistic update on error
       setHoldings(prev => prev.filter(h => h.ticker !== holding.ticker));
-      
+
       toast({
         title: 'Error',
         description: 'Failed to add holding. Please try again.',
@@ -143,19 +151,19 @@ export const PortfolioEditDialog = ({
           // Continue with next holding even if one fails
         }
       }
-      
+
       // Invalidate the portfolio query to refetch data
       await queryClient.invalidateQueries({ queryKey: ['portfolio', portfolio.id] });
-      
+
       // Update local state with the new holdings
       const updatedPortfolio = queryClient.getQueryData(['portfolio', portfolio.id]) as Portfolio | undefined;
       if (updatedPortfolio?.holdings) {
         setHoldings(updatedPortfolio.holdings);
       }
-      
+
       // Switch back to holdings tab
       setActiveTab('holdings');
-      
+
       toast({
         title: 'Import successful',
         description: `Successfully imported ${importedHoldings.length} holdings.`,
@@ -181,16 +189,16 @@ export const PortfolioEditDialog = ({
           total_invested: updatedHolding.total_invested || (updatedHolding.quantity * updatedHolding.average_price),
         }
       });
-      
+
       // Invalidate the portfolio query to refetch data
       await queryClient.invalidateQueries({ queryKey: ['portfolio', portfolio.id] });
-      
+
       // Update local state with the actual data from the server
       const updatedPortfolio = queryClient.getQueryData(['portfolio', portfolio.id]) as Portfolio | undefined;
       if (updatedPortfolio?.holdings) {
         setHoldings(updatedPortfolio.holdings);
       }
-      
+
       toast({
         title: 'Holding updated',
         description: `${updatedHolding.ticker} has been updated.`,
@@ -210,35 +218,35 @@ export const PortfolioEditDialog = ({
     try {
       // Optimistically update the UI
       setHoldings(prev => prev.filter(h => h.ticker !== ticker));
-      
+
       await deleteHolding({
         portfolioId: portfolio.id,
         ticker
       });
-      
+
       // Invalidate the portfolio query to refetch data
       await queryClient.invalidateQueries({ queryKey: ['portfolio', portfolio.id] });
-      
+
       // Update local state with the actual data from the server
       const updatedPortfolio = queryClient.getQueryData(['portfolio', portfolio.id]) as Portfolio | undefined;
       if (updatedPortfolio?.holdings) {
         setHoldings(updatedPortfolio.holdings);
       }
-      
+
       toast({
         title: 'Holding removed',
         description: `${ticker} has been removed from your portfolio.`,
       });
     } catch (error) {
       console.error('Error deleting holding:', error);
-      
+
       // Revert optimistic update on error
       await queryClient.invalidateQueries({ queryKey: ['portfolio', portfolio.id] });
       const updatedPortfolio = queryClient.getQueryData(['portfolio', portfolio.id]) as Portfolio | undefined;
       if (updatedPortfolio?.holdings) {
         setHoldings(updatedPortfolio.holdings);
       }
-      
+
       toast({
         title: 'Error',
         description: 'Failed to remove holding. Please try again.',
@@ -254,7 +262,7 @@ export const PortfolioEditDialog = ({
         <DialogHeader>
           <DialogTitle>Edit Portfolio</DialogTitle>
         </DialogHeader>
-        
+
         <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'details' | 'holdings' | 'import')}>
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="details" onClick={() => setActiveTab('details')}>
@@ -267,15 +275,15 @@ export const PortfolioEditDialog = ({
               Import CSV
             </TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="details" className="mt-6">
-            <PortfolioDetailsForm 
-              portfolio={portfolio} 
-              onSave={handleSave} 
+            <PortfolioDetailsForm
+              portfolio={portfolio}
+              onSave={handleSave}
               onCancel={() => onOpenChange(false)}
             />
           </TabsContent>
-          
+
           <TabsContent value="holdings" className="mt-6 space-y-6">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-medium">Portfolio Holdings</h3>
@@ -306,16 +314,16 @@ export const PortfolioEditDialog = ({
                 />
               </div>
             ) : (
-              <HoldingsList 
+              <HoldingsList
                 holdings={holdings}
                 onUpdateHolding={handleUpdateHolding}
                 onDeleteHolding={handleDeleteHolding}
               />
             )}
           </TabsContent>
-          
+
           <TabsContent value="import" className="mt-6">
-            <ImportHoldingsFromCSV 
+            <ImportHoldingsFromCSV
               onImport={handleImportHoldings}
               onCancel={() => setActiveTab('holdings')}
             />
