@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { usePortfolio, useDeletePortfolio } from "@/api/portfolio/portfolio";
+import { usePortfolioFollows } from "@/api/portfolio/usePortfolioFollows";
 import { usePortfolioTransactions } from "@/api/transaction/usePortfolioTransactions";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/auth";
@@ -58,6 +59,9 @@ export const PortfolioDetail = () => {
   // Load transactions in parallel
   const { data: transactions, isLoading: isLoadingTransactions } = usePortfolioTransactions(portfolioId);
 
+  // Follow/unfollow functionality
+  const { isFollowing, toggleFollow } = usePortfolioFollows(portfolioId);
+
   // Calculate derived values
   const totalValue = portfolio?.holdings?.reduce(
     (sum, h) => sum + ((h.current_price || 0) * h.quantity),
@@ -71,6 +75,24 @@ export const PortfolioDetail = () => {
 
   const totalReturn = totalValue - totalInvested;
   const returnPercentage = totalInvested > 0 ? (totalReturn / totalInvested) * 100 : 0;
+
+  const handleToggleFollow = async () => {
+    try {
+      await toggleFollow();
+      toast({
+        title: isFollowing ? 'Unfollowed' : 'Following',
+        description: isFollowing
+          ? `You unfollowed ${portfolio.name}`
+          : `You are now following ${portfolio.name}`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update follow status. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const handleDelete = async () => {
     if (!portfolioId) return;
@@ -123,6 +145,7 @@ export const PortfolioDetail = () => {
     <PortfolioLayout>
       {/* Hero Section */}
       <PortfolioHero
+        portfolioId={portfolioId}
         name={portfolio.name}
         description={portfolio.description}
         isPublic={portfolio.is_public}
@@ -133,11 +156,13 @@ export const PortfolioDetail = () => {
         returnPercentage={returnPercentage}
         todayChange={portfolio.today_change}
         todayChangePercent={portfolio.today_change_percent}
-        onBack={() => navigate("/dashboard")}
+        onBack={() => navigate(-1)}
         onEdit={() => setIsEditDialogOpen(true)}
         onDelete={() => setIsDeleteDialogOpen(true)}
         onAISummary={() => setAISummaryOpen(true)}
         isOwner={isOwner}
+        isFollowing={isFollowing}
+        onToggleFollow={handleToggleFollow}
         isLoading={isLoadingPortfolio}
         isLoadingPrices={isLoadingPrices}
       />

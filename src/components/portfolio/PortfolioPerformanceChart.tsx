@@ -54,26 +54,6 @@ export const PortfolioPerformanceChart = ({
     );
   }
 
-  // Find min and max values for the Y-axis domain
-  const minValue = Math.max(0, Math.min(...values) * 0.995); // 0.5% padding on the bottom
-  const maxValue = Math.max(...values) * 1.005; // 0.5% padding on the top
-
-  // Format X-axis tick to show month and year
-  const formatXAxis = (date: string) => {
-    return format(new Date(date), "MMM yyyy");
-  };
-
-  // Format Y-axis tick to show abbreviated currency values (e.g., 1K, 1M)
-  const formatYAxis = (value: number) => {
-    if (value >= 1000000) {
-      return `$${(value / 1000000).toFixed(1)}M`;
-    }
-    if (value >= 1000) {
-      return `$${(value / 1000).toFixed(0)}K`;
-    }
-    return `$${value.toFixed(0)}`;
-  };
-
   return (
     <div className={`h-full w-full ${className}`}>
       <ResponsiveContainer width="100%" height="100%">
@@ -110,6 +90,7 @@ export const PortfolioPerformanceChart = ({
             minTickGap={30}
           />
           <YAxis
+            domain={['auto', 'auto']}
             tickFormatter={(value) => `$${value}`}
             stroke="hsl(var(--muted-foreground))"
             fontSize={12}

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, MoreHorizontal, TrendingUp, TrendingDown, Edit, Trash2, Sparkles } from "lucide-react";
+import { ArrowLeft, MoreHorizontal, TrendingUp, TrendingDown, Edit, Trash2, Sparkles, UserPlus, UserMinus } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -13,6 +13,7 @@ import { formatCurrency } from "@/lib/utils";
 import { motion } from "framer-motion";
 
 interface PortfolioHeroProps {
+    portfolioId: string;
     name: string;
     description?: string;
     isPublic?: boolean;
@@ -28,11 +29,14 @@ interface PortfolioHeroProps {
     onDelete: () => void;
     onAISummary: () => void;
     isOwner: boolean;
+    isFollowing?: boolean;
+    onToggleFollow?: () => void;
     isLoading?: boolean;
     isLoadingPrices?: boolean;
 }
 
 export const PortfolioHero = ({
+    portfolioId,
     name,
     description,
     isPublic,
@@ -48,6 +52,8 @@ export const PortfolioHero = ({
     onDelete,
     onAISummary,
     isOwner,
+    isFollowing = false,
+    onToggleFollow,
     isLoading = false,
     isLoadingPrices = false,
 }: PortfolioHeroProps) => {
@@ -72,6 +78,7 @@ export const PortfolioHero = ({
                     <div className="flex items-center justify-between">
                         <Skeleton className="h-9 w-20" />
                         <div className="flex items-center gap-2">
+                            {!isOwner && <Skeleton className="h-9 w-24" />}
                             <Skeleton className="h-9 w-28 hidden sm:flex" />
                             {isOwner && <Skeleton className="h-8 w-8" />}
                         </div>
@@ -124,6 +131,29 @@ export const PortfolioHero = ({
                     </Button>
 
                     <div className="flex items-center gap-2">
+                        {!isOwner && onToggleFollow && (
+                            <Button
+                                variant={isFollowing ? "outline" : "default"}
+                                size="sm"
+                                onClick={onToggleFollow}
+                                className={isFollowing
+                                    ? "gap-2"
+                                    : "gap-2 bg-primary hover:bg-primary/90"}
+                            >
+                                {isFollowing ? (
+                                    <>
+                                        <UserMinus className="h-4 w-4" />
+                                        Unfollow
+                                    </>
+                                ) : (
+                                    <>
+                                        <UserPlus className="h-4 w-4" />
+                                        Follow
+                                    </>
+                                )}
+                            </Button>
+                        )}
+
                         <Button
                             variant="outline"
                             size="sm"
