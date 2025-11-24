@@ -24,6 +24,7 @@ import {
 import { AllocationChart } from "@/components/portfolio/portfolioDetails/AllocationChart";
 import { TopMovers } from "@/components/portfolio/portfolioDetails/TopMovers";
 import { KeyMetrics } from "@/components/portfolio/portfolioDetails/KeyMetrics";
+import { PortfolioAwards } from "@/components/portfolio/portfolioDetails/PortfolioAwards";
 
 // Add custom animation keyframes for the spinning gradient
 const style = document.createElement('style');
@@ -141,6 +142,10 @@ export const PortfolioDetail = () => {
   // Check if user is the owner of the portfolio
   const isOwner = user?.id === portfolio?.user_id;
 
+  const portfolioAgeDays = portfolio?.created_at
+    ? Math.floor((new Date().getTime() - new Date(portfolio.created_at).getTime()) / (1000 * 60 * 60 * 24))
+    : 0;
+
   return (
     <PortfolioLayout>
       {/* Hero Section */}
@@ -219,6 +224,18 @@ export const PortfolioDetail = () => {
               isLoading={isLoadingPrices}
             />
           </div>
+        </div>
+
+        {/* Awards Section - Moved to bottom */}
+        <div className="mt-12">
+          <PortfolioAwards
+            totalReturn={totalReturn}
+            returnPercentage={returnPercentage}
+            portfolioAgeDays={portfolioAgeDays}
+            holdingsCount={portfolio?.holdings?.length || 0}
+            totalValue={totalValue}
+            todayChangePercent={portfolio?.today_change_percent || 0}
+          />
         </div>
       </PortfolioSection>
 

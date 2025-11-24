@@ -187,14 +187,16 @@ export const PortfolioHero = ({
                 </div>
 
                 {/* Main Hero Content */}
-                <div className="flex flex-col md:flex-row justify-between items-start gap-8">
-                    {/* Left Side: Info */}
-                    <div className="space-y-4 max-w-2xl">
-                        <div className="space-y-2">
+                {/* Main Hero Content */}
+                <div className="flex flex-col gap-4 md:gap-8">
+                    {/* Top Row: Name & Valuation */}
+                    <div className="flex justify-between items-start gap-4">
+                        {/* Left: Name */}
+                        <div className="space-y-2 flex-1 min-w-0">
                             <motion.h1
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="text-3xl md:text-4xl font-bold tracking-tight"
+                                className="text-2xl md:text-4xl font-bold tracking-tight truncate"
                             >
                                 {name}
                             </motion.h1>
@@ -203,117 +205,159 @@ export const PortfolioHero = ({
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.1 }}
-                                    className="text-muted-foreground text-lg leading-relaxed"
+                                    className="text-muted-foreground text-sm md:text-lg leading-relaxed hidden md:block"
                                 >
                                     {description}
                                 </motion.p>
                             )}
                         </div>
 
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.2 }}
-                            className="flex items-center gap-4 text-sm text-muted-foreground"
-                        >
-                            {isPublic !== undefined && (
-                                <div className={`
-                                  px-2.5 py-0.5 rounded-full text-xs font-semibold border
-                                  ${isPublic
-                                        ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:text-emerald-400'
-                                        : 'bg-slate-500/10 text-slate-600 border-slate-500/20 dark:text-slate-400'}
-                                `}>
-                                    {isPublic ? 'Public' : 'Private'}
-                                </div>
-                            )}
-                            {followersCount !== undefined && (
-                                <>
-                                    <div className="w-1 h-1 rounded-full bg-border" />
-                                    <div>{followersCount} {followersCount === 1 ? 'follower' : 'followers'}</div>
-                                </>
-                            )}
-                            {createdAt && (
-                                <>
-                                    <div className="w-1 h-1 rounded-full bg-border" />
-                                    <div>Created {new Date(createdAt).toLocaleDateString()}</div>
-                                </>
-                            )}
-                        </motion.div>
+                        {/* Right: Valuation */}
+                        <div className="flex flex-col items-end shrink-0">
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.1 }}
+                                className="flex items-baseline gap-1"
+                            >
+                                {isLoadingPrices ? (
+                                    <Skeleton className="h-8 w-32 md:h-12 md:w-48" />
+                                ) : (
+                                    <span className="text-2xl md:text-5xl font-bold tracking-tight">
+                                        {formatCurrency(totalValue)}
+                                    </span>
+                                )}
+                            </motion.div>
+
+                            {/* Desktop Stats (Hidden on Mobile) */}
+                            <div className="hidden md:flex flex-col items-end space-y-2 mt-2">
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.2 }}
+                                    className="flex items-center gap-3"
+                                >
+                                    {isLoadingPrices ? (
+                                        <>
+                                            <Skeleton className="h-7 w-32 rounded-full" />
+                                            <Skeleton className="h-5 w-16" />
+                                        </>
+                                    ) : (
+                                        <>
+                                            <div className={`
+                                                flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium
+                                                ${isPositive
+                                                    ? "bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20"
+                                                    : "bg-red-500/10 text-red-500 dark:bg-red-500/20"}
+                                            `}>
+                                                {isPositive ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
+                                                <span>{isPositive ? "+" : ""}{formatCurrency(totalReturn)}</span>
+                                                <span className="opacity-60">|</span>
+                                                <span>{isPositive ? "+" : ""}{returnPercentage.toFixed(2)}%</span>
+                                            </div>
+                                            <span className="text-sm text-muted-foreground">All time</span>
+                                        </>
+                                    )}
+                                </motion.div>
+
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.25 }}
+                                    className="flex items-center gap-3"
+                                >
+                                    {isLoadingPrices ? (
+                                        <Skeleton className="h-6 w-40" />
+                                    ) : (
+                                        <>
+                                            <div className={`
+                                                flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium
+                                                ${isTodayPositive
+                                                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                                    : "bg-red-500/10 text-red-600 dark:text-red-400"}
+                                            `}>
+                                                {isTodayPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                                                <span>{isTodayPositive ? "+" : ""}{formatCurrency(todayChange)}</span>
+                                                <span className="opacity-60">|</span>
+                                                <span>{isTodayPositive ? "+" : ""}{todayChangePercent.toFixed(2)}%</span>
+                                            </div>
+                                            <span className="text-xs text-muted-foreground">Today</span>
+                                        </>
+                                    )}
+                                </motion.div>
+                            </div>
+                        </div>
                     </div>
 
-                    {/* Right Side: Stats */}
-                    <div className="flex flex-col items-start md:items-end space-y-2 min-w-[200px]">
-                        <motion.div
+                    {/* Mobile Description (Visible only on Mobile) */}
+                    {description && (
+                        <motion.p
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.1 }}
-                            className="flex items-baseline gap-1"
+                            className="text-muted-foreground text-sm leading-relaxed md:hidden"
                         >
-                            {isLoadingPrices ? (
-                                <Skeleton className="h-12 w-48" />
-                            ) : (
-                                <span className="text-4xl md:text-5xl font-bold tracking-tight">
-                                    {formatCurrency(totalValue)}
-                                </span>
-                            )}
-                        </motion.div>
+                            {description}
+                        </motion.p>
+                    )}
 
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.2 }}
-                            className="flex items-center gap-3"
-                        >
-                            {isLoadingPrices ? (
-                                <>
-                                    <Skeleton className="h-7 w-32 rounded-full" />
-                                    <Skeleton className="h-5 w-16" />
-                                </>
-                            ) : (
-                                <>
-                                    <div className={`
-                                        flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium
-                                        ${isPositive
-                                            ? "bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20"
-                                            : "bg-red-500/10 text-red-500 dark:bg-red-500/20"}
-                                    `}>
-                                        {isPositive ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
-                                        <span>{isPositive ? "+" : ""}{formatCurrency(totalReturn)}</span>
-                                        <span className="opacity-60">|</span>
-                                        <span>{isPositive ? "+" : ""}{returnPercentage.toFixed(2)}%</span>
-                                    </div>
-                                    <span className="text-sm text-muted-foreground">All time</span>
-                                </>
-                            )}
-                        </motion.div>
+                    {/* Mobile Stats Row (Visible only on Mobile) */}
+                    <div className="flex flex-wrap gap-3 md:hidden">
+                        {/* All Time Return */}
+                        <div className={`
+                            flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium
+                            ${isPositive
+                                ? "bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20"
+                                : "bg-red-500/10 text-red-500 dark:bg-red-500/20"}
+                        `}>
+                            {isPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                            <span>{isPositive ? "+" : ""}{formatCurrency(totalReturn)}</span>
+                            <span className="opacity-60">|</span>
+                            <span>{isPositive ? "+" : ""}{returnPercentage.toFixed(2)}%</span>
+                        </div>
 
-                        {/* Today's Performance */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.25 }}
-                            className="flex items-center gap-3"
-                        >
-                            {isLoadingPrices ? (
-                                <Skeleton className="h-6 w-40" />
-                            ) : (
-                                <>
-                                    <div className={`
-                                        flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium
-                                        ${isTodayPositive
-                                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                                            : "bg-red-500/10 text-red-600 dark:text-red-400"}
-                                    `}>
-                                        {isTodayPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                                        <span>{isTodayPositive ? "+" : ""}{formatCurrency(todayChange)}</span>
-                                        <span className="opacity-60">|</span>
-                                        <span>{isTodayPositive ? "+" : ""}{todayChangePercent.toFixed(2)}%</span>
-                                    </div>
-                                    <span className="text-xs text-muted-foreground">Today</span>
-                                </>
-                            )}
-                        </motion.div>
+                        {/* Today Return */}
+                        <div className={`
+                            flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium
+                            ${isTodayPositive
+                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                : "bg-red-500/10 text-red-600 dark:text-red-400"}
+                        `}>
+                            {isTodayPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                            <span>{isTodayPositive ? "+" : ""}{formatCurrency(todayChange)}</span>
+                        </div>
                     </div>
+
+                    {/* Bottom Row: Metadata */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="flex items-center gap-3 text-xs md:text-sm text-muted-foreground flex-wrap"
+                    >
+                        {isPublic !== undefined && (
+                            <div className={`
+                                px-2.5 py-0.5 rounded-full text-xs font-semibold border
+                                ${isPublic
+                                    ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:text-emerald-400'
+                                    : 'bg-slate-500/10 text-slate-600 border-slate-500/20 dark:text-slate-400'}
+                            `}>
+                                {isPublic ? 'Public' : 'Private'}
+                            </div>
+                        )}
+                        {followersCount !== undefined && (
+                            <>
+                                <div className="w-1 h-1 rounded-full bg-border" />
+                                <div>{followersCount} {followersCount === 1 ? 'follower' : 'followers'}</div>
+                            </>
+                        )}
+                        {createdAt && (
+                            <>
+                                <div className="w-1 h-1 rounded-full bg-border" />
+                                <div>Created {new Date(createdAt).toLocaleDateString()}</div>
+                            </>
+                        )}
+                    </motion.div>
                 </div>
             </div>
         </div>

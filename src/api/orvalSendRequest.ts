@@ -29,7 +29,6 @@ export function useSendRequest<T = any>(config: AxiosRequestConfig): Promise<Axi
       Authorization: `Bearer ${token}`,
     };
     const requestConfig = { ...config, url, headers };
-    console.log('About to send API request:', requestConfig);
     return instance.request<T>(requestConfig).then(resp => {
       return resp;
     }).catch(err => {

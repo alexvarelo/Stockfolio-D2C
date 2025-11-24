@@ -39,7 +39,7 @@ export const EvolutionChart = ({ holdings, className = "", isLoading: isParentLo
         <CardTitle className="text-lg font-medium">Evolution</CardTitle>
       </CardHeader>
       <CardContent className="flex-1 p-0">
-        <div className="h-[300px] md:h-[400px] w-full bg-card/50 border border-border/50 rounded-3xl overflow-hidden p-4 md:p-6 shadow-sm">
+        <div className="h-[300px] md:h-[400px] w-full bg-card/50 border border-border/50 rounded-3xl overflow-hidden md:p-4 p-2 shadow-sm">
           <PortfolioPerformanceChart
             dates={performanceData.dates}
             values={performanceData.values}

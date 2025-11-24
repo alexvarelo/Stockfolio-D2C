@@ -91,12 +91,16 @@ export const PortfolioPerformanceChart = ({
           />
           <YAxis
             domain={['auto', 'auto']}
-            tickFormatter={(value) => `$${value}`}
+            tickFormatter={(value) => {
+              if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
+              if (value >= 1000) return `$${(value / 1000).toFixed(0)}k`;
+              return `$${value}`;
+            }}
             stroke="hsl(var(--muted-foreground))"
             fontSize={12}
             tickLine={false}
             axisLine={false}
-            width={60}
+            width={45}
           />
           <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'hsl(var(--primary))', strokeWidth: 2, strokeDasharray: '5 5' }} />
           <Area
