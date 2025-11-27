@@ -210,6 +210,37 @@ export const PortfolioHero = ({
                                     {description}
                                 </motion.p>
                             )}
+
+                            {/* Desktop Metadata (Hidden on Mobile) */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.2 }}
+                                className="hidden md:flex items-center gap-3 text-sm text-muted-foreground pt-2"
+                            >
+                                {isPublic !== undefined && (
+                                    <div className={`
+                                        px-2.5 py-0.5 rounded-full text-xs font-semibold border
+                                        ${isPublic
+                                            ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:text-emerald-400'
+                                            : 'bg-slate-500/10 text-slate-600 border-slate-500/20 dark:text-slate-400'}
+                                    `}>
+                                        {isPublic ? 'Public' : 'Private'}
+                                    </div>
+                                )}
+                                {followersCount !== undefined && (
+                                    <>
+                                        <div className="w-1 h-1 rounded-full bg-border" />
+                                        <div>{followersCount} {followersCount === 1 ? 'follower' : 'followers'}</div>
+                                    </>
+                                )}
+                                {createdAt && (
+                                    <>
+                                        <div className="w-1 h-1 rounded-full bg-border" />
+                                        <div>Created {new Date(createdAt).toLocaleDateString()}</div>
+                                    </>
+                                )}
+                            </motion.div>
                         </div>
 
                         {/* Right: Valuation */}
@@ -328,12 +359,12 @@ export const PortfolioHero = ({
                         </div>
                     </div>
 
-                    {/* Bottom Row: Metadata */}
+                    {/* Mobile Metadata (Visible only on Mobile) */}
                     <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 }}
-                        className="flex items-center gap-3 text-xs md:text-sm text-muted-foreground flex-wrap"
+                        className="flex md:hidden items-center gap-3 text-xs text-muted-foreground flex-wrap"
                     >
                         {isPublic !== undefined && (
                             <div className={`
