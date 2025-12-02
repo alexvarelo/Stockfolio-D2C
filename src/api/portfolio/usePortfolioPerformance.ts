@@ -17,7 +17,7 @@ const fetchTickerHistory = async (ticker: string): Promise<HistoricalPrice[]> =>
   try {
     const response = await getHistoricalDataApiV1StockTickerHistoryGet(ticker, { period: '1y' });
     if (!response?.data?.data) return [];
-    
+
     return response.data.data.map(item => ({
       date: item.date,
       close: item.close ? Number(item.close) : 0
@@ -97,7 +97,7 @@ export const usePortfolioPerformance = (holdings: Holding[] | undefined) => {
         // Sort dates in ascending order
         const sortedUniqueDates = Array.from(allDates)
           .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
-        
+
         // For each date, keep track of the first original date string we see
         const dateDisplayMap = new Map<string, string>();
         processedTickerData.forEach(query => {
@@ -108,24 +108,43 @@ export const usePortfolioPerformance = (holdings: Holding[] | undefined) => {
           });
         });
 
+        // Sort prices by date for each ticker to ensure reliable finding
+        const sortedPricesMap = new Map<string, typeof processedTickerData[0]['data']>();
+        tickerToPrices.forEach((prices, ticker) => {
+          sortedPricesMap.set(
+            ticker,
+            [...prices].sort((a, b) => a.normalizedDate.localeCompare(b.normalizedDate))
+          );
+        });
+
         // Calculate portfolio value for each unique date
         const values = sortedUniqueDates.map(normalizedDate => {
           return holdings.reduce((total, holding) => {
-            const prices = tickerToPrices.get(holding.ticker) || [];
+            const prices = sortedPricesMap.get(holding.ticker) || [];
+
+            if (prices.length === 0) return total;
+
             // Find the most recent price on or before this date
-            let priceEntry = prices.find(p => p.normalizedDate === normalizedDate);
-            
-            if (!priceEntry) {
-              // If no exact match, find the most recent price before this date
-              const earlierPrices = prices
-                .filter(p => p.normalizedDate <= normalizedDate)
-                .sort((a, b) => b.normalizedDate.localeCompare(a.normalizedDate));
-              priceEntry = earlierPrices[0];
+            // Since prices are sorted ascending, we can reverse or findLast (if available) 
+            // or just filter and take the last one.
+            // Optimization: find the last price where date <= normalizedDate
+            let priceToUse = 0;
+
+            const priceIndex = prices.findIndex(p => p.normalizedDate > normalizedDate);
+
+            if (priceIndex === -1) {
+              // All prices are <= normalizedDate, use the last one (most recent)
+              priceToUse = prices[prices.length - 1].close;
+            } else if (priceIndex === 0) {
+              // All prices are > normalizedDate (future prices only)
+              // This is the case causing the issue. Backfill with the earliest available price.
+              priceToUse = prices[0].close;
+            } else {
+              // Found the boundary, use the price just before the boundary
+              priceToUse = prices[priceIndex - 1].close;
             }
-            
-            return priceEntry 
-              ? total + (priceEntry.close * holding.quantity)
-              : total;
+
+            return total + (priceToUse * holding.quantity);
           }, 0);
         });
 

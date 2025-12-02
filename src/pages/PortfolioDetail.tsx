@@ -1,10 +1,10 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { usePortfolio, useDeletePortfolio } from "@/api/portfolio/portfolio";
+import { usePortfolioFollows } from "@/api/portfolio/usePortfolioFollows";
 import { usePortfolioTransactions } from "@/api/transaction/usePortfolioTransactions";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/auth";
 import { PortfolioHoldings } from "@/components/portfolio/PortfolioHoldings";
-import { PortfolioStats } from "@/components/portfolio/PortfolioStats";
 import { TransactionsCard } from "@/components/transactions/TransactionsCard";
 import { PortfolioEditDialog } from "@/components/portfolio/edit/PortfolioEditDialog";
 import { DeleteConfirmationDialog } from "@/components/portfolio/delete/DeleteConfirmationDialog";
@@ -14,17 +14,17 @@ import { ArrowLeft } from "lucide-react";
 
 // Import from portfolioDetails folder
 import { EvolutionChart } from "@/components/portfolio/portfolioDetails/EvolutionChart";
-import { PortfolioActions } from "@/components/portfolio/portfolioDetails/PortfolioActions";
 import { AISummaryDrawer } from "@/components/portfolio/portfolioDetails/AISummaryDrawer";
-import { PortfolioHeaderSection } from "@/components/portfolio/PortfolioHeaderSection";
+import { PortfolioHero } from "@/components/portfolio/portfolioDetails/PortfolioHero";
 import {
   PortfolioLayout,
-  PortfolioGrid,
-  PortfolioMainContent,
-  PortfolioSidebar,
   PortfolioSection,
   PortfolioLoadingSkeleton
 } from "@/components/portfolio/portfolioDetails/PortfolioLayout";
+import { AllocationChart } from "@/components/portfolio/portfolioDetails/AllocationChart";
+import { TopMovers } from "@/components/portfolio/portfolioDetails/TopMovers";
+import { KeyMetrics } from "@/components/portfolio/portfolioDetails/KeyMetrics";
+import { PortfolioAwards } from "@/components/portfolio/portfolioDetails/PortfolioAwards";
 
 // Add custom animation keyframes for the spinning gradient
 const style = document.createElement('style');
@@ -60,8 +60,10 @@ export const PortfolioDetail = () => {
   // Load transactions in parallel
   const { data: transactions, isLoading: isLoadingTransactions } = usePortfolioTransactions(portfolioId);
 
+  // Follow/unfollow functionality
+  const { isFollowing, toggleFollow } = usePortfolioFollows(portfolioId);
+
   // Calculate derived values
-  const holdingsCount = portfolio?.holdings?.length || 0;
   const totalValue = portfolio?.holdings?.reduce(
     (sum, h) => sum + ((h.current_price || 0) * h.quantity),
     0
@@ -74,6 +76,24 @@ export const PortfolioDetail = () => {
 
   const totalReturn = totalValue - totalInvested;
   const returnPercentage = totalInvested > 0 ? (totalReturn / totalInvested) * 100 : 0;
+
+  const handleToggleFollow = async () => {
+    try {
+      await toggleFollow();
+      toast({
+        title: isFollowing ? 'Unfollowed' : 'Following',
+        description: isFollowing
+          ? `You unfollowed ${portfolio.name}`
+          : `You are now following ${portfolio.name}`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update follow status. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const handleDelete = async () => {
     if (!portfolioId) return;
@@ -122,28 +142,34 @@ export const PortfolioDetail = () => {
   // Check if user is the owner of the portfolio
   const isOwner = user?.id === portfolio?.user_id;
 
+  const portfolioAgeDays = portfolio?.created_at
+    ? Math.floor((new Date().getTime() - new Date(portfolio.created_at).getTime()) / (1000 * 60 * 60 * 24))
+    : 0;
+
   return (
     <PortfolioLayout>
-      {/* Header Section */}
-      <PortfolioHeaderSection
-        onBack={() => navigate(-1)}
+      {/* Hero Section */}
+      <PortfolioHero
+        portfolioId={portfolioId}
         name={portfolio.name}
-        description={portfolio.description || ''}
-        isPublic={portfolio.is_public || false}
-        followersCount={portfolio.followers_count || 0}
+        description={portfolio.description}
+        isPublic={portfolio.is_public}
+        followersCount={portfolio.followers_count}
         createdAt={portfolio.created_at}
-        actions={
-          <PortfolioActions
-            portfolioId={portfolioId}
-            isOwner={isOwner}
-            isPublic={portfolio.is_public || false}
-            followersCount={portfolio.followers_count || 0}
-            onEdit={() => setIsEditDialogOpen(true)}
-            onDelete={() => setIsDeleteDialogOpen(true)}
-            onAISummary={() => setAISummaryOpen(true)}
-            holdings={portfolio.holdings || []}
-          />
-        }
+        totalValue={totalValue}
+        totalReturn={totalReturn}
+        returnPercentage={returnPercentage}
+        todayChange={portfolio.today_change}
+        todayChangePercent={portfolio.today_change_percent}
+        onBack={() => navigate(-1)}
+        onEdit={() => setIsEditDialogOpen(true)}
+        onDelete={() => setIsDeleteDialogOpen(true)}
+        onAISummary={() => setAISummaryOpen(true)}
+        isOwner={isOwner}
+        isFollowing={isFollowing}
+        onToggleFollow={handleToggleFollow}
+        isLoading={isLoadingPortfolio}
+        isLoadingPrices={isLoadingPrices}
       />
 
       {/* AI Summary Drawer */}
@@ -154,40 +180,63 @@ export const PortfolioDetail = () => {
       />
 
       <PortfolioSection>
-        <PortfolioGrid>
-          <PortfolioMainContent>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Column (2/3) */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Evolution Chart */}
             <EvolutionChart
               holdings={portfolio.holdings || []}
-              isLoading={isLoadingPrices} // Pass loading state to chart
+              isLoading={isLoadingPrices}
             />
-          </PortfolioMainContent>
 
-          <PortfolioSidebar>
-            <PortfolioStats
-              totalValue={totalValue}
+            {/* Holdings List */}
+            <PortfolioHoldings
+              holdings={portfolio.holdings || []}
+              isLoading={isLoadingPortfolio}
+              isLoadingPrices={isLoadingPrices}
+            />
+
+            {/* Transactions */}
+            <TransactionsCard
+              transactions={transactions || []}
+              isLoading={isLoadingTransactions}
+            />
+          </div>
+
+          {/* Sidebar Column (1/3) */}
+          <div className="lg:col-span-1 space-y-8">
+            {/* Allocation Chart */}
+            <AllocationChart
+              holdings={portfolio.holdings || []}
+              isLoading={isLoadingPrices}
+            />
+
+            {/* Top Movers */}
+            <TopMovers
+              holdings={portfolio.holdings || []}
+              isLoading={isLoadingPrices}
+            />
+
+            {/* Key Metrics */}
+            <KeyMetrics
+              holdings={portfolio.holdings || []}
               totalInvested={totalInvested}
-              totalReturn={totalReturn}
-              returnPercentage={returnPercentage}
-              holdingsCount={holdingsCount}
-              className="w-full"
-              isLoading={isLoadingPrices} // Pass loading state to stats
+              isLoading={isLoadingPrices}
             />
-          </PortfolioSidebar>
-        </PortfolioGrid>
+          </div>
+        </div>
 
-        {/* Holdings and Transactions section */}
-        <PortfolioSection>
-          <PortfolioHoldings
-            holdings={portfolio.holdings || []}
-            isLoading={isLoadingPortfolio} // Initial loading
-            isLoadingPrices={isLoadingPrices} // Price loading
+        {/* Awards Section - Moved to bottom */}
+        <div className="mt-12">
+          <PortfolioAwards
+            totalReturn={totalReturn}
+            returnPercentage={returnPercentage}
+            portfolioAgeDays={portfolioAgeDays}
+            holdingsCount={portfolio?.holdings?.length || 0}
+            totalValue={totalValue}
+            todayChangePercent={portfolio?.today_change_percent || 0}
           />
-
-          <TransactionsCard
-            transactions={transactions || []}
-            isLoading={isLoadingTransactions}
-          />
-        </PortfolioSection>
+        </div>
       </PortfolioSection>
 
       <DeleteConfirmationDialog
