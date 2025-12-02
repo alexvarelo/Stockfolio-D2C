@@ -22,9 +22,11 @@ const COLORS = [
     "#6366f1", // indigo-500
 ];
 
+const OTHERS_COLOR = "#94a3b8"; // slate-400
+
 export const AllocationChart = ({ holdings, className = "", isLoading }: AllocationChartProps) => {
-    const data = useMemo(() => {
-        if (!holdings.length) return [];
+    const { chartData, allData } = useMemo(() => {
+        if (!holdings.length) return { chartData: [], allData: [] };
 
         const totalValue = holdings.reduce((sum, h) => sum + ((h.current_price || 0) * h.quantity), 0);
 
@@ -32,25 +34,31 @@ export const AllocationChart = ({ holdings, className = "", isLoading }: Allocat
             ((b.current_price || 0) * b.quantity) - ((a.current_price || 0) * a.quantity)
         );
 
-        const topHoldings = sortedHoldings.slice(0, 4);
-        const otherHoldings = sortedHoldings.slice(4);
-
-        const data = topHoldings.map(h => ({
+        // Prepare data for all holdings (for the list)
+        const allData = sortedHoldings.map((h, index) => ({
             name: h.ticker,
             value: (h.current_price || 0) * h.quantity,
-            percentage: totalValue > 0 ? ((h.current_price || 0) * h.quantity / totalValue) * 100 : 0
+            percentage: totalValue > 0 ? ((h.current_price || 0) * h.quantity / totalValue) * 100 : 0,
+            color: index < 5 ? COLORS[index % COLORS.length] : OTHERS_COLOR
         }));
 
+        // Prepare data for the chart (Top 5 + Others)
+        const topHoldings = allData.slice(0, 5);
+        const otherHoldings = allData.slice(5);
+
+        const chartData = [...topHoldings];
+
         if (otherHoldings.length > 0) {
-            const otherValue = otherHoldings.reduce((sum, h) => sum + ((h.current_price || 0) * h.quantity), 0);
-            data.push({
+            const otherValue = otherHoldings.reduce((sum, h) => sum + h.value, 0);
+            chartData.push({
                 name: "Others",
                 value: otherValue,
-                percentage: totalValue > 0 ? (otherValue / totalValue) * 100 : 0
+                percentage: totalValue > 0 ? (otherValue / totalValue) * 100 : 0,
+                color: OTHERS_COLOR
             });
         }
 
-        return data;
+        return { chartData, allData };
     }, [holdings]);
 
     if (isLoading) {
@@ -79,7 +87,7 @@ export const AllocationChart = ({ holdings, className = "", isLoading }: Allocat
         );
     }
 
-    if (data.length === 0) {
+    if (allData.length === 0) {
         return (
             <Card className={`flex flex-col border-none shadow-none bg-transparent ${className}`}>
                 <CardHeader className="pb-2 px-0">
@@ -102,7 +110,7 @@ export const AllocationChart = ({ holdings, className = "", isLoading }: Allocat
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                             <Pie
-                                data={data}
+                                data={chartData}
                                 cx="50%"
                                 cy="50%"
                                 innerRadius={60}
@@ -112,8 +120,8 @@ export const AllocationChart = ({ holdings, className = "", isLoading }: Allocat
                                 stroke="none"
                                 cornerRadius={4}
                             >
-                                {data.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                {chartData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={entry.color} />
                                 ))}
                             </Pie>
                             <Tooltip
@@ -132,7 +140,7 @@ export const AllocationChart = ({ holdings, className = "", isLoading }: Allocat
                     {/* Center Text */}
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                         <div className="text-center">
-                            <span className="text-3xl font-bold tracking-tighter">{data.length}</span>
+                            <span className="text-3xl font-bold tracking-tighter">{allData.length}</span>
                             <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest mt-1">Assets</p>
                         </div>
                     </div>
@@ -140,12 +148,12 @@ export const AllocationChart = ({ holdings, className = "", isLoading }: Allocat
 
                 {/* Custom Legend - Scrollable */}
                 <div className="mt-4 space-y-3 overflow-y-auto pr-2 pl-1 custom-scrollbar flex-1">
-                    {data.map((entry, index) => (
+                    {allData.map((entry, index) => (
                         <div key={entry.name} className="flex items-center justify-between text-sm group">
                             <div className="flex items-center gap-3">
                                 <div
                                     className="w-2.5 h-2.5 rounded-full ring-2 ring-offset-2 ring-offset-card"
-                                    style={{ backgroundColor: COLORS[index % COLORS.length], "--tw-ring-color": COLORS[index % COLORS.length] } as any}
+                                    style={{ backgroundColor: entry.color, "--tw-ring-color": entry.color } as any}
                                 />
                                 <span className="font-medium text-muted-foreground group-hover:text-foreground transition-colors truncate max-w-[100px]">{entry.name}</span>
                             </div>

@@ -2,13 +2,15 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { StepPortfolioDetails } from "./StepPortfolioDetails";
 import { StepHoldings } from "./StepHoldings";
+import { StepAIGenerator } from "./StepAIGenerator";
 import { Holding, portfolioSchema } from "./types";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/components/ui/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { GeneratedPortfolioResponse } from "@/api/portfolio/usePortfolioGenerator";
 
-export type WizardStep = 0 | 1;
+export type WizardStep = "ai-prompt" | "details" | "holdings";
 
 export function PortfolioWizard({
   open,
@@ -17,7 +19,7 @@ export function PortfolioWizard({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [step, setStep] = useState<WizardStep>(0);
+  const [step, setStep] = useState<WizardStep>("ai-prompt");
   const [portfolioDetails, setPortfolioDetails] = useState<any>(null);
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,7 +38,17 @@ export function PortfolioWizard({
     setHoldings((prev) => prev.filter((_, i) => i !== index));
   };
 
-  console.log("holdings", holdings);
+  const handleAIGenerated = (data: GeneratedPortfolioResponse) => {
+    if (data.success) {
+      toast({
+        title: "Portfolio Created",
+        description: "AI has successfully created your portfolio.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["portfolios-detailed"] });
+      onOpenChange(false);
+      resetWizard();
+    }
+  };
 
   // Submit wizard (create portfolio & holdings)
   const handleSubmit = async () => {
@@ -94,39 +106,63 @@ export function PortfolioWizard({
   };
 
   const resetWizard = () => {
-    setStep(0);
+    setStep("ai-prompt");
     setPortfolioDetails(null);
     setHoldings([]);
   };
 
+  const getStepTitle = () => {
+    switch (step) {
+      case "ai-prompt": return "Create New Portfolio";
+      case "details": return "Portfolio Details";
+      case "holdings": return "Review Holdings";
+      default: return "Create Portfolio";
+    }
+  };
+
+  const getStepDescription = () => {
+    switch (step) {
+      case "ai-prompt": return "Let AI build your portfolio or start from scratch";
+      case "details": return "Review and customize your portfolio details";
+      case "holdings": return "Add or modify holdings in your portfolio";
+      default: return "";
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(open) => {
+      if (!open) resetWizard();
+      onOpenChange(open);
+    }}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            {step === 1 ? "Create New Portfolio" : "Add Holdings"}
-          </DialogTitle>
-          <DialogDescription>
-            {step === 1
-              ? "Set up your portfolio details"
-              : "Import your current holdings to this portfolio"}
-          </DialogDescription>
+          <DialogTitle>{getStepTitle()}</DialogTitle>
+          <DialogDescription>{getStepDescription()}</DialogDescription>
         </DialogHeader>
-        {step === 0 && (
+
+        {step === "ai-prompt" && (
+          <StepAIGenerator
+            onGenerate={handleAIGenerated}
+            onSkip={() => goToStep("details")}
+          />
+        )}
+
+        {step === "details" && (
           <StepPortfolioDetails
             initialValues={portfolioDetails}
             onNext={(values: any) => {
               setPortfolioDetails(values);
-              goToStep(1);
+              goToStep("holdings");
             }}
           />
         )}
-        {step === 1 && (
+
+        {step === "holdings" && (
           <StepHoldings
             holdings={holdings}
             onAddHolding={handleAddHolding}
             onRemoveHolding={handleRemoveHolding}
-            onBack={() => goToStep(0)}
+            onBack={() => goToStep("details")}
             onSubmit={handleSubmit}
             isSubmitting={isSubmitting}
           />
