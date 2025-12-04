@@ -18,6 +18,7 @@ import { useAuth } from "@/lib/auth";
 import { FormProvider, useForm } from "react-hook-form";
 import { PortfolioWizard } from "@/components/portfolio/portfolioWizard/PortfolioWizard";
 import { useFollowedPortfolios } from "@/api/portfolio/useFollowedPortfolios";
+import { usePortfolios } from "@/api/portfolio/usePortfolios";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
 
@@ -31,34 +32,7 @@ const Portfolios = () => {
   const { data: followedPortfolios, isLoading: isLoadingFollowed } =
     useFollowedPortfolios();
 
-  const { data: portfolios, isLoading } = useQuery({
-    queryKey: ["portfolios-detailed"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("portfolios")
-        .select(
-          `
-          id,
-          name,
-          description,
-          is_public,
-          is_default,
-          created_at,
-          holdings (
-            ticker,
-            quantity,
-            total_invested
-          )
-        `
-        )
-        .eq("user_id", user?.id)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!user,
-  });
+  const { data: portfolios, isLoading } = usePortfolios(user?.id);
 
   if (isLoading) {
     return (
@@ -90,8 +64,8 @@ const Portfolios = () => {
 
   const item: Record<string, any> = {
     hidden: { opacity: 0, y: 20 },
-    show: { 
-      opacity: 1, 
+    show: {
+      opacity: 1,
       y: 0,
       transition: {
         type: "spring" as const,
@@ -108,7 +82,7 @@ const Portfolios = () => {
       exit={{ opacity: 0 }}
       className="py-6 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full"
     >
-      <motion.div 
+      <motion.div
         className="flex flex-col gap-6 sm:gap-8"
         variants={container}
         initial="hidden"
@@ -121,7 +95,7 @@ const Portfolios = () => {
               Manage and track your investment portfolios
             </p>
           </div>
-          <Button 
+          <Button
             onClick={() => setShowCreateWizard(true)}
             className="w-full sm:w-auto"
           >
@@ -171,7 +145,7 @@ const Portfolios = () => {
                 </CardHeader>
               </Card>
             ) : (
-              <motion.div 
+              <motion.div
                 className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
                 variants={container}
               >
@@ -182,6 +156,8 @@ const Portfolios = () => {
                       user_id={user?.id}
                       showOwner={false}
                       isOwnPortfolio={true}
+                      totalValue={portfolio.total_value}
+                      totalReturnPercentage={portfolio.daily_change}
                     />
                   </motion.div>
                 ))}

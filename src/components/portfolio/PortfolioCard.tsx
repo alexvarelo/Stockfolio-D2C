@@ -41,6 +41,8 @@ export interface PortfolioCardProps {
   user_avatar_url?: string;
   className?: string;
   isOwnPortfolio?: boolean;
+  totalValue?: number;
+  totalReturnPercentage?: number;
 }
 
 export const PortfolioCard: React.FC<PortfolioCardProps> = ({
@@ -58,6 +60,8 @@ export const PortfolioCard: React.FC<PortfolioCardProps> = ({
   user_avatar_url,
   className = '',
   isOwnPortfolio,
+  totalValue,
+  totalReturnPercentage,
 }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -96,12 +100,27 @@ export const PortfolioCard: React.FC<PortfolioCardProps> = ({
     }
   };
 
-  // Get portfolio data with metrics
+  // Get portfolio data with metrics - ONLY if we don't have stored values
+  // Or fetch it in background but don't block UI
   const { data: portfolioData, isLoading: isBasicLoading, isLoadingPrices: isPricesLoading } = usePortfolio(id, true);
-  const isLoadingPrices = isBasicLoading || isPricesLoading;
+
+  // If we have stored values, we are NOT loading
+  const hasStoredValues = totalValue !== undefined;
+  const isLoadingPrices = !hasStoredValues && (isBasicLoading || isPricesLoading);
 
   // Calculate portfolio metrics from portfolio data
   const portfolioMetrics = useMemo(() => {
+    // If we have stored values, use them!
+    if (hasStoredValues) {
+      return {
+        currentValue: totalValue || 0,
+        costBasis: 0, // We might not have this from stored values, but it's less critical for card view
+        earnedLost: 0, // We use percentage for return
+        isPositive: (totalReturnPercentage || 0) >= 0,
+        formattedPerformance: Math.abs(totalReturnPercentage || 0).toFixed(2)
+      };
+    }
+
     if (!portfolioData?.holdings?.length) {
       return {
         currentValue: 0,
@@ -133,7 +152,7 @@ export const PortfolioCard: React.FC<PortfolioCardProps> = ({
       isPositive: earnedLost >= 0,
       formattedPerformance: (Math.abs(performance) * 100).toFixed(2)
     };
-  }, [portfolioData]);
+  }, [portfolioData, totalValue, totalReturnPercentage, hasStoredValues]);
 
 
   // Calculate total number of holdings

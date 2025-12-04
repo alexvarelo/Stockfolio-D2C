@@ -64,10 +64,11 @@ export const PortfolioDetail = () => {
   const { isFollowing, toggleFollow } = usePortfolioFollows(portfolioId);
 
   // Calculate derived values
-  const totalValue = portfolio?.holdings?.reduce(
+  // Use stored values from the hook if available, otherwise calculate from holdings
+  const totalValue = portfolio?.total_value ?? (portfolio?.holdings?.reduce(
     (sum, h) => sum + ((h.current_price || 0) * h.quantity),
     0
-  ) || 0;
+  ) || 0);
 
   const totalInvested = portfolio?.holdings?.reduce(
     (sum, h) => sum + h.total_invested,
@@ -75,7 +76,9 @@ export const PortfolioDetail = () => {
   ) || 0;
 
   const totalReturn = totalValue - totalInvested;
-  const returnPercentage = totalInvested > 0 ? (totalReturn / totalInvested) * 100 : 0;
+
+  // Use stored return percentage if available, otherwise calculate
+  const returnPercentage = portfolio?.total_return_percentage ?? (totalInvested > 0 ? (totalReturn / totalInvested) * 100 : 0);
 
   const handleToggleFollow = async () => {
     try {

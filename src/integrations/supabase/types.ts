@@ -7,13 +7,224 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.12 (cd3cf9e)"
   }
   public: {
     Tables: {
+      api_credentials: {
+        Row: {
+          client_id: string
+          client_secret: string
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          metadata: Json | null
+          provider_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          client_id: string
+          client_secret: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          provider_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          client_id?: string
+          client_secret?: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          provider_name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      article_engagement: {
+        Row: {
+          article_id: string
+          created_at: string | null
+          engagement_type: string
+          id: string
+          metadata: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          article_id: string
+          created_at?: string | null
+          engagement_type: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          article_id?: string
+          created_at?: string | null
+          engagement_type?: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "article_engagement_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "article_engagement_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      article_sections: {
+        Row: {
+          article_id: string
+          content: Json
+          created_at: string | null
+          id: string
+          section_order: number
+          section_title: string
+        }
+        Insert: {
+          article_id: string
+          content: Json
+          created_at?: string | null
+          id?: string
+          section_order: number
+          section_title: string
+        }
+        Update: {
+          article_id?: string
+          content?: Json
+          created_at?: string | null
+          id?: string
+          section_order?: number
+          section_title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "article_sections_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      article_sources: {
+        Row: {
+          article_id: string
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          relevance_score: number | null
+          source_date: string | null
+          source_title: string | null
+          source_type: string
+          source_url: string | null
+        }
+        Insert: {
+          article_id: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          relevance_score?: number | null
+          source_date?: string | null
+          source_title?: string | null
+          source_type: string
+          source_url?: string | null
+        }
+        Update: {
+          article_id?: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          relevance_score?: number | null
+          source_date?: string | null
+          source_title?: string | null
+          source_type?: string
+          source_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "article_sources_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      articles: {
+        Row: {
+          article_type: string
+          author: string | null
+          content: Json
+          created_at: string | null
+          id: string
+          is_premium: boolean | null
+          metadata: Json | null
+          slug: string
+          status: string | null
+          summary: string | null
+          tags: string[] | null
+          tickers: string[] | null
+          title: string
+          updated_at: string | null
+          view_count: number | null
+        }
+        Insert: {
+          article_type: string
+          author?: string | null
+          content: Json
+          created_at?: string | null
+          id?: string
+          is_premium?: boolean | null
+          metadata?: Json | null
+          slug: string
+          status?: string | null
+          summary?: string | null
+          tags?: string[] | null
+          tickers?: string[] | null
+          title: string
+          updated_at?: string | null
+          view_count?: number | null
+        }
+        Update: {
+          article_type?: string
+          author?: string | null
+          content?: Json
+          created_at?: string | null
+          id?: string
+          is_premium?: boolean | null
+          metadata?: Json | null
+          slug?: string
+          status?: string | null
+          summary?: string | null
+          tags?: string[] | null
+          tickers?: string[] | null
+          title?: string
+          updated_at?: string | null
+          view_count?: number | null
+        }
+        Relationships: []
+      }
       holdings: {
         Row: {
           average_price: number
@@ -131,6 +342,35 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portfolio_values: {
+        Row: {
+          portfolio_id: string
+          total_return_percentage: number | null
+          total_value: number
+          updated_at: string | null
+        }
+        Insert: {
+          portfolio_id: string
+          total_return_percentage?: number | null
+          total_value: number
+          updated_at?: string | null
+        }
+        Update: {
+          portfolio_id?: string
+          total_return_percentage?: number | null
+          total_value?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_values_portfolio_id_fkey"
+            columns: ["portfolio_id"]
+            isOneToOne: true
+            referencedRelation: "portfolios"
             referencedColumns: ["id"]
           },
         ]
@@ -272,6 +512,7 @@ export type Database = {
           is_public: boolean | null
           portfolio_id: string | null
           post_type: string | null
+          ticker: string | null
           updated_at: string | null
           user_id: string
         }
@@ -282,6 +523,7 @@ export type Database = {
           is_public?: boolean | null
           portfolio_id?: string | null
           post_type?: string | null
+          ticker?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -292,6 +534,7 @@ export type Database = {
           is_public?: boolean | null
           portfolio_id?: string | null
           post_type?: string | null
+          ticker?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -312,27 +555,21 @@ export type Database = {
           },
         ]
       }
-      securities: {
+      ticker_prices: {
         Row: {
-          created_at: string | null
-          id: string
-          is_active: boolean | null
+          last_updated: string | null
+          price: number
           ticker: string
-          updated_at: string | null
         }
         Insert: {
-          created_at?: string | null
-          id?: string
-          is_active?: boolean | null
+          last_updated?: string | null
+          price: number
           ticker: string
-          updated_at?: string | null
         }
         Update: {
-          created_at?: string | null
-          id?: string
-          is_active?: boolean | null
+          last_updated?: string | null
+          price?: number
           ticker?: string
-          updated_at?: string | null
         }
         Relationships: []
       }
@@ -340,6 +577,7 @@ export type Database = {
         Row: {
           created_at: string | null
           fees: number | null
+          holding_id: string | null
           id: string
           notes: string | null
           portfolio_id: string
@@ -354,6 +592,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           fees?: number | null
+          holding_id?: string | null
           id?: string
           notes?: string | null
           portfolio_id: string
@@ -368,6 +607,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           fees?: number | null
+          holding_id?: string | null
           id?: string
           notes?: string | null
           portfolio_id?: string
@@ -380,6 +620,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "transactions_holding_id_fkey"
+            columns: ["holding_id"]
+            isOneToOne: false
+            referencedRelation: "holdings"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "transactions_portfolio_id_fkey"
             columns: ["portfolio_id"]
@@ -477,8 +724,8 @@ export type Database = {
           is_public: boolean | null
           is_verified: boolean | null
           updated_at: string | null
-          website: string | null
           username: string
+          website: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -491,6 +738,7 @@ export type Database = {
           is_verified?: boolean | null
           updated_at?: string | null
           username: string
+          website?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -503,6 +751,7 @@ export type Database = {
           is_verified?: boolean | null
           updated_at?: string | null
           username?: string
+          website?: string | null
         }
         Relationships: []
       }
@@ -584,16 +833,29 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_post_comment: {
+        Args: {
+          p_content: string
+          p_parent_comment_id?: string
+          p_post_id: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      add_post_like: {
+        Args: { p_post_id: string; p_user_id: string }
+        Returns: Json
+      }
       add_transaction: {
         Args: {
-          portfolio_uuid: string
-          ticker_param: string
-          transaction_type_param: string
-          quantity_param: number
-          price_per_share_param: number
-          transaction_date_param: string
           fees_param?: number
           notes_param?: string
+          portfolio_uuid: string
+          price_per_share_param: number
+          quantity_param: number
+          ticker_param: string
+          transaction_date_param: string
+          transaction_type_param: string
         }
         Returns: string
       }
@@ -601,13 +863,60 @@ export type Database = {
         Args: { portfolio_uuid: string }
         Returns: number
       }
+      create_post: {
+        Args: {
+          p_content: string
+          p_is_public?: boolean
+          p_portfolio_id?: string
+          p_post_type?: string
+          p_ticker?: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      follow_user: {
+        Args: { p_follower_id: string; p_following_id: string }
+        Returns: Json
+      }
       get_portfolio_summary: {
         Args: { portfolio_uuid: string }
         Returns: {
+          last_transaction_date: string
           total_holdings: number
           total_invested: number
           total_transactions: number
-          last_transaction_date: string
+        }[]
+      }
+      get_posts_with_details: {
+        Args: {
+          p_author_id?: string
+          p_exclude_user?: string
+          p_is_public?: boolean
+          p_limit?: number
+          p_offset?: number
+          p_only_following?: boolean
+          p_portfolio_id?: string
+          p_post_type?: string
+          p_ticker?: string
+          p_user_id?: string
+        }
+        Returns: {
+          avatar_url: string
+          comment_count: number
+          content: string
+          created_at: string
+          full_name: string
+          id: string
+          is_liked_by_me: boolean
+          is_public: boolean
+          like_count: number
+          portfolio_id: string
+          portfolio_name: string
+          post_type: string
+          ticker: string
+          updated_at: string
+          user_id: string
+          username: string
         }[]
       }
     }

@@ -23,7 +23,7 @@ export interface Portfolio {
 }
 
 export const UserPortfolios = ({ userId }: { userId: string }) => {
-  const {user} = useAuth();
+  const { user } = useAuth();
   const { data: portfolios, isLoading, isError, error } = useQuery({
     queryKey: ['user-portfolios', userId],
     queryFn: async () => {
@@ -41,13 +41,23 @@ export const UserPortfolios = ({ userId }: { userId: string }) => {
             ticker,
             quantity,
             total_invested
+          ),
+          portfolio_values (
+            total_value,
+            total_return_percentage
           )
         `)
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as Portfolio[];
+
+      // Map the response to include the joined data
+      return (data || []).map((p: any) => ({
+        ...p,
+        total_value: p.portfolio_values?.[0]?.total_value,
+        daily_change: p.portfolio_values?.[0]?.total_return_percentage,
+      })) as Portfolio[];
     },
   });
 
@@ -89,12 +99,14 @@ export const UserPortfolios = ({ userId }: { userId: string }) => {
     <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
       {portfolios
         .filter(portfolio => portfolio.is_public) // Only show public portfolios
-        .map((portfolio) => (
-          <PortfolioCard 
-            key={portfolio.id} 
-            {...portfolio} 
+        .map((portfolio: any) => (
+          <PortfolioCard
+            key={portfolio.id}
+            {...portfolio}
             user_id={userId}
-            isOwnPortfolio={userId === user?.id}
+            showOwner={false}
+            totalValue={portfolio.total_value}
+            totalReturnPercentage={portfolio.daily_change}
           />
         ))}
     </div>

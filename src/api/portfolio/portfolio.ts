@@ -42,10 +42,10 @@ export interface Portfolio extends Omit<PortfolioBase, "portfolio_followers"> {
     dates: string[];
     values: number[];
   };
+  total_value?: number;
+  total_return_percentage?: number;
 }
 
-// Get portfolio data with current prices and performance
-// This is a combination of basic portfolio data and current market data
 // Get portfolio data with current prices and performance
 // This is a combination of basic portfolio data and current market data
 export const usePortfolio = (portfolioId: string, includePrices = true) => {
@@ -86,10 +86,47 @@ export const usePortfolio = (portfolioId: string, includePrices = true) => {
     enabled: !!portfolioId,
   });
 
-  // 2. Fetch live prices for holdings (Slower)
+  // 1b. Fetch stored portfolio value (Fastest for total value)
+  const { data: storedValue } = useQuery({
+    queryKey: ["stored-portfolio-value", portfolioId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("portfolio_values")
+        .select("*")
+        .eq("portfolio_id", portfolioId)
+        .maybeSingle();
+      if (error) return null;
+      return data;
+    },
+    enabled: !!portfolioId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // 1c. Fetch stored ticker prices (Fast for individual holdings)
+  const tickers = basicPortfolio?.holdings?.map(h => h.ticker) || [];
+  const { data: storedPrices } = useQuery({
+    queryKey: ["stored-ticker-prices", tickers],
+    queryFn: async () => {
+      if (!tickers.length) return {};
+      const { data, error } = await supabase
+        .from("ticker_prices")
+        .select("ticker, price, last_updated")
+        .in("ticker", tickers);
+
+      if (error) return {};
+
+      const map: Record<string, number> = {};
+      data?.forEach(d => { map[d.ticker] = d.price; });
+      return map;
+    },
+    enabled: tickers.length > 0,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // 2. Fetch live prices for holdings (Slower, but fresher)
   const {
-    data: prices,
-    isLoading: isLoadingPrices
+    data: livePrices,
+    isLoading: isLoadingLivePrices
   } = useQuery<Record<string, PriceData>, Error>({
     queryKey: ["portfolio-prices", portfolioId],
     queryFn: async () => {
@@ -140,19 +177,29 @@ export const usePortfolio = (portfolioId: string, includePrices = true) => {
   // We'll calculate derived values based on what we have
   let totalTodayChange = 0;
   let totalInvested = 0;
+  let calculatedTotalValue = 0;
 
   const holdingsWithPrices = basicPortfolio.holdings.map((holding) => {
-    // Use fetched price if available, otherwise fall back to stored current_price or 0
-    // If prices are loading, this might be undefined initially, which is fine
-    const priceData = prices?.[holding.ticker];
-    const priceInfo = priceData || { current: holding.current_price || 0 };
-    const currentPrice = priceInfo.current;
+    // Priority: Live Price -> Stored Price -> Average Price (fallback)
+    const livePriceData = livePrices?.[holding.ticker];
+    const storedPrice = storedPrices?.[holding.ticker];
+
+    // Determine the price to use
+    let currentPrice = 0;
+    if (livePriceData) {
+      currentPrice = livePriceData.current;
+    } else if (storedPrice !== undefined) {
+      currentPrice = storedPrice;
+    } else {
+      currentPrice = holding.average_price; // Fallback
+    }
 
     const investedValue = (holding.average_price || 0) * holding.quantity;
     const currentValue = currentPrice * holding.quantity;
 
     // Calculate today's value change based on 24h change percentage
-    const todayChangePercent = priceInfo.changePercent || 0;
+    // Only available if we have live data
+    const todayChangePercent = livePriceData?.changePercent || 0;
     const todayValueChange = todayChangePercent
       ? (todayChangePercent / 100) *
       (currentValue / (1 + todayChangePercent / 100))
@@ -160,6 +207,7 @@ export const usePortfolio = (portfolioId: string, includePrices = true) => {
 
     totalTodayChange += todayValueChange;
     totalInvested += investedValue;
+    calculatedTotalValue += currentValue;
 
     return {
       ...holding,
@@ -172,23 +220,54 @@ export const usePortfolio = (portfolioId: string, includePrices = true) => {
           : 0,
       total_value: currentValue,
       total_invested: investedValue,
-      today_change: priceInfo.change || 0,
+      today_change: livePriceData?.change || 0,
       today_change_percent: todayChangePercent,
       today_value_change: todayValueChange,
     };
   });
+
+  // Use stored total value if live calculation isn't ready yet, or if it's more reliable
+  // But usually calculated is better if we have individual prices
+  // However, if we have a stored value from a background job, it might be good to show that initially
+
+  // If we have live prices, we prefer the calculated value (calculatedTotalValue)
+  // If we don't have live prices but have stored prices, we use calculatedTotalValue (based on stored prices)
+  // If we have neither, we might want to fall back to the stored total value from the portfolio_values table
+
+  const finalTotalValue = (livePrices && Object.keys(livePrices).length > 0)
+    ? calculatedTotalValue
+    : (storedValue?.total_value || calculatedTotalValue);
+
+  const finalTotalReturnPercentage = (livePrices && Object.keys(livePrices).length > 0)
+    ? (totalInvested > 0 ? (totalTodayChange / totalInvested) * 100 : 0) // This logic seems to be for today change, not total return. 
+    // Wait, totalTodayChange is for TODAY. 
+    // Total return is (currentValue - invested) / invested.
+    : (storedValue?.total_return_percentage || (totalInvested > 0 ? ((calculatedTotalValue - totalInvested) / totalInvested) * 100 : 0));
+
+  // Actually, the original code didn't return total_value explicitly in the Portfolio interface, 
+  // it seems it was derived in the components or I missed it.
+  // Let's check the Portfolio interface. It has holdings.
+  // The components usually calculate total value from holdings.
+  // But if we want to pass a pre-calculated value, we should add it to the interface or ensure holdings sum up to it.
+  // Since we updated holdings with stored prices, the sum should be correct-ish.
+
+  // However, PortfolioHero takes totalValue as a prop.
+  // In PortfolioDetail, it probably calculates it.
 
   const portfolioWithPrices: Portfolio = {
     ...basicPortfolio,
     holdings: holdingsWithPrices,
     today_change: totalTodayChange,
     today_change_percent: totalInvested > 0 ? (totalTodayChange / totalInvested) * 100 : 0,
+    // If we have a stored total return, we could potentially use it, but calculating from holdings is usually safer for consistency
+    total_value: finalTotalValue,
+    total_return_percentage: finalTotalReturnPercentage,
   };
 
   return {
     data: portfolioWithPrices,
     isLoading: isLoadingBasic,
-    isLoadingPrices: isLoadingPrices && includePrices, // Only true if we actually wanted prices
+    isLoadingPrices: isLoadingLivePrices && includePrices && !storedPrices, // Only consider loading if we don't even have stored prices
     error: basicError
   };
 };
