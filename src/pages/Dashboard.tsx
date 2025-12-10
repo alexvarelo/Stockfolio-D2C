@@ -3,17 +3,9 @@ import { motion, Variants } from "framer-motion";
 import { useAuth } from "@/lib/auth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Card,
-  CardContent, CardHeader,
-  CardTitle
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  TrendingUp, DollarSign,
-  Briefcase,
-  BarChart3,
-  Plus, Clock,
+  Plus,
   Sparkles
 } from "lucide-react";
 import { useNeedsOnboarding } from "@/lib/onboarding";
@@ -28,6 +20,9 @@ import {
 } from "@/components/dashboard/DashboardSkeleton";
 import { HoldingsDonutChart } from "@/components/charts/HoldingsDonutChart";
 import { ActivityCalendar } from "@/components/profile/ActivityCalendar";
+
+import { usePortfolios } from "@/api/portfolio/usePortfolios";
+import { DashboardStatsGrid } from "@/components/dashboard/stats/DashboardStatsGrid";
 
 const Dashboard = () => {
   const [commandOpen, setCommandOpen] = useState(false);
@@ -47,48 +42,7 @@ const Dashboard = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
-  const { needsOnboarding } = useNeedsOnboarding(user?.id);
-
-  const { data: portfolios, isLoading } = useQuery({
-    queryKey: ["portfolios"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("portfolios")
-        .select(
-          `
-          id,
-          name,
-          is_default,
-          holdings (
-            total_invested
-          )
-        `
-        )
-        .eq("user_id", user?.id);
-
-      if (error) throw error;
-
-      return (
-        data?.map((portfolio) => ({
-          id: portfolio.id,
-          name: portfolio.name,
-          is_default: portfolio.is_default,
-          total_invested:
-            portfolio.holdings?.reduce(
-              (sum, h) => sum + (h.total_invested || 0),
-              0
-            ) || 0,
-          total_holdings: portfolio.holdings?.length || 0,
-        })) || []
-      );
-    },
-    enabled: !!user,
-  });
-
-  const totalPortfolioValue =
-    portfolios?.reduce((sum, p) => sum + p.total_invested, 0) || 0;
-  const totalHoldings =
-    portfolios?.reduce((sum, p) => sum + p.total_holdings, 0) || 0;
+  const { data: portfolios, isLoading } = usePortfolios(user?.id);
 
   // Animation variants
   const container: Variants = {
@@ -156,72 +110,7 @@ const Dashboard = () => {
         {/* Left Column - Portfolio Overview & Insights (5/12) */}
         <div className="xl:col-span-5 space-y-8">
           {/* Stats Grid */}
-          <motion.div
-            className="grid grid-cols-2 gap-4"
-            variants={container}
-            initial="hidden"
-            animate="show"
-          >
-            <motion.div variants={item}>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Invested</CardTitle>
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    ${totalPortfolioValue?.toLocaleString("en-US", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </div>
-                  <p className="text-xs text-muted-foreground">Across all portfolios</p>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <motion.div variants={item}>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Holdings</CardTitle>
-                  <Briefcase className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{totalHoldings}</div>
-                  <p className="text-xs text-muted-foreground">Unique assets</p>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <motion.div variants={item}>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Performance</CardTitle>
-                  <BarChart3 className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold flex items-center">
-                    <TrendingUp className="h-5 w-5 text-green-500 mr-1" />
-                    +12.5%
-                  </div>
-                  <p className="text-xs text-muted-foreground">Last 30 days</p>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <motion.div variants={item}>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Updates</CardTitle>
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">3</div>
-                  <p className="text-xs text-muted-foreground">New notifications</p>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </motion.div>
+          <DashboardStatsGrid portfolios={portfolios || []} />
 
           {/* Articles Section */}
           <motion.div variants={item} initial="hidden" animate="show">

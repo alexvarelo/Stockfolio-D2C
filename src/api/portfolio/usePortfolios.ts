@@ -11,8 +11,9 @@ export interface Portfolio {
   updated_at: string;
   user_id: string;
   total_value?: number;
-  daily_change?: number;
+  total_return_percentage?: number;
   holdings_count?: number;
+  total_invested?: number;
 }
 
 export const usePortfolios = (userId?: string) => {
@@ -32,7 +33,8 @@ export const usePortfolios = (userId?: string) => {
           ),
           holdings (
             ticker,
-            quantity
+            quantity,
+            total_invested
           )
         `)
         .eq('user_id', userId)
@@ -49,9 +51,10 @@ export const usePortfolios = (userId?: string) => {
       // For now, let's map it to match the Portfolio interface expectations where possible
       return data.map(p => ({
         ...p,
-        total_value: p.portfolio_values?.[0]?.total_value,
-        daily_change: p.portfolio_values?.[0]?.total_return_percentage, // Using return % as proxy for daily change visual if needed, or just value
+        total_value: p.portfolio_values?.total_value,
+        total_return_percentage: p.portfolio_values?.total_return_percentage,
         holdings_count: p.holdings?.length || 0,
+        total_invested: p.holdings?.reduce((sum, h) => sum + (h.total_invested || 0), 0) || 0,
         // We keep the raw arrays too if needed
         holdings: p.holdings
       })) || [];
