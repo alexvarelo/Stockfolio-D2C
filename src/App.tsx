@@ -53,6 +53,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+import { Footer } from "@/components/layout/Footer";
+
 // Main Layout Component
 function MainLayout({ children }: { children: React.ReactNode }) {
   inject();
@@ -62,6 +64,7 @@ function MainLayout({ children }: { children: React.ReactNode }) {
       <main className="flex-1 px-4 py-6 sm:px-2 md:px-6 md:py-4 max-w-[2000px] mx-auto w-full">
         {children}
       </main>
+      <Footer />
     </div>
   );
 }

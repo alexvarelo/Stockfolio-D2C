@@ -145,7 +145,7 @@ const Dashboard = () => {
           className="relative group overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50"
         >
           <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
-          <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 px-6 py-2 text-sm font-medium text-white backdrop-blur-3xl transition-all hover:opacity-90 gap-2">
+          <span className="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-full bg-gradient-to-r px-6 py-2 text-sm font-medium text-white backdrop-blur-3xl transition-all hover:opacity-90 gap-2">
             Ask Stocky
             <Sparkles className="h-3 w-3 text-yellow-200" />
           </span>
