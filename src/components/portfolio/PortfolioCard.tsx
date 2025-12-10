@@ -114,8 +114,8 @@ export const PortfolioCard: React.FC<PortfolioCardProps> = ({
     if (hasStoredValues) {
       return {
         currentValue: totalValue || 0,
-        costBasis: 0, // We might not have this from stored values, but it's less critical for card view
-        earnedLost: 0, // We use percentage for return
+        costBasis: 0,
+        earnedLost: totalValue * (totalReturnPercentage || 0) / 100,
         isPositive: (totalReturnPercentage || 0) >= 0,
         formattedPerformance: Math.abs(totalReturnPercentage || 0).toFixed(2)
       };
