@@ -157,7 +157,7 @@ const Portfolios = () => {
                       showOwner={false}
                       isOwnPortfolio={true}
                       totalValue={portfolio.total_value}
-                      totalReturnPercentage={portfolio.daily_change}
+                      totalReturnPercentage={portfolio.total_return_percentage}
                     />
                   </motion.div>
                 ))}
