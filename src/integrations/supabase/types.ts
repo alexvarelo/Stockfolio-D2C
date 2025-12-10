@@ -878,6 +878,34 @@ export type Database = {
         Args: { p_follower_id: string; p_following_id: string }
         Returns: Json
       }
+      get_portfolio_rankings: {
+        Args: {
+          p_author_id?: string
+          p_end_date?: string
+          p_limit?: number
+          p_page?: number
+          p_public_only?: boolean
+          p_sort_by?: string
+          p_sort_order?: string
+          p_start_date?: string
+        }
+        Returns: {
+          author_avatar_url: string
+          author_full_name: string
+          author_id: string
+          author_username: string
+          created_at: string
+          description: string
+          holdings_count: number
+          name: string
+          portfolio_id: string
+          top_holding_allocation: number
+          top_holding_ticker: string
+          total_count: number
+          total_return_percentage: number
+          total_value: number
+        }[]
+      }
       get_portfolio_summary: {
         Args: { portfolio_uuid: string }
         Returns: {

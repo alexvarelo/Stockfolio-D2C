@@ -16,6 +16,7 @@ import { useAuth } from "@/lib/auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { PortfolioLeaderboard } from "@/components/discover/PortfolioLeaderboard";
 
 type UserProfile = {
   id: string;
@@ -166,14 +167,22 @@ export default function DiscoverPage() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Discover</h1>
-        <p className="text-muted-foreground">
-          Find and connect with other investors in the community
-        </p>
-      </div>
-
       <div className="space-y-6">
+        {/* Portfolio Leaderboard Section */}
+        <section className="mb-12">
+          <PortfolioLeaderboard />
+        </section>
+
+        {/* Divider */}
+        <div className="border-t my-8" />
+
+        {/* User Discovery Section */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold mb-2">Discover Investors</h2>
+          <p className="text-muted-foreground">
+            Find and connect with other investors in the community
+          </p>
+        </div>
 
         <div className="max-w-md">
           <form onSubmit={(e) => e.preventDefault()} className="relative">
@@ -208,9 +217,9 @@ export default function DiscoverPage() {
                       <AvatarFallback>
                         {userProfile.full_name
                           ? userProfile.full_name
-                              .split(" ")
-                              .map((n) => n[0])
-                              .join("")
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
                           : "U"}
                       </AvatarFallback>
                     </Avatar>
