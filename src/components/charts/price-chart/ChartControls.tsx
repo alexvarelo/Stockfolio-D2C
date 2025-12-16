@@ -37,7 +37,7 @@ export const ChartControls = ({
     hasData
 }: ChartControlsProps) => {
     return (
-        <CardHeader className="flex flex-col gap-4 pb-4">
+        <CardHeader className="flex flex-col gap-2 sm:gap-4 pb-2 sm:pb-4 p-4 sm:p-6">
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div>
                     <CardTitle className="text-lg flex items-center gap-2">
@@ -66,12 +66,12 @@ export const ChartControls = ({
                 </div>
 
                 <div className="flex flex-col items-end gap-2 w-full sm:w-auto">
-                    <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                    <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
                         <Tabs value={chartMode} onValueChange={(v) => {
                             setChartMode(v as ChartMode);
                             if (v === 'price') setComparisonTicker(null);
-                        }} className="w-auto">
-                            <TabsList>
+                        }} className="w-full sm:w-auto">
+                            <TabsList className="w-full sm:w-auto grid grid-cols-2 sm:flex">
                                 <TabsTrigger value="price">Price</TabsTrigger>
                                 <TabsTrigger value="performance">Performance</TabsTrigger>
                             </TabsList>
@@ -80,9 +80,9 @@ export const ChartControls = ({
                         <Tabs
                             value={timeRange}
                             onValueChange={(value) => setTimeRange(value as TimeRange)}
-                            className="w-auto"
+                            className="w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0"
                         >
-                            <TabsList className="bg-transparent p-0 h-auto hidden sm:flex">
+                            <TabsList className="bg-transparent p-0 h-auto flex w-max sm:w-auto">
                                 {['5d', '1mo', '3mo', '6mo', 'ytd', '1y', '5y', 'max'].map((range) => (
                                     <TabsTrigger
                                         key={range}

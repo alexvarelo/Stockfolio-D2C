@@ -60,7 +60,7 @@ export const ChartVisualizer = ({
     };
 
     return (
-        <CardContent className="h-[400px] w-full flex flex-col">
+        <CardContent className="h-[400px] w-full flex flex-col p-1 sm:p-6">
             {isLoading ? (
                 <div className="h-full flex items-center justify-center">
                     <div className="animate-pulse">Loading chart...</div>
@@ -69,7 +69,7 @@ export const ChartVisualizer = ({
                 <>
                     <div className="flex-1 min-h-0">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={data} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                            <AreaChart data={data} margin={{ top: 5, right: 0, bottom: 5, left: -20 }}>
                                 <defs>
                                     <linearGradient id="colorMain" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor={isPositive ? '#10b981' : '#ef4444'} stopOpacity={0.3} />
