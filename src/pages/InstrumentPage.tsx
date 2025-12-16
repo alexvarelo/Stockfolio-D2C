@@ -21,7 +21,7 @@ import {
 import { StockyChatDrawer } from "@/components/chat/StockyChatDrawer";
 import { useGetStockInfoApiV1StockTickerGet } from "@/api/stock/stock";
 import type { StockInfo, CompanyInfo } from "@/api/financialDataApi.schemas";
-import { PriceChart } from "@/components/charts/PriceChart";
+import { PriceChart } from "@/components/charts/price-chart/PriceChart";
 import { NewsSection } from "@/components/news/NewsSection";
 import { InstrumentPosts } from "@/components/instruments/InstrumentPosts";
 import { InstrumentPostsCarousel } from "@/components/instruments/InstrumentPostsCarousel";
