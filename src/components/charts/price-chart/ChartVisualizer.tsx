@@ -1,15 +1,14 @@
 import { CardContent } from '@/components/ui/card';
 import {
-    LineChart,
-    Line,
+    AreaChart,
+    Area,
     XAxis,
     YAxis,
     CartesianGrid,
     Tooltip,
     ResponsiveContainer,
     ReferenceLine,
-    TooltipProps,
-    Legend
+    TooltipProps
 } from 'recharts';
 import { ValueType, NameType } from 'recharts/types/component/DefaultTooltipContent';
 import { ChartMode, ChartDataPoint } from './types';
@@ -70,7 +69,19 @@ export const ChartVisualizer = ({
                 <>
                     <div className="flex-1 min-h-0">
                         <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={data} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                            <AreaChart data={data} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                                <defs>
+                                    <linearGradient id="colorMain" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor={isPositive ? '#10b981' : '#ef4444'} stopOpacity={0.3} />
+                                        <stop offset="95%" stopColor={isPositive ? '#10b981' : '#ef4444'} stopOpacity={0} />
+                                    </linearGradient>
+                                    {comparisonTicker && (
+                                        <linearGradient id="colorComparison" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+                                        </linearGradient>
+                                    )}
+                                </defs>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted" />
                                 <XAxis
                                     dataKey="date"
@@ -90,26 +101,28 @@ export const ChartVisualizer = ({
                                 />
                                 <Tooltip content={<CustomTooltip />} />
 
-                                {/* Main Ticker Line */}
-                                <Line
+                                {/* Main Ticker Area */}
+                                <Area
                                     type="monotone"
                                     dataKey={chartMode === 'price' ? 'price' : 'normalized'}
                                     name={chartMode === 'price' ? 'Price' : ticker}
                                     stroke={isPositive ? '#10b981' : '#ef4444'}
+                                    fillOpacity={1}
+                                    fill="url(#colorMain)"
                                     strokeWidth={2}
-                                    dot={false}
                                     activeDot={{ r: 4 }}
                                 />
 
-                                {/* Comparison Ticker Line */}
+                                {/* Comparison Ticker Area */}
                                 {chartMode === 'performance' && comparisonTicker && (
-                                    <Line
+                                    <Area
                                         type="monotone"
                                         dataKey="comparisonNormalized"
                                         name={comparisonTicker}
-                                        stroke="#f59e0b" // Amber color for comparison
+                                        stroke="#f59e0b"
+                                        fillOpacity={1}
+                                        fill="url(#colorComparison)"
                                         strokeWidth={2}
-                                        dot={false}
                                         activeDot={{ r: 4 }}
                                         connectNulls
                                     />
@@ -134,7 +147,7 @@ export const ChartVisualizer = ({
                                         strokeOpacity={0.5}
                                     />
                                 )}
-                            </LineChart>
+                            </AreaChart>
                         </ResponsiveContainer>
                     </div>
 
