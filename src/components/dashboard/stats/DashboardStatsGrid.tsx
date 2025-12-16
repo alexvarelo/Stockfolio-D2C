@@ -53,7 +53,7 @@ export const DashboardStatsGrid = ({ portfolios }: DashboardStatsGridProps) => {
 
     return (
         <motion.div
-            className="grid grid-cols-2 gap-4"
+            className="grid grid-cols-1 sm:grid-cols-2 gap-4"
             variants={container}
             initial="hidden"
             animate="show"

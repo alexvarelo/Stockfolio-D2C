@@ -15,7 +15,7 @@ export const TotalHoldingsCard = ({ count }: TotalHoldingsCardProps) => {
                 </div>
             </CardHeader>
             <CardContent className="relative z-10">
-                <div className="text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight">{count}</div>
+                <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight">{count}</div>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Unique assets</p>
             </CardContent>
         </Card>

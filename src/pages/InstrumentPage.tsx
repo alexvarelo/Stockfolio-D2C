@@ -27,6 +27,7 @@ import { InstrumentPosts } from "@/components/instruments/InstrumentPosts";
 import { InstrumentPostsCarousel } from "@/components/instruments/InstrumentPostsCarousel";
 import { InvestmentSimulator } from "@/components/instruments/InvestmentSimulator";
 import { TransactionDrawer } from "@/components/transactions/TransactionDrawer";
+import { InstrumentNewsSentimentCard } from "@/components/instruments/InstrumentNewsSentimentCard";
 
 // Formatter components
 import {
@@ -77,8 +78,8 @@ export function InstrumentPage() {
   // Type assertion for the response data
   const stockInfo = response?.data as
     | (StockInfo & {
-        company_info: ExtendedCompanyInfo;
-      })
+      company_info: ExtendedCompanyInfo;
+    })
     | undefined;
 
   const {
@@ -233,6 +234,9 @@ export function InstrumentPage() {
           <div className="grid gap-6 lg:grid-cols-3">
             {/* Left Column - Financial Highlights and Key Executives */}
             <div className="space-y-6 lg:col-span-2">
+              {/* Sentiment Analysis */}
+              {ticker && <InstrumentNewsSentimentCard ticker={ticker} />}
+
               {/* Company Information */}
               <Card>
                 <CardHeader>

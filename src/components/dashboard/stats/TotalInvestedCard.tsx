@@ -15,7 +15,7 @@ export const TotalInvestedCard = ({ totalValue }: TotalInvestedCardProps) => {
                 </div>
             </CardHeader>
             <CardContent className="relative z-10">
-                <div className="text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight">
+                <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-50 tracking-tight">
                     ${totalValue.toLocaleString("en-US", {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,

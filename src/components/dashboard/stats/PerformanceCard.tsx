@@ -37,7 +37,7 @@ export const PerformanceCard = ({ portfolios }: PerformanceCardProps) => {
                 </div>
             </CardHeader>
             <CardContent className="relative z-10">
-                <div className={`text-3xl font-extrabold flex items-center tracking-tight ${isPositivePerformance ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                <div className={`text-2xl sm:text-3xl font-extrabold flex items-center tracking-tight ${isPositivePerformance ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                     {isPositivePerformance ? (
                         <TrendingUp className="h-5 w-5 mr-1" />
                     ) : (
