@@ -42,7 +42,10 @@ export const InstrumentNewsSentimentCard = ({ ticker }: InstrumentNewsSentimentC
         queryKey: ["news-sentiment", ticker],
         queryFn: async () => {
             const { data, error } = await supabase.functions.invoke("analyze-ticker-news", {
-                body: { ticker },
+                body: {
+                    ticker,
+                    limit: 20 // Request more articles if supported
+                },
             });
 
             if (error) throw error;
@@ -72,6 +75,11 @@ export const InstrumentNewsSentimentCard = ({ ticker }: InstrumentNewsSentimentC
     if (error || !data) {
         return null;
     }
+
+    // Sort articles by date descending
+    const sortedArticles = data.raw_articles?.slice().sort((a, b) =>
+        new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+    ) || [];
 
     const getSentimentConfig = (sentiment: string) => {
         switch (sentiment) {
@@ -138,7 +146,7 @@ export const InstrumentNewsSentimentCard = ({ ticker }: InstrumentNewsSentimentC
                             <span>Source: News API</span>
                             <div className="flex items-center gap-2">
                                 <span>Based on {data.article_count} articles</span>
-                                {data.raw_articles && data.raw_articles.length > 0 && (
+                                {sortedArticles.length > 0 && (
                                     <Button
                                         variant="ghost"
                                         size="sm"
@@ -152,9 +160,9 @@ export const InstrumentNewsSentimentCard = ({ ticker }: InstrumentNewsSentimentC
                             </div>
                         </div>
 
-                        {showArticles && data.raw_articles && (
+                        {showArticles && sortedArticles.length > 0 && (
                             <div className="space-y-3 pt-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                                {data.raw_articles.map((article, index) => (
+                                {sortedArticles.map((article, index) => (
                                     <div
                                         key={index}
                                         onClick={() => setSelectedArticle(article)}
