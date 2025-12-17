@@ -60,7 +60,7 @@ export const ChartVisualizer = ({
     };
 
     return (
-        <CardContent className="h-[400px] w-full flex flex-col p-1 sm:p-6">
+        <CardContent className="h-[400px] w-full flex flex-col p-1 sm:p-6 sm:pb-2">
             {isLoading ? (
                 <div className="h-full flex items-center justify-center">
                     <div className="animate-pulse">Loading chart...</div>
@@ -97,7 +97,18 @@ export const ChartVisualizer = ({
                                     tickLine={false}
                                     axisLine={false}
                                     width={60}
-                                    tickFormatter={(value) => chartMode === 'price' ? `$${value}` : `${value.toFixed(0)}%`}
+                                    tickFormatter={(value) => {
+                                        if (chartMode === 'performance') return `${value.toFixed(0)}%`;
+                                        if (value >= 1000000) {
+                                            const val = value / 1000000;
+                                            return `${val.toFixed(val >= 10 ? 0 : 1)}M`;
+                                        }
+                                        if (value >= 1000) {
+                                            const val = value / 1000;
+                                            return `${val.toFixed(val >= 100 ? 0 : 1)}k`;
+                                        }
+                                        return `${value}`;
+                                    }}
                                 />
                                 <Tooltip content={<CustomTooltip />} />
 
