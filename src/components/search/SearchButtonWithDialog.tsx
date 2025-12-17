@@ -40,7 +40,7 @@ export function SearchButtonWithDialog() {
   // Fetch search results using our custom hook
   const { data: searchResults = [], isLoading: isSearching } = useSearchInstruments(
     debouncedQuery,
-    { 
+    {
       enabled: debouncedQuery.length >= 2 // Only fetch if query is 2+ characters
     }
   );
@@ -63,7 +63,7 @@ export function SearchButtonWithDialog() {
   const handleSelectResult = useCallback((type: 'instrument' | 'portfolio' | 'watchlist', id: string) => {
     setCommandOpen(false);
     setSearchQuery("");
-    
+
     switch (type) {
       case 'instrument':
         navigate(`/instrument/${id}`);
@@ -123,16 +123,15 @@ export function SearchButtonWithDialog() {
         </div>
       </button>
       {/* Mobile: icon-only search button */}
-      <button
-        type="button"
+      {/* Mobile: icon-only search button */}
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={() => setCommandOpen(true)}
-        aria-label="Search"
-        className={cn(
-          "md:hidden inline-flex items-center justify-center bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-10 w-10 p-0"
-        )}
+        className="md:hidden h-9 w-9 rounded-full text-muted-foreground hover:text-foreground"
       >
         <SearchIcon className="h-5 w-5" />
-      </button>
+      </Button>
 
       <Dialog open={commandOpen} onOpenChange={setCommandOpen}>
         <DialogContent className="p-0 overflow-hidden">
@@ -143,134 +142,134 @@ export function SearchButtonWithDialog() {
               onValueChange={setSearchQuery}
               className="border-b-0 pb-2"
             />
-          <CommandList className="max-h-[400px] overflow-auto">
-          {searchQuery.length >= 2 ? (
-            // Search results
-            isSearching || !searchResults ? (
-              <div className="p-4 space-y-2">
-                {[...Array(3)].map((_, i) => (
-                  <Skeleton key={i} className="h-10 w-full" />
-                ))}
-              </div>
-            ) : searchResults.length === 0 ? (
-              <CommandEmpty>No results found for "{searchQuery}"</CommandEmpty>
-            ) : (
-              <CommandGroup heading="Instruments">
-                {searchResults.map((result) => (
-                  <CommandItem 
-                    key={result.ticker} 
-                    value={`${result.ticker} ${result.name}`}
-                    className="relative group"
-                    onSelect={() => handleSelectResult('instrument', result.ticker)}
-                  >
-                    <div className="flex items-center justify-between w-full">
-                      <div className="flex-1 min-w-0 pr-2">
-                        <p className="text-sm font-medium truncate">
-                          {result.name} <span className="text-muted-foreground">({result.ticker})</span>
-                        </p>
-                        {result.exchange && (
-                          <p className="text-xs text-muted-foreground truncate">
-                            {result.exchange}
-                            {result.country && ` • ${result.country}`}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex-shrink-0">
-                        <AddToWatchlist 
-                          ticker={result.ticker}
-                          buttonVariant="outline"
-                          buttonSize="sm"
-                          onAdded={() => {
-                            setSearchQuery('');
-                            setCommandOpen(false);
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            )
-          ) : (
-            <>
-              {/* Quick Access */}
-              {user && (
-                <>
-                  <CommandGroup heading="Quick Access">
-                    <CommandItem
-                      onSelect={() => {
-                        navigate('/portfolios');
-                        setCommandOpen(false);
-                      }}
-                      className="flex items-center gap-2 cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors rounded-md px-2 py-1.5"
-                    >
-                      <Briefcase className="h-4 w-4 text-muted-foreground" />
-                      <span>My Portfolios</span>
-                    </CommandItem>
-                    <CommandItem
-                      onSelect={() => {
-                        navigate('/watchlists');
-                        setCommandOpen(false);
-                      }}
-                      className="flex items-center gap-2 cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors rounded-md px-2 py-1.5"
-                    >
-                      <List className="h-4 w-4 text-yellow-500" />
-                      <span>My Watchlists</span>
-                    </CommandItem>
-                  </CommandGroup>
-                  <CommandSeparator />
-                </>
-              )}
-
-              {/* Popular Stocks */}
-              <CommandGroup heading="Popular Stocks">
-                {isLoadingPopular ? (
-                  <div className="p-2 space-y-2">
-                    {[...Array(5)].map((_, i) => (
+            <CommandList className="max-h-[400px] overflow-auto">
+              {searchQuery.length >= 2 ? (
+                // Search results
+                isSearching || !searchResults ? (
+                  <div className="p-4 space-y-2">
+                    {[...Array(3)].map((_, i) => (
                       <Skeleton key={i} className="h-10 w-full" />
                     ))}
                   </div>
-                ) : popularStocks.length > 0 ? (
-                  popularStocks.map((stock) => (
-                    <div key={stock.symbol} className="relative group">
-                      <div className="flex items-center justify-between w-full px-2">
-                        <div 
-                          className="flex-1 min-w-0 pr-2 py-2 cursor-pointer"
-                          onClick={() => handleSelectResult('instrument', stock.symbol)}
-                        >
-                          <p className="text-sm font-medium truncate">
-                            {stock.name} <span className="text-muted-foreground">({stock.symbol})</span>
-                          </p>
-                          {stock.exchange && (
-                            <p className="text-xs text-muted-foreground truncate">
-                              {stock.exchange}
-                              {stock.country && ` • ${stock.country}`}
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex-shrink-0">
-                          <AddToWatchlist 
-                            ticker={stock.symbol}
-                            buttonVariant="outline"
-                            buttonSize="sm"
-                            onAdded={() => {
-                              setSearchQuery('');
-                              setCommandOpen(false);
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))
+                ) : searchResults.length === 0 ? (
+                  <CommandEmpty>No results found for "{searchQuery}"</CommandEmpty>
                 ) : (
-                  <div className="py-3 text-center text-sm text-muted-foreground">
-                    No popular stocks available
-                  </div>
-                )}
-              </CommandGroup>
-            </>
-          )}
-          </CommandList>
+                  <CommandGroup heading="Instruments">
+                    {searchResults.map((result) => (
+                      <CommandItem
+                        key={result.ticker}
+                        value={`${result.ticker} ${result.name}`}
+                        className="relative group"
+                        onSelect={() => handleSelectResult('instrument', result.ticker)}
+                      >
+                        <div className="flex items-center justify-between w-full">
+                          <div className="flex-1 min-w-0 pr-2">
+                            <p className="text-sm font-medium truncate">
+                              {result.name} <span className="text-muted-foreground">({result.ticker})</span>
+                            </p>
+                            {result.exchange && (
+                              <p className="text-xs text-muted-foreground truncate">
+                                {result.exchange}
+                                {result.country && ` • ${result.country}`}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex-shrink-0">
+                            <AddToWatchlist
+                              ticker={result.ticker}
+                              buttonVariant="outline"
+                              buttonSize="sm"
+                              onAdded={() => {
+                                setSearchQuery('');
+                                setCommandOpen(false);
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                )
+              ) : (
+                <>
+                  {/* Quick Access */}
+                  {user && (
+                    <>
+                      <CommandGroup heading="Quick Access">
+                        <CommandItem
+                          onSelect={() => {
+                            navigate('/portfolios');
+                            setCommandOpen(false);
+                          }}
+                          className="flex items-center gap-2 cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors rounded-md px-2 py-1.5"
+                        >
+                          <Briefcase className="h-4 w-4 text-muted-foreground" />
+                          <span>My Portfolios</span>
+                        </CommandItem>
+                        <CommandItem
+                          onSelect={() => {
+                            navigate('/watchlists');
+                            setCommandOpen(false);
+                          }}
+                          className="flex items-center gap-2 cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors rounded-md px-2 py-1.5"
+                        >
+                          <List className="h-4 w-4 text-yellow-500" />
+                          <span>My Watchlists</span>
+                        </CommandItem>
+                      </CommandGroup>
+                      <CommandSeparator />
+                    </>
+                  )}
+
+                  {/* Popular Stocks */}
+                  <CommandGroup heading="Popular Stocks">
+                    {isLoadingPopular ? (
+                      <div className="p-2 space-y-2">
+                        {[...Array(5)].map((_, i) => (
+                          <Skeleton key={i} className="h-10 w-full" />
+                        ))}
+                      </div>
+                    ) : popularStocks.length > 0 ? (
+                      popularStocks.map((stock) => (
+                        <div key={stock.symbol} className="relative group">
+                          <div className="flex items-center justify-between w-full px-2">
+                            <div
+                              className="flex-1 min-w-0 pr-2 py-2 cursor-pointer"
+                              onClick={() => handleSelectResult('instrument', stock.symbol)}
+                            >
+                              <p className="text-sm font-medium truncate">
+                                {stock.name} <span className="text-muted-foreground">({stock.symbol})</span>
+                              </p>
+                              {stock.exchange && (
+                                <p className="text-xs text-muted-foreground truncate">
+                                  {stock.exchange}
+                                  {stock.country && ` • ${stock.country}`}
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex-shrink-0">
+                              <AddToWatchlist
+                                ticker={stock.symbol}
+                                buttonVariant="outline"
+                                buttonSize="sm"
+                                onAdded={() => {
+                                  setSearchQuery('');
+                                  setCommandOpen(false);
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="py-3 text-center text-sm text-muted-foreground">
+                        No popular stocks available
+                      </div>
+                    )}
+                  </CommandGroup>
+                </>
+              )}
+            </CommandList>
           </Command>
         </DialogContent>
       </Dialog>

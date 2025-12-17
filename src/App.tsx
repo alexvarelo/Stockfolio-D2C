@@ -54,17 +54,19 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 import { Footer } from "@/components/layout/Footer";
+import { BottomNav } from "@/components/navigation/BottomNav";
 
 // Main Layout Component
 function MainLayout({ children }: { children: React.ReactNode }) {
   inject();
   return (
-    <div className="min-h-screen flex flex-col w-full">
+    <div className="min-h-screen flex flex-col w-full pb-16 md:pb-0">
       <Navbar />
       <main className="flex-1 px-4 py-6 sm:px-2 md:px-6 md:py-4 max-w-[2000px] mx-auto w-full">
         {children}
       </main>
       <Footer />
+      <BottomNav />
     </div>
   );
 }
