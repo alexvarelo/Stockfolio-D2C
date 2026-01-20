@@ -50,6 +50,7 @@ export const UserProfile = () => {
   const [activeTab, setActiveTab] = useState("posts");
   const [followersOpen, setFollowersOpen] = useState(false);
   const [followingOpen, setFollowingOpen] = useState(false);
+  const [isBioExpanded, setIsBioExpanded] = useState(false);
 
   const {
     data: profile,
@@ -114,8 +115,8 @@ export const UserProfile = () => {
           className="w-full sm:w-auto"
         >
           {isCheckingFollowing ||
-          followUser.isPending ||
-          unfollowUser.isPending ? (
+            followUser.isPending ||
+            unfollowUser.isPending ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : isFollowing ? (
             "Following"
@@ -202,217 +203,229 @@ export const UserProfile = () => {
         transition={{ duration: 0.3 }}
         className="max-w-6xl mx-auto py-6 sm:px-6 lg:px-8 w-full"
       >
-      <motion.div
-        variants={container}
-        initial="hidden"
-        animate="show"
-        className="space-y-6"
-      >
-        {/* Profile Header - Redesigned Layout */}
-        <div className="flex flex-col md:flex-row gap-6 w-full">
-          {/* Left Section - Avatar and User Info */}
-          <div className="flex flex-col md:flex-row items-start gap-6 w-full md:w-1/2">
-            {/* Avatar */}
-            <motion.div variants={item} className="flex-shrink-0">
-              <Avatar className="h-24 w-24 sm:h-32 sm:w-32 border-2 border-border">
-                <AvatarImage src={profile.avatar_url} alt={profile.username} />
-                <AvatarFallback className="text-2xl sm:text-4xl">
-                  {profile.username?.charAt(0).toUpperCase() || "U"}
-                </AvatarFallback>
-              </Avatar>
-            </motion.div>
+        <motion.div
+          variants={container}
+          initial="hidden"
+          animate="show"
+          className="space-y-6"
+        >
+          {/* Profile Header - Redesigned Layout */}
+          <div className="flex flex-col md:flex-row gap-6 w-full">
+            {/* Left Section - Avatar and User Info */}
+            <div className="flex flex-col md:flex-row items-start gap-6 w-full md:w-1/2">
+              {/* Avatar */}
+              <motion.div variants={item} className="flex-shrink-0">
+                <Avatar className="h-24 w-24 sm:h-32 sm:w-32 border-2 border-border">
+                  <AvatarImage src={profile.avatar_url} alt={profile.username} />
+                  <AvatarFallback className="text-2xl sm:text-4xl">
+                    {profile.username?.charAt(0).toUpperCase() || "U"}
+                  </AvatarFallback>
+                </Avatar>
+              </motion.div>
 
-            {/* User Info */}
-            <div className="space-y-1">
-              <div className="flex items-center gap-4">
-                <h1 className="text-2xl font-semibold">{profile.username}</h1>
-                {isOwnProfile ? (
-                  <EditProfileButton
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 px-2"
-                  />
-                ) : (
-                  <FollowButton />
+              {/* User Info */}
+              <div className="space-y-1 min-w-0 flex-1">
+                <div className="flex items-center gap-4">
+                  <h1 className="text-2xl font-semibold">{profile.username}</h1>
+                  {isOwnProfile ? (
+                    <EditProfileButton
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 px-2"
+                    />
+                  ) : (
+                    <FollowButton />
+                  )}
+                </div>
+
+                {profile.full_name && (
+                  <motion.h2 variants={item} className="">
+                    {profile.full_name}
+                  </motion.h2>
+                )}
+
+                {profile.bio && (
+                  <motion.div variants={item} className="space-y-1">
+                    <p
+                      className={`text-muted-foreground/90 leading-relaxed whitespace-pre-line text-sm sm:text-base ${!isBioExpanded ? "line-clamp-3 sm:line-clamp-none" : ""
+                        }`}
+                    >
+                      {profile.bio}
+                    </p>
+                    {profile.bio.length > 150 && (
+                      <button
+                        onClick={() => setIsBioExpanded(!isBioExpanded)}
+                        className="text-xs font-medium text-primary hover:underline sm:hidden"
+                      >
+                        {isBioExpanded ? "Show less" : "Show more"}
+                      </button>
+                    )}
+                  </motion.div>
+                )}
+
+                {profile.website && (
+                  <motion.a
+                    href={
+                      profile.website.startsWith("http")
+                        ? profile.website
+                        : `https://${profile.website}`
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:underline text-sm block truncate max-w-full"
+                    title={profile.website}
+                    variants={item}
+                  >
+                    {profile.website.replace(/(https?:\/\/)?(www\.)?/i, "").split('/')[0]}
+                    {profile.website.replace(/(https?:\/\/)?(www\.)?/i, "").split('/')[1] ? '/...' : ''}
+                  </motion.a>
                 )}
               </div>
+            </div>
 
-              {profile.full_name && (
-                <motion.h2 variants={item} className="">
-                  {profile.full_name}
-                </motion.h2>
-              )}
-
-              {profile.bio && (
-                <motion.p
-                  variants={item}
-                  className="text-muted-foreground/90 leading-relaxed whitespace-pre-line"
+            {/* Right Section - Stats */}
+            <div className="md:pl-8 w-full md:w-1/2">
+              <motion.div
+                variants={item}
+                className="grid grid-cols-3 gap-4 text-center"
+              >
+                <button
+                  onClick={() => setFollowersOpen(true)}
+                  className="flex flex-col items-center group"
                 >
-                  {profile.bio}
-                </motion.p>
-              )}
-
-              {profile.website && (
-                <motion.a
-                  href={
-                    profile.website.startsWith("http")
-                      ? profile.website
-                      : `https://${profile.website}`
-                  }
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-500 hover:underline text-sm block"
-                  variants={item}
+                  <span className="text-2xl font-bold">{followers.length}</span>
+                  <span className="text-sm text-muted-foreground">Followers</span>
+                </button>
+                <button
+                  onClick={() => setFollowingOpen(true)}
+                  className="flex flex-col items-center group"
                 >
-                  {profile.website.replace(/(https?:\/\/)?(www\.)?/i, "")}
-                </motion.a>
-              )}
+                  <span className="text-2xl font-bold">{following.length}</span>
+                  <span className="text-sm text-muted-foreground">Following</span>
+                </button>
+                <button
+                  onClick={() => navigate(`/user/${profile.id}/posts`)}
+                  className="flex flex-col items-center group"
+                >
+                  <span className="text-2xl font-bold">{postCount}</span>
+                  <span className="text-sm text-muted-foreground">Posts</span>
+                </button>
+              </motion.div>
             </div>
           </div>
 
-          {/* Right Section - Stats */}
-          <div className="md:pl-8 w-full md:w-1/2">
-            <motion.div
-              variants={item}
-              className="grid grid-cols-3 gap-4 text-center"
-            >
-              <button
-                onClick={() => setFollowersOpen(true)}
-                className="flex flex-col items-center group"
-              >
-                <span className="text-2xl font-bold">{followers.length}</span>
-                <span className="text-sm text-muted-foreground">Followers</span>
-              </button>
-              <button
-                onClick={() => setFollowingOpen(true)}
-                className="flex flex-col items-center group"
-              >
-                <span className="text-2xl font-bold">{following.length}</span>
-                <span className="text-sm text-muted-foreground">Following</span>
-              </button>
-              <button
-                onClick={() => navigate(`/user/${profile.id}/posts`)}
-                className="flex flex-col items-center group"
-              >
-                <span className="text-2xl font-bold">{postCount}</span>
-                <span className="text-sm text-muted-foreground">Posts</span>
-              </button>
-            </motion.div>
-          </div>
-        </div>
-
-        {/* Join Date */}
-        <motion.div
-          variants={item}
-          className="flex items-center justify-center gap-1 text-sm text-muted-foreground/80"
-        >
-          <CalendarIcon className="h-4 w-4" />
-          <span>
-            Joined {format(new Date(profile.created_at), "MMMM yyyy")}
-          </span>
-        </motion.div>
-
-        {/* Tabs */}
-        <motion.div variants={item} className="mt-8">
-          <Tabs
-            defaultValue="posts"
-            onValueChange={setActiveTab}
-            value={activeTab}
-            className="w-full"
+          {/* Join Date */}
+          <motion.div
+            variants={item}
+            className="flex items-center justify-center gap-1 text-sm text-muted-foreground/80"
           >
-            <TabsList className="w-full justify-start rounded-none border-b bg-transparent p-0">
-              <TabsTrigger
-                value="posts"
-                className="relative rounded-none border-b-2 border-transparent bg-transparent px-4 pb-4 pt-2 font-medium text-muted-foreground shadow-none transition-none data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
-              >
-                Posts
-              </TabsTrigger>
-              <TabsTrigger
-                value="portfolios"
-                className="relative rounded-none border-b-2 border-transparent bg-transparent px-4 pb-4 pt-2 font-medium text-muted-foreground shadow-none transition-none data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
-              >
-                Portfolios
-              </TabsTrigger>
-              {isOwnProfile && (
-                <>
-                  <TabsTrigger
-                    value="saved"
-                    className="relative rounded-none border-b-2 border-transparent bg-transparent px-4 pb-4 pt-2 font-medium text-muted-foreground shadow-none transition-none data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
-                  >
-                    Saved
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="calendar"
-                    className="relative rounded-none border-b-2 border-transparent bg-transparent px-4 pb-4 pt-2 font-medium text-muted-foreground shadow-none transition-none data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    Calendar
-                  </TabsTrigger>
-                </>
-              )}
-            </TabsList>
+            <CalendarIcon className="h-4 w-4" />
+            <span>
+              Joined {format(new Date(profile.created_at), "MMMM yyyy")}
+            </span>
+          </motion.div>
 
-            <AnimatePresence mode="wait">
-              <TabsContent value="posts" className="mt-6">
-                <motion.div
-                  key="posts"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.2 }}
+          {/* Tabs */}
+          <motion.div variants={item} className="mt-8">
+            <Tabs
+              defaultValue="posts"
+              onValueChange={setActiveTab}
+              value={activeTab}
+              className="w-full"
+            >
+              <TabsList className="w-full justify-start rounded-none border-b bg-transparent p-0">
+                <TabsTrigger
+                  value="posts"
+                  className="relative rounded-none border-b-2 border-transparent bg-transparent px-4 pb-4 pt-2 font-medium text-muted-foreground shadow-none transition-none data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
                 >
-                  <UserPostsComponent userId={profile.id} />
-                </motion.div>
-              </TabsContent>
+                  Posts
+                </TabsTrigger>
+                <TabsTrigger
+                  value="portfolios"
+                  className="relative rounded-none border-b-2 border-transparent bg-transparent px-4 pb-4 pt-2 font-medium text-muted-foreground shadow-none transition-none data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
+                >
+                  Portfolios
+                </TabsTrigger>
+                {isOwnProfile && (
+                  <>
+                    <TabsTrigger
+                      value="saved"
+                      className="relative rounded-none border-b-2 border-transparent bg-transparent px-4 pb-4 pt-2 font-medium text-muted-foreground shadow-none transition-none data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
+                    >
+                      Saved
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="calendar"
+                      className="relative rounded-none border-b-2 border-transparent bg-transparent px-4 pb-4 pt-2 font-medium text-muted-foreground shadow-none transition-none data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      Calendar
+                    </TabsTrigger>
+                  </>
+                )}
+              </TabsList>
 
-              {isOwnProfile && (
-                <TabsContent value="calendar" className="mt-6">
+              <AnimatePresence mode="wait">
+                <TabsContent value="posts" className="mt-6">
                   <motion.div
-                    key="calendar"
+                    key="posts"
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <ActivityCalendar userId={profile.id} />
+                    <UserPostsComponent userId={profile.id} />
                   </motion.div>
                 </TabsContent>
-              )}
 
-              <TabsContent value="portfolios" className="mt-6">
-                <motion.div
-                  key="portfolios"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <UserPortfoliosComponent userId={profile.id} />
-                </motion.div>
-              </TabsContent>
+                {isOwnProfile && (
+                  <TabsContent value="calendar" className="mt-6">
+                    <motion.div
+                      key="calendar"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <ActivityCalendar userId={profile.id} />
+                    </motion.div>
+                  </TabsContent>
+                )}
 
-              <TabsContent value="saved" className="mt-6">
-                <motion.div
-                  key="saved"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <div className="text-center py-8">
-                    <Bookmark className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-                    <h3 className="text-lg font-medium">Saved posts</h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Posts you save will appear here
-                    </p>
-                  </div>
-                </motion.div>
-              </TabsContent>
-            </AnimatePresence>
-          </Tabs>
+                <TabsContent value="portfolios" className="mt-6">
+                  <motion.div
+                    key="portfolios"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <UserPortfoliosComponent userId={profile.id} />
+                  </motion.div>
+                </TabsContent>
+
+                <TabsContent value="saved" className="mt-6">
+                  <motion.div
+                    key="saved"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <div className="text-center py-8">
+                      <Bookmark className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
+                      <h3 className="text-lg font-medium">Saved posts</h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Posts you save will appear here
+                      </p>
+                    </div>
+                  </motion.div>
+                </TabsContent>
+              </AnimatePresence>
+            </Tabs>
+          </motion.div>
         </motion.div>
       </motion.div>
-    </motion.div>
       {/* Followers Drawer */}
       <FollowersDrawer
         open={followersOpen}
