@@ -37,7 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchUserProfile = async (userId: string) => {
     const { data, error } = await supabase
       .from('users')
-      .select('id, full_name, email, avatar_url, bio, website')
+      .select('id, username, full_name, email, avatar_url, bio, website')
       .eq('id', userId)
       .single();
     if (!error && data) {
@@ -79,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string, fullName: string, username: string) => {
     const redirectUrl = `${window.location.origin}`;
-    
+
     try {
       const { data, error } = await supabase.auth.signUp({
         email,

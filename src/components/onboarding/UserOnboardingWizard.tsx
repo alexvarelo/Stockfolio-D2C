@@ -28,7 +28,7 @@ const onboardingSchema = z.object({
   full_name: z.string().min(1, "Full name is required"),
   bio: z.string().max(200, "Bio must be less than 200 characters").optional(),
   website: z.string().url("Must be a valid URL").or(z.literal("")).optional(),
-  avatar_url: z.string().url("Must be a valid URL").optional(),
+  avatar_url: z.string().url("Must be a valid URL").or(z.literal("")).optional(),
 });
 
 type OnboardingFields = z.infer<typeof onboardingSchema>;
@@ -53,7 +53,11 @@ export function UserOnboardingWizard() {
     resolver: zodResolver(onboardingSchema),
     defaultValues: {
       username: user?.user_metadata?.username || userProfile?.username || "",
-      full_name: user?.user_metadata?.full_name || userProfile?.full_name || "",
+      full_name:
+        user?.user_metadata?.full_name ||
+        user?.user_metadata?.name ||
+        userProfile?.full_name ||
+        "",
       bio: userProfile?.bio || "",
       website: userProfile?.website || "",
       avatar_url:
@@ -67,7 +71,10 @@ export function UserOnboardingWizard() {
       form.reset({
         username: user?.user_metadata?.username || userProfile?.username || "",
         full_name:
-          user?.user_metadata?.full_name || userProfile?.full_name || "",
+          user?.user_metadata?.full_name ||
+          user?.user_metadata?.name ||
+          userProfile?.full_name ||
+          "",
         bio: userProfile?.bio || "",
         website: userProfile?.website || "",
         avatar_url:
@@ -238,9 +245,9 @@ export function UserOnboardingWizard() {
             />
 
             <div className="sticky bottom-0 bg-background pt-4 pb-2 -mx-2 px-2 sm:static sm:mx-0 sm:px-0">
-              <Button 
-                type="submit" 
-                className="w-full" 
+              <Button
+                type="submit"
+                className="w-full"
                 disabled={loading}
                 size="lg"
               >
