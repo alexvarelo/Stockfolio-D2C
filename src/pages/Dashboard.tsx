@@ -128,7 +128,7 @@ const Dashboard = () => {
           {/* Activity Calendar */}
           <motion.div variants={item} initial="hidden" animate="show" className="space-y-4">
             <h2 className="text-xl font-semibold tracking-tight">Activity</h2>
-            <div className="h-[24rem] xl:h-[28rem]">
+            <div>
               <ActivityCalendar userId={user?.id || ""} />
             </div>
           </motion.div>
