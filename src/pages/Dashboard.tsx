@@ -20,12 +20,14 @@ import {
 } from "@/components/dashboard/DashboardSkeleton";
 import { HoldingsDonutChart } from "@/components/charts/HoldingsDonutChart";
 import { ActivityCalendar } from "@/components/profile/ActivityCalendar";
+import { StockyChat } from "@/components/dashboard/StockyChat";
 
 import { usePortfolios } from "@/api/portfolio/usePortfolios";
 import { DashboardStatsGrid } from "@/components/dashboard/stats/DashboardStatsGrid";
 
 const Dashboard = () => {
   const [commandOpen, setCommandOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -96,6 +98,7 @@ const Dashboard = () => {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
+          onClick={() => setIsChatOpen(true)}
           className="relative group overflow-hidden rounded-full p-[1px] focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50"
         >
           <span className="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#E2CBFF_0%,#393BB2_50%,#E2CBFF_100%)]" />
@@ -157,6 +160,7 @@ const Dashboard = () => {
       </div>
 
       <UserOnboardingWizard />
+      <StockyChat open={isChatOpen} onOpenChange={setIsChatOpen} />
     </motion.div>
   );
 };
