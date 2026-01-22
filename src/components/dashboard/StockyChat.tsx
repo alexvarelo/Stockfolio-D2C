@@ -18,7 +18,10 @@ import {
     Loader2,
     MessageSquare,
     ChevronRight,
-    History
+    History,
+    ChevronDown,
+    ChevronUp,
+    Terminal
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -27,8 +30,9 @@ import stockyLogo from "@/assets/stocky.png";
 
 interface Message {
     id: string;
-    role: "user" | "assistant";
+    role: "user" | "assistant" | "tool";
     content: string;
+    tool_name?: string;
 }
 
 interface StockyChatProps {
@@ -42,6 +46,52 @@ const PREDEFINED_PROMPTS = [
     "Show me my largest holdings",
     "How can I diversify my portfolio further?",
 ];
+
+function ToolResponse({ content, toolName }: { content: string; toolName?: string }) {
+    const [isExpanded, setIsExpanded] = React.useState(false);
+
+    let jsonContent: any = null;
+    try {
+        jsonContent = JSON.parse(content);
+    } catch (e) {
+        jsonContent = content;
+    }
+
+    return (
+        <div className="w-full bg-slate-50 border border-slate-200 rounded-xl overflow-hidden mb-4">
+            <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="w-full flex items-center justify-between px-4 py-2 hover:bg-slate-100 transition-colors text-slate-600"
+            >
+                <div className="flex items-center gap-2">
+                    <Terminal className="w-4 h-4" />
+                    <span className="text-xs font-mono font-medium">
+                        {toolName || "Tool Output"}
+                    </span>
+                </div>
+                {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+            <AnimatePresence>
+                {isExpanded && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                    >
+                        <div className="px-4 pb-4 border-t border-slate-200">
+                            <pre className="mt-2 text-[11px] font-mono leading-relaxed overflow-x-auto p-3 bg-slate-900 text-slate-100 rounded-lg">
+                                {typeof jsonContent === 'string'
+                                    ? jsonContent
+                                    : JSON.stringify(jsonContent, null, 2)}
+                            </pre>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+}
 
 export function StockyChat({ open, onOpenChange }: StockyChatProps) {
     const { user } = useAuth();
@@ -93,8 +143,9 @@ export function StockyChat({ open, onOpenChange }: StockyChatProps) {
                 if (msgs) {
                     setMessages(msgs.map(m => ({
                         id: m.id,
-                        role: m.role as "user" | "assistant",
-                        content: m.content || ""
+                        role: m.role as "user" | "assistant" | "tool",
+                        content: m.content || "",
+                        tool_name: (m.tool_calls as any)?.[0]?.function?.name || undefined
                     })));
                 }
             }
@@ -123,6 +174,9 @@ export function StockyChat({ open, onOpenChange }: StockyChatProps) {
                     message: text,
                     conversation_id: conversationId
                 },
+                headers: {
+                    "X-Platform-Origin": window.location.origin
+                }
             });
 
             if (error) throw error;
@@ -192,7 +246,7 @@ export function StockyChat({ open, onOpenChange }: StockyChatProps) {
                 </SheetHeader>
 
                 <ScrollArea className="flex-1 overflow-y-auto">
-                    <div className="max-w-3xl mx-auto px-6 py-12 md:px-12">
+                    <div className="max-w-3xl mx-auto px-6 py-12">
                         {messages.length === 0 ? (
                             <div className="h-full flex flex-col items-center justify-center text-center space-y-8 py-12">
                                 <div className="w-20 h-20 rounded-full bg-primary/5 flex items-center justify-center">
@@ -234,6 +288,13 @@ export function StockyChat({ open, onOpenChange }: StockyChatProps) {
                                             <div className="max-w-[85%] bg-muted/40 text-foreground px-5 py-3 rounded-[24px] text-base font-medium leading-relaxed">
                                                 {message.content}
                                             </div>
+                                        ) : message.role === "tool" ? (
+                                            <div className="w-full flex flex-col gap-2">
+                                                <ToolResponse
+                                                    content={message.content}
+                                                    toolName={message.tool_name}
+                                                />
+                                            </div>
                                         ) : (
                                             <div className="w-full flex gap-4">
                                                 <div className="flex-1 min-w-0">
@@ -257,6 +318,7 @@ export function StockyChat({ open, onOpenChange }: StockyChatProps) {
                                                                     ),
                                                                 blockquote: ({ node, ...props }) => <blockquote className="border-l-4 border-primary/20 pl-4 italic my-6 text-muted-foreground" {...props} />,
                                                                 hr: ({ node, ...props }) => <hr className="my-8 border-border/50" {...props} />,
+                                                                a: ({ node, ...props }) => <a className="text-blue-600 hover:text-blue-800 underline transition-colors" {...props} />,
                                                             }}
                                                         >
                                                             {message.content}
@@ -292,7 +354,7 @@ export function StockyChat({ open, onOpenChange }: StockyChatProps) {
                 <div className="p-6 border-t border-border/50 shrink-0 bg-white shadow-sm">
                     <form
                         onSubmit={(e) => { e.preventDefault(); handleSend(); }}
-                        className="flex gap-3 max-w-4xl mx-auto items-end"
+                        className="flex gap-3 max-w-4xl mx-auto items-end px-2"
                     >
                         <div className="flex-1 relative bg-muted/30 rounded-2xl border border-border/40 transition-all focus-within:border-primary/20 focus-within:bg-white focus-within:ring-2 focus-within:ring-primary/5">
                             <textarea
@@ -323,7 +385,7 @@ export function StockyChat({ open, onOpenChange }: StockyChatProps) {
                             <Send className="w-6 h-6" />
                         </Button>
                     </form>
-                    <div className="max-w-4xl mx-auto mt-4 px-2 flex justify-between items-center text-[10px] text-muted-foreground/60 font-medium">
+                    <div className="max-w-4xl mx-auto mt-4 px-6 flex justify-between items-center text-[10px] text-muted-foreground/60 font-medium">
                         <span>AI response for informational purposes only.</span>
                         <div className="flex items-center gap-1.5">
                             <Sparkles className="w-3 h-3" />
