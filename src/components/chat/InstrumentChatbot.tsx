@@ -7,6 +7,8 @@ import rehypeHighlight from 'rehype-highlight';
 import 'highlight.js/styles/github-dark.css';
 import { StockCard } from "@/components/chat/visuals/StockCard";
 import { StockChart } from "@/components/chat/visuals/StockChart";
+import { VoiceInputButton } from "@/components/chat/VoiceInputButton";
+import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -27,6 +29,22 @@ export function InstrumentChatbot({ ticker, isOpen, portfolios }: InstrumentChat
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPortfolio, setSelectedPortfolio] = useState<string>('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const voiceBaseTextRef = useRef("");
+
+  const { isSupported: isVoiceSupported, isListening: isVoiceListening, toggle: toggleVoice } = useSpeechRecognition({
+    onResult: (transcript) => {
+      setInput(voiceBaseTextRef.current ? `${voiceBaseTextRef.current} ${transcript}` : transcript);
+    },
+    onError: (error) => {
+      if (error === 'no-speech' || error === 'aborted') return;
+      console.error('Voice input failed:', error);
+    }
+  });
+
+  const handleToggleVoice = () => {
+    if (!isVoiceListening) voiceBaseTextRef.current = input;
+    toggleVoice();
+  };
 
   // Add initial welcome message
   useEffect(() => {
@@ -294,28 +312,39 @@ export function InstrumentChatbot({ ticker, isOpen, portfolios }: InstrumentChat
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   placeholder={`Message Stocky AI about ${ticker}...`}
-                  className="w-full bg-transparent border-0 focus:ring-0 focus:outline-none px-4 py-3 pr-12 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                  className={cn(
+                    "w-full bg-transparent border-0 focus:ring-0 focus:outline-none px-4 py-3 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400",
+                    isVoiceSupported ? "pr-20" : "pr-12"
+                  )}
                   disabled={isLoading}
                 />
-                <button
-                  type="submit"
-                  disabled={!input.trim() || isLoading}
-                  className={cn(
-                    "absolute right-2 p-1.5 rounded-md",
-                    !input.trim() || isLoading
-                      ? "text-gray-400 dark:text-gray-600"
-                      : "text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-700"
-                  )}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="w-5 h-5"
+                <div className="absolute right-2 flex items-center gap-0.5">
+                  <VoiceInputButton
+                    isListening={isVoiceListening}
+                    isSupported={isVoiceSupported}
+                    onToggle={handleToggleVoice}
+                    size="sm"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!input.trim() || isLoading}
+                    className={cn(
+                      "p-1.5 rounded-md",
+                      !input.trim() || isLoading
+                        ? "text-gray-400 dark:text-gray-600"
+                        : "text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-700"
+                    )}
                   >
-                    <path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" />
-                  </svg>
-                </button>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      className="w-5 h-5"
+                    >
+                      <path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" />
+                    </svg>
+                  </button>
+                </div>
               </form>
               <div className="text-xs text-center text-gray-500 dark:text-gray-400">
                 Stocky AI can make mistakes. Consider checking important information.

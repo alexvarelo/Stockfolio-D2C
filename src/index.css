@@ -179,6 +179,15 @@
   /* Hairlines */
   .border-hairline-light { border-color: #e2e2e7; }
   .border-hairline-dark  { border-color: rgba(255, 255, 255, 0.12); }
+
+  .voice-bar {
+    animation: voice-wave 0.9s ease-in-out infinite;
+    transform-origin: center;
+  }
+  @keyframes voice-wave {
+    0%, 100% { transform: scaleY(0.35); }
+    50%      { transform: scaleY(1); }
+  }
 }
 
 @theme inline {

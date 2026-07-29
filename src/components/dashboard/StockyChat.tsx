@@ -31,6 +31,8 @@ import ReactMarkdown from "react-markdown";
 import { StockyLogo } from "@/components/brand/StockyLogo";
 import { StockCard } from "@/components/chat/visuals/StockCard";
 import { StockChart } from "@/components/chat/visuals/StockChart";
+import { VoiceInputButton } from "@/components/chat/VoiceInputButton";
+import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { toast } from "sonner";
 
 interface Message {
@@ -259,6 +261,37 @@ export function StockyChat({ open, onOpenChange }: StockyChatProps) {
     const scrollRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
     const toolDataRef = useRef<VisualToolData>({ charts: {}, quotes: {} });
+    const voiceBaseTextRef = useRef("");
+
+    const resizeInput = (value: string) => {
+        setInput(value);
+        if (inputRef.current) {
+            inputRef.current.style.height = 'inherit';
+            inputRef.current.style.height = `${Math.min(inputRef.current.scrollHeight, 160)}px`;
+        }
+    };
+
+    const { isSupported: isVoiceSupported, isListening: isVoiceListening, toggle: toggleVoice } = useSpeechRecognition({
+        onResult: (transcript) => {
+            resizeInput(voiceBaseTextRef.current ? `${voiceBaseTextRef.current} ${transcript}` : transcript);
+        },
+        onError: (error) => {
+            if (error === 'no-speech' || error === 'aborted') return;
+            console.error('Voice input error:', error);
+            const messages: Record<string, string> = {
+                'not-allowed': "Microphone access denied — check your browser's site permissions",
+                'service-not-allowed': "Microphone access denied — check your browser's site permissions",
+                'audio-capture': "No microphone found — check it's connected and enabled",
+                'network': "Voice recognition needs an internet connection",
+            };
+            toast.error(messages[error] || `Voice input failed (${error}), please try again`);
+        }
+    });
+
+    const handleToggleVoice = () => {
+        if (!isVoiceListening) voiceBaseTextRef.current = input;
+        toggleVoice();
+    };
 
     // Collect tool results so visual blocks can render from real data
     const ingestToolData = useCallback((td: HistoryResult | QuoteData | Record<string, unknown>) => {
@@ -852,11 +885,7 @@ export function StockyChat({ open, onOpenChange }: StockyChatProps) {
                                         ref={inputRef}
                                         placeholder="Ask for anything..."
                                         value={input}
-                                        onChange={(e) => {
-                                            setInput(e.target.value);
-                                            e.target.style.height = 'inherit';
-                                            e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`;
-                                        }}
+                                        onChange={(e) => resizeInput(e.target.value)}
                                         onKeyDown={(e) => {
                                             if (e.key === 'Enter' && !e.shiftKey) {
                                                 e.preventDefault();
@@ -867,7 +896,12 @@ export function StockyChat({ open, onOpenChange }: StockyChatProps) {
                                         className="w-full bg-transparent border-none focus:ring-0 text-[14px] text-gray-800 placeholder:text-gray-400 px-4 pt-3.5 pb-12 min-h-[52px] resize-none max-h-[160px] outline-none"
                                         rows={1}
                                     />
-                                    <div className="absolute bottom-2.5 right-2.5">
+                                    <div className="absolute bottom-2.5 right-2.5 flex items-center gap-1">
+                                        <VoiceInputButton
+                                            isListening={isVoiceListening}
+                                            isSupported={isVoiceSupported}
+                                            onToggle={handleToggleVoice}
+                                        />
                                         <button
                                             type="submit"
                                             disabled={isLoading || !input.trim()}
