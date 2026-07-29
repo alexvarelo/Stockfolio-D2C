@@ -192,6 +192,7 @@ export const PortfolioDetail = () => {
         totalValue={totalValue}
         totalReturn={totalReturn}
         returnPercentage={returnPercentage}
+        currency={portfolio.currency}
         todayChange={portfolio.today_change}
         todayChangePercent={portfolio.today_change_percent}
         onBack={() => navigate(-1)}

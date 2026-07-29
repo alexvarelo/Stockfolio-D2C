@@ -12,6 +12,7 @@ export interface Portfolio {
   user_id: string;
   total_value?: number;
   total_return_percentage?: number;
+  currency?: string;
   holdings_count?: number;
   total_invested?: number;
 }
@@ -29,12 +30,14 @@ export const usePortfolios = (userId?: string) => {
           portfolio_values (
             total_value,
             total_return_percentage,
+            currency,
             updated_at
           ),
           holdings (
             ticker,
             quantity,
-            total_invested
+            total_invested,
+            currency
           )
         `)
         .eq('user_id', userId)
@@ -53,6 +56,7 @@ export const usePortfolios = (userId?: string) => {
         ...p,
         total_value: p.portfolio_values?.total_value,
         total_return_percentage: p.portfolio_values?.total_return_percentage,
+        currency: p.portfolio_values?.currency || 'USD',
         holdings_count: p.holdings?.length || 0,
         total_invested: p.holdings?.reduce((sum, h) => sum + (h.total_invested || 0), 0) || 0,
         // We keep the raw arrays too if needed

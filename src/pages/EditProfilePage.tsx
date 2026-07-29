@@ -11,9 +11,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Pencil, ArrowLeft, Paintbrush } from 'lucide-react';
+import { Pencil, ArrowLeft, Paintbrush, Coins } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { ThemeSelector } from '@/components/theme/ThemeSelector';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useUserSettings, useUpdateUserSettings } from '@/api/user/useUserSettings';
+
+const SUPPORTED_CURRENCIES = ['USD', 'EUR', 'GBP', 'JPY', 'CHF', 'CAD', 'AUD'];
 
 const profileFormSchema = z.object({
   username: z.string().min(2, {
@@ -37,6 +41,8 @@ export const EditProfilePage = () => {
 
   const { data: profile, isLoading: isProfileLoading } = useUserProfile(user?.id || '');
   const updateProfile = useUpdateProfile();
+  const { data: userSettings } = useUserSettings(user?.id);
+  const updateUserSettings = useUpdateUserSettings();
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -242,6 +248,44 @@ export const EditProfilePage = () => {
                       </p>
                     </div>
                     <ThemeSelector />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
+                <Coins className="h-5 w-5" />
+                Currency
+              </h3>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Portfolio totals are converted into this currency, no matter what currency each holding is actually listed in.
+                  </p>
+                  <div className="flex items-center justify-between p-4 border rounded-lg bg-card">
+                    <div>
+                      <p className="font-medium">Base currency</p>
+                      <p className="text-sm text-muted-foreground">
+                        Used for your portfolio totals across the app
+                      </p>
+                    </div>
+                    <Select
+                      value={userSettings?.default_currency || 'USD'}
+                      onValueChange={(value) => {
+                        if (!user) return;
+                        updateUserSettings.mutate({ userId: user.id, updates: { default_currency: value } });
+                      }}
+                    >
+                      <SelectTrigger className="w-28">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SUPPORTED_CURRENCIES.map((currency) => (
+                          <SelectItem key={currency} value={currency}>{currency}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>

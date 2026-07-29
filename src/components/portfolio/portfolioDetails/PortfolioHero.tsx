@@ -8,7 +8,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/lib/formatters";
 import { motion } from "framer-motion";
 import { usePriceFlash, priceFlashClass } from "@/hooks/usePriceFlash";
 
@@ -22,6 +22,7 @@ interface PortfolioHeroProps {
     totalValue: number;
     totalReturn: number;
     returnPercentage: number;
+    currency?: string;
     todayChange?: number;
     todayChangePercent?: number;
     onBack: () => void;
@@ -47,6 +48,7 @@ export const PortfolioHero = ({
     totalValue,
     totalReturn,
     returnPercentage,
+    currency = "USD",
     todayChange = 0,
     todayChangePercent = 0,
     onBack,
@@ -266,7 +268,7 @@ export const PortfolioHero = ({
                                     <Skeleton className="h-8 w-32 md:h-12 md:w-48" />
                                 ) : (
                                     <span className={`text-2xl md:text-5xl font-bold tracking-tight rounded px-1 -mx-1 transition-colors duration-700 ${priceFlashClass(flash)}`}>
-                                        {formatCurrency(totalValue)}
+                                        {formatCurrency(totalValue, currency)}
                                     </span>
                                 )}
                                 {isLive && !isLoadingPrices && (
@@ -302,7 +304,7 @@ export const PortfolioHero = ({
                                                     : "bg-red-500/10 text-red-500 dark:bg-red-500/20"}
                                             `}>
                                                 {isPositive ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
-                                                <span>{isPositive ? "+" : ""}{formatCurrency(totalReturn)}</span>
+                                                <span>{isPositive ? "+" : ""}{formatCurrency(totalReturn, currency)}</span>
                                                 <span className="opacity-60">|</span>
                                                 <span>{isPositive ? "+" : ""}{returnPercentage.toFixed(2)}%</span>
                                             </div>
@@ -328,7 +330,7 @@ export const PortfolioHero = ({
                                                     : "bg-red-500/10 text-red-600 dark:text-red-400"}
                                             `}>
                                                 {isTodayPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                                                <span>{isTodayPositive ? "+" : ""}{formatCurrency(todayChange)}</span>
+                                                <span>{isTodayPositive ? "+" : ""}{formatCurrency(todayChange, currency)}</span>
                                                 <span className="opacity-60">|</span>
                                                 <span>{isTodayPositive ? "+" : ""}{todayChangePercent.toFixed(2)}%</span>
                                             </div>
@@ -362,7 +364,7 @@ export const PortfolioHero = ({
                                 : "bg-red-500/10 text-red-500 dark:bg-red-500/20"}
                         `}>
                             {isPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                            <span>{isPositive ? "+" : ""}{formatCurrency(totalReturn)}</span>
+                            <span>{isPositive ? "+" : ""}{formatCurrency(totalReturn, currency)}</span>
                             <span className="opacity-60">|</span>
                             <span>{isPositive ? "+" : ""}{returnPercentage.toFixed(2)}%</span>
                         </div>
@@ -375,7 +377,7 @@ export const PortfolioHero = ({
                                 : "bg-red-500/10 text-red-600 dark:text-red-400"}
                         `}>
                             {isTodayPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                            <span>{isTodayPositive ? "+" : ""}{formatCurrency(todayChange)}</span>
+                            <span>{isTodayPositive ? "+" : ""}{formatCurrency(todayChange, currency)}</span>
                         </div>
                     </div>
 

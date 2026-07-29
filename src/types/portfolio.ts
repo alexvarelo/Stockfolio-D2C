@@ -4,6 +4,7 @@ export interface Holding {
   name?: string;
   quantity: number;
   averagePrice: number;
+  currency?: string;
   currentPrice: number | null;
   currentValue: number | null;
   costBasis: number;
