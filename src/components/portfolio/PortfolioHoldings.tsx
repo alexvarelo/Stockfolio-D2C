@@ -74,7 +74,7 @@ const HoldingRow = ({
           <div className="flex flex-col items-end">
             <span className="inline-flex items-center gap-1.5">
               <span className={`rounded px-1 -mx-1 transition-colors duration-700 ${priceFlashClass(flash)}`}>
-                {holding.current_price ? formatCurrency(holding.current_price) : "N/A"}
+                {holding.current_price ? formatCurrency(holding.current_price, holding.currency) : "N/A"}
               </span>
               {isLive && (
                 <span className="relative flex h-1.5 w-1.5" title="Live price">
@@ -83,7 +83,7 @@ const HoldingRow = ({
                 </span>
               )}
             </span>
-            <span className="text-xs text-muted-foreground">Avg: {formatCurrency(holding.average_price)}</span>
+            <span className="text-xs text-muted-foreground">Avg: {formatCurrency(holding.average_price, holding.currency)}</span>
           </div>
         )}
       </TableCell>
@@ -91,7 +91,7 @@ const HoldingRow = ({
         {isLoadingPrices ? (
           <Skeleton className="h-4 w-20 ml-auto" />
         ) : (
-          formatCurrency(marketValue)
+          formatCurrency(marketValue, holding.currency)
         )}
       </TableCell>
       <TableCell className="text-right">
@@ -106,7 +106,7 @@ const HoldingRow = ({
                 }`}
             >
               <span className="font-medium text-sm">
-                {pnl >= 0 ? "+" : ""}{formatCurrency(pnl)}
+                {pnl >= 0 ? "+" : ""}{formatCurrency(pnl, holding.currency)}
               </span>
               <span className="text-xs opacity-80 bg-current/10 px-1.5 py-0.5 rounded-md mt-0.5">
                 {formatPercentage(pnlPercentage)}

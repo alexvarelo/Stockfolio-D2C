@@ -14,6 +14,7 @@ export interface PortfolioHolding {
   quantity: number;
   total_invested: number;
   average_price: number;
+  currency?: string;
   current_price?: number;
   change_percent?: number;
   today_change?: number;
@@ -44,6 +45,7 @@ export interface Portfolio extends Omit<PortfolioBase, "portfolio_followers"> {
   };
   total_value?: number;
   total_return_percentage?: number;
+  currency?: string;
 }
 
 // Get portfolio data with current prices and performance
@@ -66,7 +68,8 @@ export const usePortfolio = (portfolioId: string, includePrices = true) => {
             ticker,
             quantity,
             total_invested,
-            average_price
+            average_price,
+            currency
           ),
           portfolio_follows(count)
         `
@@ -262,6 +265,7 @@ export const usePortfolio = (portfolioId: string, includePrices = true) => {
     // If we have a stored total return, we could potentially use it, but calculating from holdings is usually safer for consistency
     total_value: finalTotalValue,
     total_return_percentage: finalTotalReturnPercentage,
+    currency: storedValue?.currency || 'USD',
   };
 
   return {
@@ -299,7 +303,8 @@ export const usePortfolioPerformance = (
             ticker,
             quantity,
             total_invested,
-            average_price
+            average_price,
+            currency
           )
         `
         )
