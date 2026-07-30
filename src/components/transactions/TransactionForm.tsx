@@ -71,12 +71,6 @@ interface TransactionFormProps {
   currentPrice?: number;
 }
 
-interface SelectedInstrument {
-  symbol: string;
-  name: string;
-  exchange?: string;
-}
-
 export function TransactionForm({
   portfolioId,
   onSuccess,
@@ -94,7 +88,7 @@ export function TransactionForm({
     exchange?: string;
   } | null>(null);
 
-  const [searchQuery, setSearchQuery] = useState("");
+  const [, setSearchQuery] = useState("");
 
   const { user } = useAuth();
   // Fetch user portfolios if portfolio selector is enabled
@@ -116,6 +110,11 @@ export function TransactionForm({
         refetchOnWindowFocus: false,
       },
     });
+
+  // The instrument's real listing currency (e.g. EUR for a Madrid-listed
+  // stock), not assumed to be USD — resolved from the price lookup.
+  const currency = priceData?.data?.currency || "USD";
+  const currencyFormatter = new Intl.NumberFormat("en-US", { style: "currency", currency });
 
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
@@ -156,18 +155,9 @@ export function TransactionForm({
   useEffect(() => {
     form.setValue("quantity", 1); // Reset quantity when holding changes
     // Remove form.trigger to prevent infinite loops
-  }, [watchTicker, watchTransactionType]);
+  }, [watchTicker, watchTransactionType]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const transactionType = form.watch("transaction_type");
-
-  const handleInstrumentSelect = (instrument: SelectedInstrument) => {
-    setSelectedInstrument(instrument);
-    form.setValue("ticker", instrument.symbol);
-    // Auto-fill the price field with the current price if available
-    if (priceData?.data?.current_price) {
-      form.setValue("price_per_share", priceData.data.current_price);
-    }
-  };
 
   const validateSellQuantity = (value: number | string) => {
     if (value === "") return "Quantity is required";
@@ -229,6 +219,7 @@ export function TransactionForm({
           : data.transaction_date.toISOString().split("T")[0],
       fees: data.fees || 0,
       notes: data.notes || "",
+      currency,
     };
 
     createTransaction(transactionData, {
@@ -281,7 +272,7 @@ export function TransactionForm({
                     </div>
                     <div className="text-right">
                       <div className="text-lg font-semibold">
-                        ${priceData.data.current_price?.toFixed(2) || "N/A"}
+                        {priceData.data.current_price != null ? currencyFormatter.format(priceData.data.current_price) : "N/A"}
                       </div>
                       {priceData.data.change_percent !== undefined && (
                         <div
@@ -531,7 +522,7 @@ export function TransactionForm({
                   rules={{
                     validate: validateSellQuantity,
                   }}
-                  render={({ field, fieldState }) => (
+                  render={({ field }) => (
                     <div>
                       <Input
                         type="number"
@@ -567,7 +558,7 @@ export function TransactionForm({
                 )}
               </div>
               <div>
-                <Label htmlFor="price_per_share">Price per Share ($)</Label>
+                <Label htmlFor="price_per_share">Price per Share ({currency})</Label>
                 <Input
                   id="price_per_share"
                   type="number"
@@ -626,7 +617,7 @@ export function TransactionForm({
             </div>
 
             <div>
-              <Label htmlFor="fees">Fees ($)</Label>
+              <Label htmlFor="fees">Fees ({currency})</Label>
               <Input
                 id="fees"
                 type="number"
