@@ -414,7 +414,6 @@ export interface NewsArticle {
 export type PredefinedScreener = typeof PredefinedScreener[keyof typeof PredefinedScreener];
 
 
-// eslint-disable-next-line @typescript-eslint/no-redeclare
 export const PredefinedScreener = {
   aggressive_small_caps: 'aggressive_small_caps',
   day_gainers: 'day_gainers',
@@ -432,6 +431,11 @@ export const PredefinedScreener = {
   solid_midcap_growth_funds: 'solid_midcap_growth_funds',
   top_mutual_funds: 'top_mutual_funds',
 } as const;
+
+/**
+ * Currency the price is denominated in, e.g. USD, EUR
+ */
+export type PriceDataCurrency = string | null;
 
 /**
  * Current stock price
@@ -499,6 +503,8 @@ export type PriceDataLastUpdated = string | null;
 export interface PriceData {
   /** Stock ticker symbol */
   symbol: string;
+  /** Currency the price is denominated in, e.g. USD, EUR */
+  currency?: PriceDataCurrency;
   /** Current stock price */
   current_price?: PriceDataCurrentPrice;
   /** Previous closing price */

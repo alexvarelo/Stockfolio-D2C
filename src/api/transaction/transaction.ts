@@ -13,6 +13,7 @@ export interface TransactionFormData {
   transaction_date: string;
   fees?: number;
   notes?: string;
+  currency?: string;
 }
 
 export const useCreateTransaction = () => {
@@ -31,6 +32,7 @@ export const useCreateTransaction = () => {
           transaction_date_param: data.transaction_date,
           fees_param: data.fees || 0,
           notes_param: data.notes || '',
+          currency_param: data.currency || 'USD',
         });
 
       if (error) throw error;
