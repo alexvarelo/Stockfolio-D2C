@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDebounce } from "@/hooks/useDebounce";
-import { Search, ArrowRight, Plus, Clock, BarChart2, Star, Briefcase, List, SearchIcon } from "lucide-react";
+import { Search, Briefcase, List, SearchIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Command,
@@ -52,13 +52,13 @@ export function SearchButtonWithDialog() {
   });
 
   // Fetch recent portfolios and watchlists
-  const { data: recentPortfolios = [], isLoading: isLoadingRecentPortfolios } = useRecentPortfolios({
+  const { data: _recentPortfolios = [], isLoading: _isLoadingRecentPortfolios } = useRecentPortfolios({
     enabled: commandOpen && !!user,
     limit: 3
   });
 
   // Fetch watchlists
-  const { data: watchlists = [], isLoading: isLoadingWatchlists } = useWatchlists();
+  const { data: _watchlists = [], isLoading: _isLoadingWatchlists } = useWatchlists();
 
   // Handle result selection
   const handleSelectResult = useCallback((type: 'instrument' | 'portfolio' | 'watchlist', id: string) => {
@@ -134,7 +134,17 @@ export function SearchButtonWithDialog() {
 
       <Dialog open={commandOpen} onOpenChange={setCommandOpen}>
         <DialogContent className="p-0 overflow-hidden">
-          <Command>
+          {/* shouldFilter=false: results are already filtered server-side via
+              useSearchInstruments (debounced). Without this, cmdk re-filters
+              client-side against the live (non-debounced) input value, which
+              hides valid results whenever typing outpaces the debounced
+              request — a timing bug, not a rendering one. */}
+          {/* shouldFilter=false: results are already filtered server-side via
+              useSearchInstruments (debounced). Without this, cmdk re-filters
+              client-side against the live (non-debounced) input value, which
+              can transiently hide valid results whenever typing outpaces the
+              debounced request — a timing bug, not a rendering one. */}
+          <Command shouldFilter={false}>
             <CommandInput
               placeholder="Search stocks, ETFs, and more..."
               value={searchQuery}
