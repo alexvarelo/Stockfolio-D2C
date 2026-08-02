@@ -1,5 +1,4 @@
 import { useParams } from "react-router-dom";
-import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Card,
@@ -62,6 +61,7 @@ interface AdditionalData {
   twoHundredDayAverage?: number;
   sharesOutstanding?: number;
   heldPercentInstitutions?: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any; // For any other properties that might exist
 }
 
@@ -137,12 +137,6 @@ export function InstrumentPage() {
     );
   };
 
-  // Mock portfolios - replace with actual portfolio data from your app
-  const userPortfolios = [
-    { id: "portfolio1", name: "My Portfolio" },
-    { id: "portfolio3", name: "Growth" },
-  ];
-
   // The StockyChatDrawer is always rendered but controlled by isChatOpen
   return (
     <div className="space-y-6">
@@ -198,7 +192,7 @@ export function InstrumentPage() {
       <div className="mb-6">
         <PriceChart
           ticker={ticker || ""}
-          currency={companyInfo?.currency || "USD"}
+          currency={priceData?.currency || "USD"}
         />
       </div>
 
@@ -292,7 +286,7 @@ export function InstrumentPage() {
                       "Market Cap",
                       <MoneyDisplay
                         value={companyInfo?.market_cap}
-                        currency={companyInfo?.currency}
+                        currency={priceData?.currency}
                       />
                     )}
                     {renderInfoCard(
@@ -314,12 +308,12 @@ export function InstrumentPage() {
                         <span>
                           <MoneyDisplay
                             value={additionalData.fiftyTwoWeekLow}
-                            currency={companyInfo?.currency}
+                            currency={priceData?.currency}
                           />
                           {" - "}
                           <MoneyDisplay
                             value={additionalData.fiftyTwoWeekHigh}
-                            currency={companyInfo?.currency}
+                            currency={priceData?.currency}
                           />
                         </span>
                       ) : (
@@ -336,7 +330,7 @@ export function InstrumentPage() {
                         "Revenue (TTM)",
                         <MoneyDisplay
                           value={additionalData.totalRevenue}
-                          currency={companyInfo?.currency}
+                          currency={priceData?.currency}
                         />
                       )}
                     {additionalData?.ebitda !== undefined &&
@@ -344,7 +338,7 @@ export function InstrumentPage() {
                         "EBITDA",
                         <MoneyDisplay
                           value={additionalData.ebitda}
-                          currency={companyInfo?.currency}
+                          currency={priceData?.currency}
                         />
                       )}
                     {additionalData?.profitMargins !== undefined &&
@@ -375,6 +369,7 @@ export function InstrumentPage() {
                   <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {additionalData.companyOfficers.map(
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         (officer: any, index: number) => (
                           <div key={index} className="p-4 border rounded-lg">
                             <h4 className="font-medium">{officer.name}</h4>
@@ -386,7 +381,7 @@ export function InstrumentPage() {
                                 Total Pay:
                                 <MoneyDisplay
                                   value={officer.totalPay}
-                                  currency={companyInfo?.currency}
+                                  currency={priceData?.currency}
                                 />
                               </p>
                             )}
@@ -418,7 +413,7 @@ export function InstrumentPage() {
                 <InvestmentSimulator
                   ticker={ticker}
                   currentPrice={priceData?.current_price || 0}
-                  currency={companyInfo?.currency || "USD"}
+                  currency={priceData?.currency || "USD"}
                 />
               )}
             </CardContent>
