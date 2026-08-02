@@ -1,8 +1,8 @@
 import React from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { useCustomerHoldings } from '@/api/portfolio/useCustomerHoldings';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/formatters';
 import { PortfolioHolding } from '@/types/portfolio';
 import { CompanyLogo } from '@/components/stock/CompanyLogo';
@@ -14,58 +14,18 @@ const COLORS = [
   '#F87171', '#60A5FA', '#A78BFA', '#F472B6', '#F87171'
 ];
 
-const RADIAN = Math.PI / 180;
+interface ChartEntry {
+  name: string;
+  value: number;
+  quantity: number;
+  color: string;
+}
 
-const renderCustomizedLabel = ({
-  cx,
-  cy,
-  midAngle,
-  innerRadius,
-  outerRadius,
-  percent,
-  index,
-}: {
-  cx: number;
-  cy: number;
-  midAngle: number;
-  innerRadius: number;
-  outerRadius: number;
-  percent: number;
-  index: number;
-}) => {
-  const radius = 25 + innerRadius + (outerRadius - innerRadius);
-  const x = cx + radius * Math.cos(-midAngle * RADIAN);
-  const y = cy + radius * Math.sin(-midAngle * RADIAN);
-
-  return (
-    <g>
-      <line 
-        x1={cx + (outerRadius + 10) * Math.cos(-midAngle * RADIAN)} 
-        y1={cy + (outerRadius + 10) * Math.sin(-midAngle * RADIAN)}
-        x2={x - 5 * Math.cos(-midAngle * RADIAN)} 
-        y2={y - 5 * Math.sin(-midAngle * RADIAN)}
-        stroke="#94A3B8"
-        strokeWidth={1}
-      />
-      <text
-        x={x}
-        y={y}
-        fill="#334155"
-        textAnchor={x > cx ? 'start' : 'end'}
-        dominantBaseline="central"
-        className="text-xs font-medium"
-      >
-        {`${(percent * 100).toFixed(0)}%`}
-      </text>
-    </g>
-  );
-};
-
-const CustomTooltip = ({ active, payload }: any) => {
+const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: { payload: ChartEntry }[] }) => {
   if (active && payload && payload.length) {
     const data = payload[0].payload;
     return (
-      <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
+      <div className="bg-card p-3 rounded-lg shadow-lg border border-border">
         <p className="font-semibold">{data.name}</p>
         <p className="text-sm">Value: {formatCurrency(data.value)}</p>
         <p className="text-sm">Shares: {data.quantity}</p>
@@ -155,7 +115,7 @@ export const HoldingsDonutChart = () => {
                   cornerRadius={4}
                   dataKey="value"
                 >
-                  {chartData.map((entry: any, index: number) => (
+                  {chartData.map((entry: ChartEntry, index: number) => (
                     <Cell 
                       key={`cell-${index}`} 
                       fill={entry.color || COLORS[index % COLORS.length]} 
@@ -164,24 +124,14 @@ export const HoldingsDonutChart = () => {
                     />
                   ))}
                 </Pie>
-                <Tooltip 
-                  content={<CustomTooltip />} 
-                  contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #E2E8F0',
-                    borderRadius: '0.5rem',
-                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
-                    padding: '0.75rem',
-                    fontSize: '0.875rem',
-                  }}
-                />
+                <Tooltip content={<CustomTooltip />} />
               </PieChart>
             </ResponsiveContainer>
           </div>
           
           {/* Legend */}
           <div className="hidden md:flex flex-col justify-center space-y-3 pl-4 py-4 overflow-y-auto max-h-full">
-            {chartData.map((entry: any, index: number) => {
+            {chartData.map((entry: ChartEntry, index: number) => {
               const color = entry.color || COLORS[index % COLORS.length];
               const percentage = ((entry.value / chartData.reduce((sum, item) => sum + item.value, 0)) * 100).toFixed(1);
               
