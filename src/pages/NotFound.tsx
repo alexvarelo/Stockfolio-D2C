@@ -1,17 +1,46 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
-import { Home, RotateCcw, User, Briefcase } from "lucide-react";
-import { motion } from "framer-motion";
+import { useEffect, useMemo } from "react";
+import { Home, RotateCcw, User, Briefcase, LifeBuoy } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { StockyLogo } from "@/components/brand/StockyLogo";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface NotFoundProps {
   type?: 'page' | 'user' | 'portfolio';
   message?: string;
 }
 
+interface Star {
+  top: number;
+  left: number;
+  size: number;
+  delay: number;
+  duration: number;
+}
+
+const STAR_COUNT = 70;
+
+function useStarfield(): Star[] {
+  return useMemo(
+    () =>
+      Array.from({ length: STAR_COUNT }, () => ({
+        top: Math.random() * 62,
+        left: Math.random() * 100,
+        size: Math.random() < 0.15 ? 3 : Math.random() < 0.5 ? 2 : 1,
+        delay: Math.random() * 4,
+        duration: 2 + Math.random() * 3,
+      })),
+    []
+  );
+}
+
 const NotFound = ({ type = 'page', message }: NotFoundProps) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { resolvedTheme } = useTheme();
+  const prefersReducedMotion = useReducedMotion();
+  const stars = useStarfield();
   const pathSegments = location.pathname.split('/').filter(Boolean);
   const notFoundItem = pathSegments[pathSegments.length - 1] || 'page';
 
@@ -19,155 +48,185 @@ const NotFound = ({ type = 'page', message }: NotFoundProps) => {
     console.error("404 Error: User attempted to access non-existent route:", location.pathname);
   }, [location.pathname]);
 
-  // Determine the type of 404 page to show
   const getNotFoundContent = () => {
     switch (type) {
       case 'user':
         return {
           title: 'User Not Found',
-          description: message || `The user "${notFoundItem}" doesn't exist or has been removed.`,
-          icon: <User className="w-16 h-16 text-blue-500 mb-4" />
+          description: message || `The profile "${notFoundItem}" doesn't exist or has been removed.`,
+          icon: User,
         };
       case 'portfolio':
         return {
           title: 'Portfolio Not Found',
           description: message || `The portfolio "${notFoundItem}" doesn't exist or you don't have permission to view it.`,
-          icon: <Briefcase className="w-16 h-16 text-blue-500 mb-4" />
+          icon: Briefcase,
         };
       default:
         return {
-          title: 'Page Not Found',
-          description: message || "The page you're looking for doesn't exist or has been moved.",
-          icon: null
+          title: 'Signal Lost',
+          description: message || "The page you're looking for doesn't exist, or it slipped through the noise.",
+          icon: null,
         };
     }
   };
 
-  const { title, description, icon } = getNotFoundContent();
+  const { title, description, icon: Icon } = getNotFoundContent();
   const handleGoHome = () => navigate("/");
   const handleGoBack = () => navigate(-1);
-  const handleReload = () => window.location.reload();
+
+  const isDark = resolvedTheme === 'dark';
+  const primaryVariant = isDark ? "default" : "dark";
+  const outlineVariant = isDark ? "outline-dark" : "outline";
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center p-4">
-      <motion.div 
-        className="max-w-3xl w-full text-center"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        {/* Not Found Illustration */}
-        <motion.div className="mb-4 ml-8">
-          <motion.div
-            className="mx-auto w-32 h-32 md:w-48 md:h-48 relative"
-            animate={{ y: [0, -10, 0] }}
-            transition={{
-              duration: 4,
-              repeat: Infinity,
-              ease: "easeInOut"
+    <div className="relative min-h-screen w-full overflow-hidden bg-background text-foreground flex flex-col items-center justify-center px-6">
+      {/* Starfield */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        {stars.map((star, i) => (
+          <motion.span
+            key={i}
+            className="absolute rounded-full bg-foreground"
+            style={{
+              top: `${star.top}%`,
+              left: `${star.left}%`,
+              width: star.size,
+              height: star.size,
             }}
+            initial={{ opacity: 0.15 }}
+            animate={
+              prefersReducedMotion
+                ? { opacity: 0.35 }
+                : { opacity: [0.15, 0.7, 0.15] }
+            }
+            transition={
+              prefersReducedMotion
+                ? undefined
+                : {
+                    duration: star.duration,
+                    delay: star.delay,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }
+            }
+          />
+        ))}
+      </div>
+
+      {/* Radial dome glow, echoing the two-mode canvas system */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-[70vh]"
+        style={{
+          background:
+            "radial-gradient(ellipse 60% 55% at 50% 15%, hsl(var(--foreground) / 0.10), transparent 70%)",
+        }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-[38%] h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full blur-3xl"
+        style={{ background: "hsl(var(--foreground) / 0.14)" }}
+      />
+
+      {/* Brand mark, top-left */}
+      <button
+        onClick={handleGoHome}
+        className="absolute left-6 top-6 flex items-center gap-2 text-foreground/80 transition-opacity hover:opacity-100 md:left-10 md:top-10"
+        aria-label="Go to Stocky home"
+      >
+        <StockyLogo variant={isDark ? "paper" : "ink"} size={32} className="shadow-sm rounded-lg" />
+        <span className="text-sm font-semibold tracking-tight">Stocky</span>
+      </button>
+
+      <motion.div
+        className="relative z-10 flex max-w-xl flex-col items-center text-center"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="mb-6"
+        >
+          <motion.div
+            animate={prefersReducedMotion ? undefined : { y: [0, -8, 0] }}
+            transition={
+              prefersReducedMotion
+                ? undefined
+                : { duration: 4, repeat: Infinity, ease: "easeInOut" }
+            }
           >
-            <motion.div 
-              className="w-full h-full flex items-center justify-center bg-transparent"
-              whileHover={{ scale: 1.05 }}
-              transition={{ type: "spring", stiffness: 300 }}
-            >
-              <img 
-                src="/stocky_not_found.png" 
-                alt="Not Found"
-                className="w-full h-full object-contain mix-blend-multiply"
-                style={{ backgroundColor: 'transparent' }}
-                draggable={false}
-              />
-            </motion.div>
-            {icon && (
-              <motion.div 
-                className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 bg-white p-3 rounded-full shadow-lg"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.5, type: 'spring' }}
-              >
-                {icon}
-              </motion.div>
-            )}
+            <StockyLogo variant="mark" size={56} animated className="text-foreground" />
           </motion.div>
+          {Icon && (
+            <motion.div
+              className="mx-auto -mt-3 flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card shadow-sm"
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.5, type: "spring" }}
+            >
+              <Icon className="h-4 w-4 text-muted-foreground" />
+            </motion.div>
+          )}
         </motion.div>
 
-        {/* 404 Content */}
-        <div className="mb-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <motion.h1 
-              className="text-8xl md:text-9xl font-bold text-blue-600 mb-2"
-              animate={{ scale: [1, 1.05, 1] }}
-              transition={{
-                duration: 2,
-              }}
-            >
-              404
-            </motion.h1>
-            <h2 className="text-2xl md:text-3xl font-semibold text-gray-800 mb-4">
-              Oops! {title}
-            </h2>
-            <p className="text-gray-600 mb-8 max-w-md mx-auto">
-              {description}
-            </p>
-          </motion.div>
+        <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+          Error 404
+        </p>
 
-          <motion.div 
-            className="flex flex-col sm:flex-row justify-center gap-4 mb-8"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }}>
-              <Button
-                onClick={handleGoHome}
-                variant="default"
-                className="group relative overflow-hidden px-6 py-3 text-base w-full sm:w-auto"
-              >
-                <Home className="w-5 h-5 mr-2" />
-                Go to Homepage
-                <motion.span
-                  className="absolute inset-0 bg-white/20"
-                  initial={{ x: -100, opacity: 0 }}
-                  whileHover={{ x: 0, opacity: 1 }}
-                  transition={{ duration: 0.3 }}
-                />
-              </Button>
-            </motion.div>
+        <motion.h1
+          className="text-[64px] font-bold leading-none tracking-tight md:text-[96px]"
+          animate={prefersReducedMotion ? undefined : { scale: [1, 1.03, 1] }}
+          transition={
+            prefersReducedMotion ? undefined : { duration: 2.5, ease: "easeInOut" }
+          }
+        >
+          404
+        </motion.h1>
 
-            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.98 }}>
-              <Button
-                onClick={handleGoBack}
-                variant="outline"
-                className="group relative overflow-hidden px-6 py-3 text-base w-full sm:w-auto"
-              >
-                <RotateCcw className="w-5 h-5 mr-2" />
-                Go Back
-                <motion.span
-                  className="absolute inset-0 bg-gray-100"
-                  initial={{ x: -100, opacity: 0 }}
-                  whileHover={{ x: 0, opacity: 1 }}
-                  transition={{ duration: 0.3 }}
-                />
-              </Button>
-            </motion.div>
-          </motion.div>
+        <h2 className="mt-4 text-xl font-semibold tracking-tight md:text-2xl">
+          {title}
+        </h2>
+        <p className="mt-2 max-w-md text-muted-foreground">{description}</p>
 
-          <motion.div 
-            className="mt-8 pt-6 border-t border-gray-100 text-sm text-gray-400"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
+        <motion.div
+          className="mt-8 flex flex-col gap-3 sm:flex-row"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
+          <Button
+            onClick={handleGoHome}
+            variant={primaryVariant}
+            size="lg"
+            className="min-w-[180px]"
           >
-            <p>Looking for something specific? Try our search feature.</p>
-            <p className="text-xs mt-1">(Error: Page not found - {location.pathname})</p>
-          </motion.div>
-        </div>
+            <Home className="h-4 w-4" />
+            Back to Home
+          </Button>
+          <Button
+            onClick={handleGoBack}
+            variant={outlineVariant}
+            size="lg"
+            className="min-w-[180px]"
+          >
+            <RotateCcw className="h-4 w-4" />
+            Go Back
+          </Button>
+        </motion.div>
+
+        <motion.a
+          href="mailto:support@stocky.app"
+          className="mt-8 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          <LifeBuoy className="h-3.5 w-3.5" />
+          Contact support
+        </motion.a>
       </motion.div>
     </div>
   );
