@@ -2,9 +2,13 @@ import { useInfinitePosts } from '@/hooks/useInfinitePosts';
 import { PostList } from '../social/PostList';
 import { useAuth } from '@/lib/auth';
 
-export function DashboardPosts() {
+interface DashboardPostsProps {
+  pageSize?: number;
+}
+
+export function DashboardPosts({ pageSize = 10 }: DashboardPostsProps) {
   const { user } = useAuth();
-  
+
   const {
     data,
     isLoading,
@@ -13,7 +17,7 @@ export function DashboardPosts() {
     hasNextPage,
     fetchNextPage,
   } = useInfinitePosts({
-    pageSize: 10, // Show 10 posts at a time
+    pageSize,
     excludeUserId: user?.id, // Exclude current user's posts
   });
 
