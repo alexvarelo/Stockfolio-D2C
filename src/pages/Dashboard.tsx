@@ -4,7 +4,6 @@ import { UserOnboardingWizard } from "@/components/onboarding/UserOnboardingWiza
 import { DashboardPosts } from "@/components/dashboard/DashboardPosts";
 import { CreatePost } from "@/components/social/CreatePost";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArticlesSection } from "@/components/articles/ArticlesSection";
 import {
   DashboardSkeleton,
 } from "@/components/dashboard/DashboardSkeleton";
@@ -50,22 +49,12 @@ const Dashboard = () => {
       transition={{ duration: 0.3 }}
       className="min-h-screen md:p-6 space-y-8"
     >
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Your financial overview and market insights
-          </p>
-        </div>
-      </div>
-
       {/* Total Wealth */}
       <WealthHero portfolios={portfolios || []} />
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-        {/* Main Column - Portfolios, Allocation & Insights (8/12) */}
-        <div className="xl:col-span-8 space-y-8">
+        {/* Main Column - Portfolios & Holdings (9/12) */}
+        <div className="xl:col-span-9 space-y-8">
           <motion.div variants={item} initial="hidden" animate="show" className="space-y-4">
             <h2 className="text-xl font-semibold tracking-tight">Your Portfolios</h2>
             <PortfolioBreakdownList portfolios={portfolios || []} />
@@ -78,10 +67,6 @@ const Dashboard = () => {
             </div>
           </motion.div>
 
-          <motion.div variants={item} initial="hidden" animate="show">
-            <ArticlesSection />
-          </motion.div>
-
           <motion.div variants={item} initial="hidden" animate="show" className="space-y-4">
             <h2 className="text-xl font-semibold tracking-tight">Activity</h2>
             <div>
@@ -90,8 +75,8 @@ const Dashboard = () => {
           </motion.div>
         </div>
 
-        {/* Sidebar - Community Feed (4/12) */}
-        <div className="xl:col-span-4 space-y-4">
+        {/* Sidebar - Community Feed (3/12) */}
+        <div className="xl:col-span-3 space-y-4">
           <h2 className="text-xl font-semibold tracking-tight">From the community</h2>
           <motion.div variants={item} initial="hidden" animate="show">
             <CreatePost
