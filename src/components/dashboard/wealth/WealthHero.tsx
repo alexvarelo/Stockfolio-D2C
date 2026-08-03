@@ -1,5 +1,4 @@
 import { motion } from "framer-motion";
-import { TrendingUp, TrendingDown } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import type { Portfolio } from "@/api/portfolio/usePortfolios";
 
@@ -19,9 +18,14 @@ export const WealthHero = ({ portfolios }: WealthHeroProps) => {
     }, 0);
 
     const netProfitLoss = totalValue - totalInvested;
-    const returnPct = totalInvested > 0 ? (netProfitLoss / totalInvested) * 100 : 0;
     const isPositive = netProfitLoss >= 0;
     const holdingsCount = portfolios.reduce((sum, p) => sum + (p.holdings_count || 0), 0);
+
+    // Bar always reads as "share of the larger of the two figures", so it never overflows
+    // whichever direction the gain/loss goes.
+    const barBase = Math.max(totalValue, totalInvested);
+    const investedShare = barBase > 0 ? Math.min(100, (Math.min(totalValue, totalInvested) / barBase) * 100) : 0;
+    const deltaShare = 100 - investedShare;
 
     return (
         <motion.div
@@ -31,44 +35,30 @@ export const WealthHero = ({ portfolios }: WealthHeroProps) => {
             className="rounded-3xl border border-border bg-card p-6 sm:p-8"
         >
             <p className="text-sm font-medium text-muted-foreground">Total Wealth</p>
-            <div className="mt-2 flex flex-wrap items-end gap-3">
-                <h1 className="text-[40px] sm:text-[48px] font-bold tracking-tight leading-none">
-                    {formatCurrency(totalValue)}
-                </h1>
+            <h1 className="mt-2 text-[40px] sm:text-[48px] font-bold tracking-tight leading-none">
+                {formatCurrency(totalValue)}
+            </h1>
+
+            <div className="mt-5 flex h-1.5 overflow-hidden rounded-full">
+                <div className="bg-muted" style={{ width: `${investedShare}%` }} />
                 <div
-                    className={`mb-1 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-sm font-semibold ${isPositive ? "bg-success-light text-success" : "bg-danger-light text-danger"
-                        }`}
-                >
-                    {isPositive ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
-                    {isPositive ? "+" : ""}
-                    {returnPct.toFixed(2)}%
-                </div>
+                    className={isPositive ? "bg-primary" : "bg-danger"}
+                    style={{ width: `${deltaShare}%` }}
+                />
             </div>
 
-            <div className="mt-6 flex flex-wrap gap-x-8 gap-y-3 border-t border-border pt-5">
-                <Stat label="Invested" value={formatCurrency(totalInvested)} />
-                <Stat
-                    label="Gain / Loss"
-                    value={`${isPositive ? "+" : ""}${formatCurrency(netProfitLoss)}`}
-                    tone={isPositive ? "success" : "danger"}
-                />
-                <Stat label="Holdings" value={`${holdingsCount}`} />
-                <Stat label="Portfolios" value={`${portfolios.length}`} />
+            <p className="mt-2.5 text-sm text-muted-foreground">
+                Invested {formatCurrency(totalInvested)}
+                {" · "}
+                <span className={isPositive ? "font-medium text-primary" : "font-medium text-danger"}>
+                    {isPositive ? "Gained" : "Lost"} {formatCurrency(Math.abs(netProfitLoss))}
+                </span>
+            </p>
+
+            <div className="mt-5 flex gap-6 border-t border-border pt-4 text-sm text-muted-foreground">
+                <span>{holdingsCount} holding{holdingsCount === 1 ? "" : "s"}</span>
+                <span>{portfolios.length} portfolio{portfolios.length === 1 ? "" : "s"}</span>
             </div>
         </motion.div>
     );
 };
-
-function Stat({ label, value, tone }: { label: string; value: string; tone?: "success" | "danger" }) {
-    return (
-        <div>
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">{label}</p>
-            <p
-                className={`mt-0.5 text-sm font-semibold ${tone === "success" ? "text-success" : tone === "danger" ? "text-danger" : "text-foreground"
-                    }`}
-            >
-                {value}
-            </p>
-        </div>
-    );
-}
