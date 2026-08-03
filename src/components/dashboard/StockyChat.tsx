@@ -617,7 +617,13 @@ export function StockyChat({ open, onOpenChange }: StockyChatProps) {
                                 ) : (
                                     /* Messages */
                                     <div className="space-y-4 pb-4">
-                                        {messages.filter((m) => m.role !== "tool").map((message) => (
+                                        {messages
+                                            .filter((m) => m.role !== "tool")
+                                            // An assistant message starts as an empty "sending" placeholder
+                                            // until the first chunk arrives - render the loading indicator
+                                            // instead of an empty bubble for that gap.
+                                            .filter((m) => !(m.role === "assistant" && m.status === "sending" && !m.content))
+                                            .map((message) => (
                                             <motion.div
                                                 key={message.id}
                                                 initial={{ opacity: 0, y: 8 }}
