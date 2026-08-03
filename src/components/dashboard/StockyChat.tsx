@@ -179,7 +179,7 @@ function ToolResponse({ content, toolName }: { content: string; toolName?: strin
                         transition={{ duration: 0.2 }}
                     >
                         <div className="px-4 pb-3 border-t border-gray-100">
-                            <pre className="mt-2 text-[11px] font-mono leading-relaxed overflow-x-auto p-3 bg-gray-900 text-gray-100 rounded-xl max-h-[200px]">
+                            <pre className="mt-2 text-[13px] font-mono leading-relaxed overflow-x-auto p-3 bg-gray-900 text-gray-100 rounded-xl max-h-[200px]">
                                 {typeof jsonContent === 'string'
                                     ? jsonContent
                                     : JSON.stringify(jsonContent, null, 2)}
@@ -228,7 +228,7 @@ function MessageActions({
             </button>
             {message.status !== "sending" && message.role === "assistant" && (
                 <button
-                    className="h-7 w-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                    className="h-7 w-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                     onClick={onRegenerate}
                     disabled={isRegenerating}
                     title="Regenerate"
@@ -237,7 +237,7 @@ function MessageActions({
                 </button>
             )}
             <button
-                className="h-7 w-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                className="h-7 w-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-danger hover:bg-danger-light transition-colors"
                 onClick={onDelete}
                 title="Delete"
             >
@@ -591,10 +591,10 @@ export function StockyChat({ open, onOpenChange }: StockyChatProps) {
                             </button>
                             <StockyLogo variant="ink" size={32} className="shadow-sm rounded-lg" />
                             <div>
-                                <SheetTitle className="text-[15px] font-semibold text-gray-900 leading-tight">
+                                <SheetTitle className="text-[16px] font-semibold text-gray-900 leading-tight">
                                     Stocky
                                 </SheetTitle>
-                                <SheetDescription className="text-[11px] text-gray-400 leading-tight">
+                                <SheetDescription className="text-[13px] text-gray-400 leading-tight">
                                     Financial Assistant
                                 </SheetDescription>
                             </div>
@@ -622,7 +622,7 @@ export function StockyChat({ open, onOpenChange }: StockyChatProps) {
                             >
                                 <div className="p-3 flex-1 overflow-y-auto">
                                     <div className="space-y-0.5">
-                                        <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-300 px-2.5 mb-2">History</p>
+                                        <p className="text-[13px] font-semibold uppercase tracking-widest text-gray-300 px-2.5 mb-2">History</p>
                                         {conversations.length === 0 ? (
                                             <div className="px-3 py-8 text-center text-xs text-gray-400">
                                                 No conversations yet
@@ -642,7 +642,7 @@ export function StockyChat({ open, onOpenChange }: StockyChatProps) {
                                                     <span className="line-clamp-1 block">
                                                         {conv.title || "New Conversation"}
                                                     </span>
-                                                    <span className="text-[10px] text-gray-400 mt-0.5 block">
+                                                    <span className="text-[13px] text-gray-400 mt-0.5 block">
                                                         {new Date(conv.updated_at || "").toLocaleDateString(undefined, {
                                                             month: 'short',
                                                             day: 'numeric',
@@ -666,7 +666,7 @@ export function StockyChat({ open, onOpenChange }: StockyChatProps) {
                                     <div className="flex flex-col justify-end min-h-[calc(100vh-280px)]">
                                         <div className="space-y-6">
                                             <div>
-                                                <h2 className="text-[28px] font-bold text-gray-900 leading-tight tracking-tight">
+                                                <h2 className="text-[32px] font-bold text-gray-900 leading-tight tracking-tight">
                                                     What do you<br />need?
                                                 </h2>
                                             </div>
@@ -711,7 +711,7 @@ export function StockyChat({ open, onOpenChange }: StockyChatProps) {
                                                                 <div className="flex-1">
                                                                     <p className="text-[13px] text-red-600 mb-2">{message.error || message.content}</p>
                                                                     <button
-                                                                        className="text-[12px] font-medium text-red-500 hover:text-red-700 flex items-center gap-1 transition-colors"
+                                                                        className="text-[13px] font-medium text-red-500 hover:text-red-700 flex items-center gap-1 transition-colors"
                                                                         onClick={() => handleRegenerate(message.id)}
                                                                         disabled={regeneratingId === message.id}
                                                                     >
@@ -793,11 +793,11 @@ export function StockyChat({ open, onOpenChange }: StockyChatProps) {
                                                                             }
 
                                                                             return inline ? (
-                                                                                <code className="bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded-md text-[12px] font-mono" {...props}>
+                                                                                <code className="bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded-md text-[13px] font-mono" {...props}>
                                                                                     {children}
                                                                                 </code>
                                                                             ) : (
-                                                                                <pre className="bg-gray-900 text-gray-100 p-4 rounded-xl overflow-x-auto my-3 whitespace-pre-wrap font-mono text-[12px] leading-relaxed">
+                                                                                <pre className="bg-gray-900 text-gray-100 p-4 rounded-xl overflow-x-auto my-3 whitespace-pre-wrap font-mono text-[13px] leading-relaxed">
                                                                                     <code className={className} {...props}>
                                                                                         {children}
                                                                                     </code>
@@ -819,7 +819,7 @@ export function StockyChat({ open, onOpenChange }: StockyChatProps) {
                                                                                 </div>
                                                                             </div>
                                                                         ),
-                                                                        thead: ({ ...props }) => <thead className="text-[11px] text-gray-400 uppercase bg-gray-50/80" {...props} />,
+                                                                        thead: ({ ...props }) => <thead className="text-[13px] text-gray-400 uppercase bg-gray-50/80" {...props} />,
                                                                         tbody: ({ ...props }) => <tbody className="divide-y divide-gray-50" {...props} />,
                                                                         th: ({ ...props }) => <th className="px-3 py-2 font-medium text-gray-500 whitespace-nowrap" {...props} />,
                                                                         td: ({ ...props }) => <td className="px-3 py-2" {...props} />,

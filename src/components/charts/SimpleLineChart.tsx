@@ -76,7 +76,7 @@ export function SimpleLineChart({ ticker, height = 200 }: SimpleLineChartProps) 
           data={chartData}
           margin={{ top: 5, right: 5, left: 0, bottom: 5 }}
         >
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
           <XAxis 
             dataKey="date" 
             tick={{ fontSize: 12 }}
@@ -96,10 +96,10 @@ export function SimpleLineChart({ ticker, height = 200 }: SimpleLineChartProps) 
           <Line
             type="monotone"
             dataKey="close"
-            stroke="#3b82f6"
+            stroke="hsl(var(--primary))"
             strokeWidth={2}
             dot={false}
-            activeDot={{ r: 4, stroke: '#3b82f6', strokeWidth: 2, fill: '#fff' }}
+            activeDot={{ r: 4, stroke: 'hsl(var(--primary))', strokeWidth: 2, fill: 'hsl(var(--background))' }}
           />
         </LineChart>
       </ResponsiveContainer>

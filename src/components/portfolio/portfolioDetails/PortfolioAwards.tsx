@@ -1,121 +1,89 @@
 import { motion } from "framer-motion";
-import {
-    Trophy,
-    Rocket,
-    Diamond,
-    Zap,
-    Globe,
-    Crown,
-    Lock,
-    TrendingUp
-} from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { Lock } from "lucide-react";
+import { AwardIcon, AwardIconDefs, type AwardIconId } from "./AwardIcons";
 
 interface PortfolioAwardsProps {
-    totalReturn: number;
     returnPercentage: number;
-    portfolioAgeDays: number;
     holdingsCount: number;
-    totalValue: number;
-    todayChangePercent: number;
+    /** Times the portfolio hit its monthly return goal. No tracking source yet — defaults to 0. */
+    monthlyGoalHits?: number;
+    /** Consecutive days the user opened the app. No tracking source yet — defaults to 0. */
+    loginStreakDays?: number;
+    /** Consecutive days the user reviewed this portfolio. No tracking source yet — defaults to 0. */
+    reviewStreakDays?: number;
     className?: string;
 }
 
 interface Award {
     id: string;
+    iconId: AwardIconId;
     title: string;
     description: string;
-    icon: React.ElementType;
     isUnlocked: boolean;
-    color: string;
-    gradient: string;
     progress: number;
     targetValue: string;
     currentValue: string;
 }
 
 export const PortfolioAwards = ({
-    totalReturn,
     returnPercentage,
-    portfolioAgeDays,
     holdingsCount,
-    totalValue,
-    todayChangePercent,
+    monthlyGoalHits = 0,
+    loginStreakDays = 0,
+    reviewStreakDays = 0,
     className = ""
 }: PortfolioAwardsProps) => {
 
     const awards: Award[] = [
         {
-            id: "100_club",
+            id: "bullseye",
+            iconId: "bullseye",
+            title: "Bullseye",
+            description: "Reached its monthly goal 3 times",
+            isUnlocked: monthlyGoalHits >= 3,
+            progress: Math.min(100, Math.max(0, (monthlyGoalHits / 3) * 100)),
+            targetValue: "3 hits",
+            currentValue: `${monthlyGoalHits} hits`
+        },
+        {
+            id: "club100",
+            iconId: "club100",
             title: "100% Club",
             description: "Achieved a total return of over 100%",
-            icon: Rocket,
             isUnlocked: returnPercentage >= 100,
-            color: "text-emerald-500",
-            gradient: "from-emerald-500/20 to-emerald-500/5",
             progress: Math.min(100, Math.max(0, (returnPercentage / 100) * 100)),
             targetValue: "100%",
             currentValue: `${returnPercentage.toFixed(1)}%`
         },
         {
-            id: "moon_walker",
-            title: "Moon Walker",
-            description: "Achieved a total return of over 200%",
-            icon: Trophy,
-            isUnlocked: returnPercentage >= 200,
-            color: "text-amber-500",
-            gradient: "from-amber-500/20 to-amber-500/5",
-            progress: Math.min(100, Math.max(0, (returnPercentage / 200) * 100)),
-            targetValue: "200%",
-            currentValue: `${returnPercentage.toFixed(1)}%`
-        },
-        {
-            id: "diamond_hands",
-            title: "Diamond Hands",
-            description: "Held portfolio for over 1 year",
-            icon: Diamond,
-            isUnlocked: portfolioAgeDays >= 365,
-            color: "text-blue-400",
-            gradient: "from-blue-500/20 to-blue-500/5",
-            progress: Math.min(100, Math.max(0, (portfolioAgeDays / 365) * 100)),
-            targetValue: "365 days",
-            currentValue: `${portfolioAgeDays} days`
-        },
-        {
-            id: "momentum_master",
-            title: "Momentum Master",
-            description: "Daily gain of over 3%",
-            icon: Zap,
-            isUnlocked: todayChangePercent >= 3,
-            color: "text-yellow-400",
-            gradient: "from-yellow-500/20 to-yellow-500/5",
-            progress: Math.min(100, Math.max(0, (todayChangePercent / 3) * 100)),
-            targetValue: "3%",
-            currentValue: `${todayChangePercent.toFixed(2)}%`
+            id: "onFire",
+            iconId: "onFire",
+            title: "On Fire",
+            description: "7-day streak opening the app",
+            isUnlocked: loginStreakDays >= 7,
+            progress: Math.min(100, Math.max(0, (loginStreakDays / 7) * 100)),
+            targetValue: "7 days",
+            currentValue: `${loginStreakDays} days`
         },
         {
             id: "diversified",
+            iconId: "diversified",
             title: "Diversified",
             description: "Holds 5 or more different assets",
-            icon: Globe,
             isUnlocked: holdingsCount >= 5,
-            color: "text-indigo-400",
-            gradient: "from-indigo-500/20 to-indigo-500/5",
             progress: Math.min(100, Math.max(0, (holdingsCount / 5) * 100)),
             targetValue: "5 assets",
             currentValue: `${holdingsCount} assets`
         },
         {
-            id: "whale_status",
-            title: "Whale Status",
-            description: "Portfolio value exceeds $100,000",
-            icon: Crown,
-            isUnlocked: totalValue >= 100000,
-            color: "text-purple-500",
-            gradient: "from-purple-500/20 to-purple-500/5",
-            progress: Math.min(100, Math.max(0, (totalValue / 100000) * 100)),
-            targetValue: "$100k",
-            currentValue: formatCurrency(totalValue)
+            id: "disciplined",
+            iconId: "disciplined",
+            title: "Disciplined",
+            description: "Reviewed its portfolio 30 days in a row",
+            isUnlocked: reviewStreakDays >= 30,
+            progress: Math.min(100, Math.max(0, (reviewStreakDays / 30) * 100)),
+            targetValue: "30 days",
+            currentValue: `${reviewStreakDays} days`
         }
     ];
 
@@ -127,6 +95,7 @@ export const PortfolioAwards = ({
 
     return (
         <div className={`flex flex-col gap-6 ${className}`}>
+            <AwardIconDefs />
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-xl sm:text-2xl font-bold tracking-tight">Awards & Achievements</h2>
@@ -151,24 +120,14 @@ export const PortfolioAwards = ({
                                 : "bg-card/20 border-white/5 opacity-70 grayscale hover:opacity-100 hover:grayscale-0"}
                         `}
                     >
-                        {/* Background Gradient Mesh */}
-                        {award.isUnlocked && (
-                            <div className={`absolute inset-0 bg-gradient-to-br ${award.gradient} opacity-10 group-hover:opacity-20 transition-opacity duration-500`} />
-                        )}
-
                         <div>
                             <div className="relative z-10 flex items-start justify-between mb-4">
-                                <div className={`
-                                    p-3 rounded-2xl transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3
-                                    ${award.isUnlocked
-                                        ? `bg-gradient-to-br ${award.gradient} text-white shadow-lg`
-                                        : "bg-muted text-muted-foreground"}
-                                `}>
-                                    <award.icon className="w-8 h-8" />
+                                <div className="transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3">
+                                    <AwardIcon id={award.iconId} unlocked={award.isUnlocked} size={64} />
                                 </div>
 
                                 {award.isUnlocked ? (
-                                    <div className="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px] sm:text-xs font-bold border border-emerald-500/20">
+                                    <div className="px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full bg-[#3FB6F0]/10 text-[#1C8CC7] text-[10px] sm:text-xs font-bold border border-[#3FB6F0]/20">
                                         UNLOCKED
                                     </div>
                                 ) : (
@@ -192,7 +151,7 @@ export const PortfolioAwards = ({
                         <div className="relative z-10 space-y-2 mt-auto">
                             <div className="flex justify-between text-xs font-medium">
                                 <span className="text-muted-foreground">Progress</span>
-                                <span className={award.isUnlocked ? "text-primary" : "text-muted-foreground"}>
+                                <span className={award.isUnlocked ? "text-[#1C8CC7]" : "text-muted-foreground"}>
                                     {award.isUnlocked ? "Completed" : `${award.currentValue} / ${award.targetValue}`}
                                 </span>
                             </div>
@@ -201,7 +160,8 @@ export const PortfolioAwards = ({
                                     initial={{ width: 0 }}
                                     animate={{ width: `${award.progress}%` }}
                                     transition={{ duration: 1, delay: 0.5 + (index * 0.1) }}
-                                    className={`h-full rounded-full ${award.isUnlocked ? "bg-emerald-500" : "bg-primary/50"}`}
+                                    className="h-full rounded-full"
+                                    style={{ backgroundColor: award.isUnlocked ? "#3FB6F0" : "hsl(var(--primary) / 0.5)" }}
                                 />
                             </div>
                         </div>
