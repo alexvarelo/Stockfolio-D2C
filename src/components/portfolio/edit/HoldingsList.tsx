@@ -1,49 +1,95 @@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Check, Pencil, Trash2, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
 import type { PortfolioHolding } from '@/api/portfolio/portfolio';
 import { CompanyLogo } from '@/components/stock/CompanyLogo';
+import { useToast } from '@/components/ui/use-toast';
 
 type Holding = PortfolioHolding;
 
 interface HoldingsListProps {
   holdings: Holding[];
-  onUpdateHolding: (holding: Holding) => Promise<void>;
-  onDeleteHolding: (ticker: string) => Promise<void>;
+  onUpdateHolding: (_holding: Holding) => Promise<void>;
+  onDeleteHolding: (_ticker: string) => Promise<void>;
   className?: string;
 }
 
-export const HoldingsList = ({ 
-  holdings, 
-  onUpdateHolding, 
+export const HoldingsList = ({
+  holdings,
+  onUpdateHolding,
   onDeleteHolding,
-  className = '' 
+  className = ''
 }: HoldingsListProps) => {
+  const { toast } = useToast();
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editValues, setEditValues] = useState<Partial<Holding>>({});
+  // Kept as raw strings while editing so a momentarily-empty or partial input
+  // (e.g. "1.") doesn't collapse to NaN and silently break the save button.
+  const [quantityInput, setQuantityInput] = useState('');
+  const [priceInput, setPriceInput] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [deletingTicker, setDeletingTicker] = useState<string | null>(null);
 
   const handleEditClick = (holding: Holding) => {
     setEditingId(holding.ticker);
-    setEditValues({ quantity: holding.quantity, average_price: holding.average_price });
+    setQuantityInput(String(holding.quantity));
+    setPriceInput(String(holding.average_price));
+  };
+
+  const handleCancel = () => {
+    setEditingId(null);
+    setQuantityInput('');
+    setPriceInput('');
   };
 
   const handleRemove = async (ticker: string) => {
-    if (confirm('Are you sure you want to remove this holding?')) {
+    if (!confirm(`Remove ${ticker} from this portfolio?`)) return;
+    setDeletingTicker(ticker);
+    try {
       await onDeleteHolding(ticker);
+    } catch {
+      // onDeleteHolding already surfaces its own error toast.
+    } finally {
+      setDeletingTicker(null);
     }
   };
 
-  const handleSave = async (holding: PortfolioHolding) => {
-    if (editValues.quantity && editValues.average_price) {
+  const handleSave = async (holding: Holding) => {
+    const quantity = parseFloat(quantityInput);
+    const averagePrice = parseFloat(priceInput);
+
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      toast({
+        title: 'Invalid quantity',
+        description: 'Enter a quantity greater than 0.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    if (!Number.isFinite(averagePrice) || averagePrice <= 0) {
+      toast({
+        title: 'Invalid price',
+        description: 'Enter an average price greater than 0.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    try {
       await onUpdateHolding({
         ...holding,
-        quantity: editValues.quantity,
-        average_price: editValues.average_price,
-        total_invested: editValues.quantity * editValues.average_price,
+        quantity,
+        average_price: averagePrice,
+        total_invested: quantity * averagePrice,
       });
-      setEditingId(null);
+      handleCancel();
+    } catch {
+      // onUpdateHolding already surfaces its own error toast; keep the row
+      // open so the user doesn't lose their edit and can retry.
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -72,52 +118,60 @@ export const HoldingsList = ({
                   <span>{holding.ticker}</span>
                 </div>
               </TableCell>
-              
+
               {editingId === holding.ticker ? (
                 <>
                   <TableCell>
                     <Input
                       type="number"
-                      min="0.00000001"
-                      step="0.00000001"
-                      value={editValues.quantity || ''}
-                      onChange={(e) => 
-                        setEditValues({...editValues, quantity: parseFloat(e.target.value)})}
+                      min="0"
+                      step="any"
+                      value={quantityInput}
+                      onChange={(e) => setQuantityInput(e.target.value)}
                       className="w-24"
+                      disabled={isSaving}
                     />
                   </TableCell>
                   <TableCell>
                     <Input
                       type="number"
-                      min="0.00000001"
-                      step="0.01"
-                      value={editValues.average_price || ''}
-                      onChange={(e) => 
-                        setEditValues({...editValues, average_price: parseFloat(e.target.value)})}
+                      min="0"
+                      step="any"
+                      value={priceInput}
+                      onChange={(e) => setPriceInput(e.target.value)}
                       className="w-24"
-                      prefix="$"
+                      disabled={isSaving}
                     />
                   </TableCell>
                   <TableCell>
-                    ${((editValues.quantity || 0) * (editValues.average_price || 0)).toFixed(2)}
+                    {(() => {
+                      const q = parseFloat(quantityInput);
+                      const p = parseFloat(priceInput);
+                      const total = Number.isFinite(q) && Number.isFinite(p) ? q * p : 0;
+                      return `$${total.toFixed(2)}`;
+                    })()}
                   </TableCell>
-                  <TableCell className="flex space-x-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleSave(holding)}
-                    >
-                      <span className="sr-only">Save</span>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setEditingId(null)}
-                    >
-                      <span className="sr-only">Cancel</span>
-                      <span className="text-sm">✕</span>
-                    </Button>
+                  <TableCell>
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleSave(holding)}
+                        disabled={isSaving}
+                      >
+                        <span className="sr-only">Save</span>
+                        <Check className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleCancel}
+                        disabled={isSaving}
+                      >
+                        <span className="sr-only">Cancel</span>
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </>
               ) : (
@@ -138,7 +192,8 @@ export const HoldingsList = ({
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => onDeleteHolding(holding.ticker)}
+                        onClick={() => handleRemove(holding.ticker)}
+                        disabled={deletingTicker === holding.ticker}
                         className="text-destructive hover:text-destructive/80"
                       >
                         <span className="sr-only">Delete</span>

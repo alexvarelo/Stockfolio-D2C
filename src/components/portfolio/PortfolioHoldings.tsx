@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import {
   Table,
   TableBody,
@@ -20,6 +21,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CompanyLogo } from "@/components/stock/CompanyLogo";
 import type { RealtimePrice } from "@/api/stock/useRealtimePrices";
 import { usePriceFlash, priceFlashClass } from "@/hooks/usePriceFlash";
+import { ArrowUp, ArrowDown, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface PortfolioHoldingsProps {
   holdings: PortfolioHolding[];
@@ -28,26 +31,71 @@ interface PortfolioHoldingsProps {
   livePrices?: Record<string, RealtimePrice>;
 }
 
-interface HoldingRowProps {
+type SortColumn = "asset" | "price" | "value" | "today" | "return" | "allocation";
+type SortDirection = "asc" | "desc";
+type AllocationBasis = "value" | "invested";
+
+interface Row {
   holding: PortfolioHolding;
   marketValue: number;
   pnl: number;
   pnlPercentage: number;
+  todayChangePercent: number;
   allocation: number;
-  isLive: boolean;
-  isLoadingPrices: boolean;
 }
 
+const SortableHead = ({
+  column,
+  label,
+  align = "right",
+  activeColumn,
+  direction,
+  onSort,
+  className,
+}: {
+  column: SortColumn;
+  label: string;
+  align?: "left" | "right";
+  activeColumn: SortColumn;
+  direction: SortDirection;
+  onSort: (_col: SortColumn) => void;
+  className?: string;
+}) => {
+  const isActive = activeColumn === column;
+  return (
+    <TableHead className={cn("h-12 font-medium", align === "right" && "text-right", className)}>
+      <button
+        type="button"
+        onClick={() => onSort(column)}
+        className={cn(
+          "inline-flex items-center gap-1 transition-colors hover:text-foreground",
+          align === "right" && "flex-row-reverse",
+          isActive ? "text-foreground" : "text-muted-foreground"
+        )}
+      >
+        {label}
+        {isActive ? (
+          direction === "desc" ? <ArrowDown className="h-3 w-3" /> : <ArrowUp className="h-3 w-3" />
+        ) : (
+          <ChevronsUpDown className="h-3 w-3 opacity-40" />
+        )}
+      </button>
+    </TableHead>
+  );
+};
+
 const HoldingRow = ({
-  holding,
-  marketValue,
-  pnl,
-  pnlPercentage,
-  allocation,
+  row,
   isLive,
   isLoadingPrices,
-}: HoldingRowProps) => {
+}: {
+  row: Row;
+  isLive: boolean;
+  isLoadingPrices: boolean;
+}) => {
+  const { holding, marketValue, pnl, pnlPercentage, todayChangePercent, allocation } = row;
   const flash = usePriceFlash(isLive ? holding.current_price : undefined);
+  const isTodayPositive = todayChangePercent >= 0;
 
   return (
     <TableRow className="group hover:bg-muted/30 border-border/50 transition-colors">
@@ -96,13 +144,23 @@ const HoldingRow = ({
       </TableCell>
       <TableCell className="text-right">
         {isLoadingPrices ? (
+          <Skeleton className="h-4 w-16 ml-auto" />
+        ) : (
+          <span className={`text-sm font-medium ${isTodayPositive ? "text-success" : "text-danger"}`}>
+            {isTodayPositive ? "+" : ""}
+            {formatPercentage(todayChangePercent)}
+          </span>
+        )}
+      </TableCell>
+      <TableCell className="text-right">
+        {isLoadingPrices ? (
           <Skeleton className="h-4 w-24 ml-auto" />
         ) : (
           <div className="flex justify-end">
             <div
               className={`flex flex-col items-end ${pnl >= 0
-                ? "text-emerald-500"
-                : "text-red-500"
+                ? "text-success"
+                : "text-danger"
                 }`}
             >
               <span className="font-medium text-sm">
@@ -136,77 +194,141 @@ const HoldingRow = ({
   );
 };
 
+const HoldingsSkeleton = () => (
+  <Card className="flex flex-col border-none shadow-none bg-transparent">
+    <CardHeader className="pb-2 px-0">
+      <div className="flex items-center justify-between">
+        <CardTitle className="text-lg font-medium">Holdings</CardTitle>
+        <Skeleton className="h-4 w-20" />
+      </div>
+    </CardHeader>
+    <CardContent className="p-0">
+      <div className="rounded-3xl border border-border/50 bg-card/50 overflow-hidden shadow-sm">
+        <Table>
+          <TableHeader className="bg-muted/30">
+            <TableRow className="hover:bg-transparent border-b border-border/50">
+              <TableHead className="w-[250px] pl-6 h-12 font-medium">Asset</TableHead>
+              <TableHead className="text-right h-12 font-medium">Price</TableHead>
+              <TableHead className="text-right h-12 font-medium">Value</TableHead>
+              <TableHead className="text-right h-12 font-medium">Today</TableHead>
+              <TableHead className="text-right h-12 font-medium">Return</TableHead>
+              <TableHead className="text-right w-[150px] pr-6 h-12 font-medium">Allocation</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {[...Array(5)].map((_, i) => (
+              <TableRow key={i} className="hover:bg-transparent border-b border-border/50 last:border-0">
+                <TableCell className="pl-6 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-16" />
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex flex-col items-end gap-1">
+                    <Skeleton className="h-4 w-16" />
+                    <Skeleton className="h-3 w-12" />
+                  </div>
+                </TableCell>
+                <TableCell className="text-right">
+                  <Skeleton className="h-4 w-20 ml-auto" />
+                </TableCell>
+                <TableCell className="text-right">
+                  <Skeleton className="h-4 w-14 ml-auto" />
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex flex-col items-end gap-1">
+                    <Skeleton className="h-4 w-16" />
+                    <Skeleton className="h-3 w-10" />
+                  </div>
+                </TableCell>
+                <TableCell className="pr-6">
+                  <div className="flex items-center gap-3 justify-end">
+                    <Skeleton className="h-1.5 w-24 rounded-full" />
+                    <Skeleton className="h-3 w-8" />
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </CardContent>
+  </Card>
+);
+
 export const PortfolioHoldings = ({
   holdings,
   isLoading = false,
   isLoadingPrices = false,
   livePrices = {}
 }: PortfolioHoldingsProps) => {
+  const [sortColumn, setSortColumn] = useState<SortColumn>("allocation");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [allocationBasis, setAllocationBasis] = useState<AllocationBasis>("value");
+
+  const handleSort = (column: SortColumn) => {
+    if (column === sortColumn) {
+      setSortDirection((d) => (d === "desc" ? "asc" : "desc"));
+    } else {
+      setSortColumn(column);
+      setSortDirection("desc");
+    }
+  };
+
+  // Total portfolio value/invested for percentage calculations - basis picks which one the Allocation column is against.
+  const totalValue = holdings.reduce(
+    (sum, holding) => sum + (isLoadingPrices ? holding.total_invested : (holding.current_price || 0) * holding.quantity),
+    0
+  );
+  const totalInvested = holdings.reduce((sum, holding) => sum + holding.total_invested, 0);
+  const allocationTotal = allocationBasis === "value" ? totalValue : totalInvested;
+
+  const rows: Row[] = useMemo(() => {
+    return holdings.map((holding) => {
+      const marketValue = (holding.current_price || 0) * holding.quantity;
+      const pnl = marketValue - holding.total_invested;
+      const pnlPercentage = holding.total_invested > 0 ? (pnl / holding.total_invested) * 100 : 0;
+      const todayChangePercent = holding.today_change_percent || 0;
+      const basisValue = allocationBasis === "value" ? marketValue : holding.total_invested;
+      const allocation = allocationTotal > 0 ? (basisValue / allocationTotal) * 100 : 0;
+
+      return { holding, marketValue, pnl, pnlPercentage, todayChangePercent, allocation };
+    });
+  }, [holdings, allocationBasis, allocationTotal]);
+
+  const sortedRows = useMemo(() => {
+    const sorted = [...rows].sort((a, b) => {
+      let diff = 0;
+      switch (sortColumn) {
+        case "asset":
+          diff = a.holding.ticker.localeCompare(b.holding.ticker);
+          break;
+        case "price":
+          diff = (a.holding.current_price || 0) - (b.holding.current_price || 0);
+          break;
+        case "value":
+          diff = a.marketValue - b.marketValue;
+          break;
+        case "today":
+          diff = a.todayChangePercent - b.todayChangePercent;
+          break;
+        case "return":
+          diff = a.pnlPercentage - b.pnlPercentage;
+          break;
+        case "allocation":
+          diff = a.allocation - b.allocation;
+          break;
+      }
+      return sortDirection === "asc" ? diff : -diff;
+    });
+    return sorted;
+  }, [rows, sortColumn, sortDirection]);
+
   if (isLoading) {
-    return (
-      <Card className="flex flex-col border-none shadow-none bg-transparent">
-        <CardHeader className="pb-2 px-0">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-medium">Holdings</CardTitle>
-            <Skeleton className="h-4 w-20" />
-          </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="rounded-3xl border border-border/50 bg-card/50 overflow-hidden shadow-sm">
-            <Table>
-              <TableHeader className="bg-muted/30">
-                <TableRow className="hover:bg-transparent border-b border-border/50">
-                  <TableHead className="w-[250px] pl-6 h-12 font-medium">Asset</TableHead>
-                  <TableHead className="text-right h-12 font-medium">Price</TableHead>
-                  <TableHead className="text-right h-12 font-medium">Shares</TableHead>
-                  <TableHead className="text-right h-12 font-medium">Balance</TableHead>
-                  <TableHead className="text-right h-12 font-medium">Return</TableHead>
-                  <TableHead className="text-right w-[150px] pr-6 h-12 font-medium">Allocation</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {[...Array(5)].map((_, i) => (
-                  <TableRow key={i} className="hover:bg-transparent border-b border-border/50 last:border-0">
-                    <TableCell className="pl-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="space-y-2">
-                          <Skeleton className="h-4 w-16" />
-                          <Skeleton className="h-3 w-24" />
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex flex-col items-end gap-1">
-                        <Skeleton className="h-4 w-16" />
-                        <Skeleton className="h-3 w-12" />
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Skeleton className="h-4 w-12 ml-auto" />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Skeleton className="h-4 w-20 ml-auto" />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex flex-col items-end gap-1">
-                        <Skeleton className="h-4 w-16" />
-                        <Skeleton className="h-3 w-10" />
-                      </div>
-                    </TableCell>
-                    <TableCell className="pr-6">
-                      <div className="flex items-center gap-3 justify-end">
-                        <Skeleton className="h-1.5 w-24 rounded-full" />
-                        <Skeleton className="h-3 w-8" />
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return <HoldingsSkeleton />;
   }
   if (holdings.length === 0) {
     return (
@@ -221,20 +343,38 @@ export const PortfolioHoldings = ({
     );
   }
 
-  // Calculate total portfolio value for percentage calculations
-  const totalValue = holdings.reduce(
-    (sum, holding) => sum + (isLoadingPrices ? holding.total_invested : (holding.current_price || 0) * holding.quantity),
-    0
-  );
-
   return (
     <Card className="flex flex-col border-none shadow-none bg-transparent">
       <CardHeader className="pb-2 px-0">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle className="text-lg font-medium">Holdings</CardTitle>
-          <CardDescription className="text-xs mr-4">
-            {holdings.length} {holdings.length === 1 ? "asset" : "assets"}
-          </CardDescription>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center rounded-full border border-border/50 bg-muted/30 p-0.5 text-xs">
+              <button
+                type="button"
+                onClick={() => setAllocationBasis("value")}
+                className={cn(
+                  "rounded-full px-2.5 py-1 font-medium transition-colors",
+                  allocationBasis === "value" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground"
+                )}
+              >
+                % of value
+              </button>
+              <button
+                type="button"
+                onClick={() => setAllocationBasis("invested")}
+                className={cn(
+                  "rounded-full px-2.5 py-1 font-medium transition-colors",
+                  allocationBasis === "invested" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground"
+                )}
+              >
+                % of invested
+              </button>
+            </div>
+            <CardDescription className="text-xs">
+              {holdings.length} {holdings.length === 1 ? "asset" : "assets"}
+            </CardDescription>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="p-0">
@@ -242,29 +382,21 @@ export const PortfolioHoldings = ({
           <Table>
             <TableHeader className="bg-muted/30">
               <TableRow className="hover:bg-transparent border-b border-border/50">
-                <TableHead className="w-[250px] pl-6 h-12 font-medium">Asset</TableHead>
-                <TableHead className="text-right h-12 font-medium">Price</TableHead>
-                <TableHead className="text-right h-12 font-medium">Value</TableHead>
-                <TableHead className="text-right w-[150px] pr-6 h-12 font-medium">Gain/Loss</TableHead>
+                <SortableHead column="asset" label="Asset" align="left" activeColumn={sortColumn} direction={sortDirection} onSort={handleSort} className="w-[250px] pl-6" />
+                <SortableHead column="price" label="Price" activeColumn={sortColumn} direction={sortDirection} onSort={handleSort} />
+                <SortableHead column="value" label="Value" activeColumn={sortColumn} direction={sortDirection} onSort={handleSort} />
+                <SortableHead column="today" label="Today" activeColumn={sortColumn} direction={sortDirection} onSort={handleSort} />
+                <SortableHead column="return" label="Return" activeColumn={sortColumn} direction={sortDirection} onSort={handleSort} />
+                <SortableHead column="allocation" label="Allocation" activeColumn={sortColumn} direction={sortDirection} onSort={handleSort} className="w-[150px] pr-6" />
               </TableRow>
             </TableHeader>
             <TableBody>
-              {holdings.map((holding) => {
-                const marketValue =
-                  (holding.current_price || 0) * holding.quantity;
-                const pnl = marketValue - holding.total_invested;
-                const pnlPercentage = holding.total_invested > 0 ? (pnl / holding.total_invested) * 100 : 0;
-                const allocation = totalValue > 0 ? (marketValue / totalValue) * 100 : 0;
-                const isLive = !!livePrices[holding.ticker.toUpperCase()];
-
+              {sortedRows.map((row) => {
+                const isLive = !!livePrices[row.holding.ticker.toUpperCase()];
                 return (
                   <HoldingRow
-                    key={holding.ticker}
-                    holding={holding}
-                    marketValue={marketValue}
-                    pnl={pnl}
-                    pnlPercentage={pnlPercentage}
-                    allocation={allocation}
+                    key={row.holding.ticker}
+                    row={row}
                     isLive={isLive}
                     isLoadingPrices={isLoadingPrices}
                   />
