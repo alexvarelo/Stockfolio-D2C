@@ -11,6 +11,7 @@ import {
 import { formatCurrency } from "@/lib/formatters";
 import { motion } from "framer-motion";
 import { usePriceFlash, priceFlashClass } from "@/hooks/usePriceFlash";
+import { useAnimatedNumber } from "@/hooks/useAnimatedNumber";
 
 interface PortfolioHeroProps {
     portfolioId: string;
@@ -67,6 +68,7 @@ export const PortfolioHero = ({
     const isTodayPositive = todayChange >= 0;
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const flash = usePriceFlash(isLive ? totalValue : undefined);
+    const animatedValue = useAnimatedNumber(totalValue);
 
     const handleEdit = () => {
         setDropdownOpen(false);
@@ -267,8 +269,8 @@ export const PortfolioHero = ({
                                 {isLoadingPrices ? (
                                     <Skeleton className="h-8 w-32 md:h-12 md:w-48" />
                                 ) : (
-                                    <span className={`text-2xl md:text-5xl font-bold tracking-tight rounded px-1 -mx-1 transition-colors duration-700 ${priceFlashClass(flash)}`}>
-                                        {formatCurrency(totalValue, currency)}
+                                    <span className={`text-2xl md:text-5xl font-bold tracking-tight rounded px-1 -mx-1 tabular-nums transition-colors duration-700 ${priceFlashClass(flash)}`}>
+                                        {formatCurrency(animatedValue, currency)}
                                     </span>
                                 )}
                                 {isLive && !isLoadingPrices && (
@@ -283,33 +285,26 @@ export const PortfolioHero = ({
                             </motion.div>
 
                             {/* Desktop Stats (Hidden on Mobile) */}
-                            <div className="hidden md:flex flex-col items-end space-y-2 mt-2">
+                            <div className="hidden md:flex flex-col items-end space-y-1.5 mt-2">
                                 <motion.div
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.2 }}
-                                    className="flex items-center gap-3"
                                 >
                                     {isLoadingPrices ? (
-                                        <>
-                                            <Skeleton className="h-7 w-32 rounded-full" />
-                                            <Skeleton className="h-5 w-16" />
-                                        </>
+                                        <Skeleton className="h-6 w-48" />
                                     ) : (
-                                        <>
-                                            <div className={`
-                                                flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-medium
-                                                ${isPositive
-                                                    ? "bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20"
-                                                    : "bg-red-500/10 text-red-500 dark:bg-red-500/20"}
-                                            `}>
-                                                {isPositive ? <TrendingUp className="h-3.5 w-3.5" /> : <TrendingDown className="h-3.5 w-3.5" />}
-                                                <span>{isPositive ? "+" : ""}{formatCurrency(totalReturn, currency)}</span>
-                                                <span className="opacity-60">|</span>
-                                                <span>{isPositive ? "+" : ""}{returnPercentage.toFixed(2)}%</span>
-                                            </div>
-                                            <span className="text-sm text-muted-foreground">All time</span>
-                                        </>
+                                        <div className="flex items-center gap-1.5 text-sm">
+                                            {isPositive ? <TrendingUp className="h-4 w-4 text-success" /> : <TrendingDown className="h-4 w-4 text-danger" />}
+                                            <span className={`font-semibold tabular-nums ${isPositive ? "text-success" : "text-danger"}`}>
+                                                {isPositive ? "+" : ""}{formatCurrency(totalReturn, currency)}
+                                            </span>
+                                            <span className="text-muted-foreground/50">|</span>
+                                            <span className={`font-semibold tabular-nums ${isPositive ? "text-success" : "text-danger"}`}>
+                                                {isPositive ? "+" : ""}{returnPercentage.toFixed(2)}%
+                                            </span>
+                                            <span className="text-muted-foreground">All time</span>
+                                        </div>
                                     )}
                                 </motion.div>
 
@@ -317,25 +312,21 @@ export const PortfolioHero = ({
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.25 }}
-                                    className="flex items-center gap-3"
                                 >
                                     {isLoadingPrices ? (
-                                        <Skeleton className="h-6 w-40" />
+                                        <Skeleton className="h-5 w-40" />
                                     ) : (
-                                        <>
-                                            <div className={`
-                                                flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium
-                                                ${isTodayPositive
-                                                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                                                    : "bg-red-500/10 text-red-600 dark:text-red-400"}
-                                            `}>
-                                                {isTodayPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                                                <span>{isTodayPositive ? "+" : ""}{formatCurrency(todayChange, currency)}</span>
-                                                <span className="opacity-60">|</span>
-                                                <span>{isTodayPositive ? "+" : ""}{todayChangePercent.toFixed(2)}%</span>
-                                            </div>
-                                            <span className="text-xs text-muted-foreground">Today</span>
-                                        </>
+                                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground/90">
+                                            {isTodayPositive ? <TrendingUp className="h-3.5 w-3.5 text-success" /> : <TrendingDown className="h-3.5 w-3.5 text-danger" />}
+                                            <span className={`font-medium tabular-nums ${isTodayPositive ? "text-success" : "text-danger"}`}>
+                                                {isTodayPositive ? "+" : ""}{formatCurrency(todayChange, currency)}
+                                            </span>
+                                            <span className="text-muted-foreground/50">|</span>
+                                            <span className={`font-medium tabular-nums ${isTodayPositive ? "text-success" : "text-danger"}`}>
+                                                {isTodayPositive ? "+" : ""}{todayChangePercent.toFixed(2)}%
+                                            </span>
+                                            <span>Today</span>
+                                        </div>
                                     )}
                                 </motion.div>
                             </div>
@@ -355,29 +346,29 @@ export const PortfolioHero = ({
                     )}
 
                     {/* Mobile Stats Row (Visible only on Mobile) */}
-                    <div className="flex flex-wrap gap-3 md:hidden">
-                        {/* All Time Return */}
-                        <div className={`
-                            flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium
-                            ${isPositive
-                                ? "bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20"
-                                : "bg-red-500/10 text-red-500 dark:bg-red-500/20"}
-                        `}>
-                            {isPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                            <span>{isPositive ? "+" : ""}{formatCurrency(totalReturn, currency)}</span>
-                            <span className="opacity-60">|</span>
-                            <span>{isPositive ? "+" : ""}{returnPercentage.toFixed(2)}%</span>
+                    <div className="flex flex-col gap-1 md:hidden">
+                        <div className="flex items-center gap-1.5 text-sm">
+                            {isPositive ? <TrendingUp className="h-3.5 w-3.5 text-success" /> : <TrendingDown className="h-3.5 w-3.5 text-danger" />}
+                            <span className={`font-semibold tabular-nums ${isPositive ? "text-success" : "text-danger"}`}>
+                                {isPositive ? "+" : ""}{formatCurrency(totalReturn, currency)}
+                            </span>
+                            <span className="text-muted-foreground/50">|</span>
+                            <span className={`font-semibold tabular-nums ${isPositive ? "text-success" : "text-danger"}`}>
+                                {isPositive ? "+" : ""}{returnPercentage.toFixed(2)}%
+                            </span>
+                            <span className="text-muted-foreground">All time</span>
                         </div>
 
-                        {/* Today Return */}
-                        <div className={`
-                            flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium
-                            ${isTodayPositive
-                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                                : "bg-red-500/10 text-red-600 dark:text-red-400"}
-                        `}>
-                            {isTodayPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                            <span>{isTodayPositive ? "+" : ""}{formatCurrency(todayChange, currency)}</span>
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground/90">
+                            {isTodayPositive ? <TrendingUp className="h-3 w-3 text-success" /> : <TrendingDown className="h-3 w-3 text-danger" />}
+                            <span className={`font-medium tabular-nums ${isTodayPositive ? "text-success" : "text-danger"}`}>
+                                {isTodayPositive ? "+" : ""}{formatCurrency(todayChange, currency)}
+                            </span>
+                            <span className="text-muted-foreground/50">|</span>
+                            <span className={`font-medium tabular-nums ${isTodayPositive ? "text-success" : "text-danger"}`}>
+                                {isTodayPositive ? "+" : ""}{todayChangePercent.toFixed(2)}%
+                            </span>
+                            <span>Today</span>
                         </div>
                     </div>
 

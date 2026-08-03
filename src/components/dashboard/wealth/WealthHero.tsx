@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { formatCurrency } from "@/lib/utils";
 import type { Portfolio } from "@/api/portfolio/usePortfolios";
 import { WealthInsight } from "./WealthInsight";
-import { useCountUp } from "./useCountUp";
+import { useAnimatedNumber } from "@/hooks/useAnimatedNumber";
 
 interface WealthHeroProps {
     portfolios: Portfolio[];
@@ -24,7 +24,7 @@ export const WealthHero = ({ portfolios }: WealthHeroProps) => {
     const isPositive = netProfitLoss >= 0;
     const holdingsCount = portfolios.reduce((sum, p) => sum + (p.holdings_count || 0), 0);
 
-    const animatedValue = useCountUp(totalValue);
+    const animatedValue = useAnimatedNumber(totalValue);
 
     return (
         <motion.div

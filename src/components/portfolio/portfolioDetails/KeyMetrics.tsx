@@ -1,8 +1,9 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PortfolioHolding } from "@/api/portfolio/portfolio";
 import { formatCurrency, formatPercentage } from "@/lib/formatters";
 import { Trophy, TrendingDown, PieChart, DollarSign, Wallet } from "lucide-react";
+import { useAnimatedNumber } from "@/hooks/useAnimatedNumber";
 
 interface KeyMetricsProps {
     holdings: PortfolioHolding[];
@@ -12,6 +13,12 @@ interface KeyMetricsProps {
 }
 
 export const KeyMetrics = ({ holdings, totalInvested, className = "", isLoading }: KeyMetricsProps) => {
+    const totalValue = holdings.reduce((sum, h) => sum + ((h.current_price || 0) * h.quantity), 0);
+    const avgPosition = holdings.length > 0 ? totalValue / holdings.length : 0;
+    // Hooks must run unconditionally, so these are computed before the loading/empty early returns.
+    const animatedTotalInvested = useAnimatedNumber(totalInvested);
+    const animatedAvgPosition = useAnimatedNumber(avgPosition);
+
     if (isLoading) {
         return (
             <div className={`grid grid-cols-2 gap-4 ${className}`}>
@@ -41,7 +48,6 @@ export const KeyMetrics = ({ holdings, totalInvested, className = "", isLoading 
     const bestPerformer = [...holdings].sort((a, b) => (b.change_percent || 0) - (a.change_percent || 0))[0];
     const worstPerformer = [...holdings].sort((a, b) => (a.change_percent || 0) - (b.change_percent || 0))[0];
 
-    const totalValue = holdings.reduce((sum, h) => sum + ((h.current_price || 0) * h.quantity), 0);
     const largestHolding = [...holdings].sort((a, b) =>
         ((b.current_price || 0) * b.quantity) - ((a.current_price || 0) * a.quantity)
     )[0];
@@ -49,7 +55,7 @@ export const KeyMetrics = ({ holdings, totalInvested, className = "", isLoading 
     const metrics = [
         {
             label: "Total Invested",
-            value: formatCurrency(totalInvested),
+            value: formatCurrency(animatedTotalInvested),
             subValue: "capital deployed",
             icon: Wallet,
             color: "text-blue-500",
@@ -85,7 +91,7 @@ export const KeyMetrics = ({ holdings, totalInvested, className = "", isLoading 
         },
         {
             label: "Avg. Position",
-            value: formatCurrency(totalValue / holdings.length),
+            value: formatCurrency(animatedAvgPosition),
             subValue: "per holding",
             icon: DollarSign,
             color: "text-emerald-500",
@@ -106,7 +112,7 @@ export const KeyMetrics = ({ holdings, totalInvested, className = "", isLoading 
                         </div>
                         <div>
                             <p className="text-xs font-medium text-muted-foreground mb-1">{metric.label}</p>
-                            <p className="text-lg font-bold tracking-tight truncate">{metric.value}</p>
+                            <p className="text-lg font-bold tracking-tight tabular-nums truncate">{metric.value}</p>
                             <p className={`text-xs font-medium mt-1 ${metric.label === "Worst Performer" || metric.label === "Best Performer" ?
                                 (metric.isPositive ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400") :
                                 "text-muted-foreground"
