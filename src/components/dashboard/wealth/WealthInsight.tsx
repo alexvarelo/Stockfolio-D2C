@@ -4,7 +4,7 @@ import { StockyLogo } from "@/components/brand/StockyLogo";
 import { useCustomerHoldings } from "@/api/portfolio/useCustomerHoldings";
 import { formatCurrency } from "@/lib/utils";
 import { formatPercentage } from "@/lib/formatters";
-import { useTypewriterRotation } from "./useTypewriterRotation";
+import { useTypewriterRotation } from "@/hooks/useTypewriterRotation";
 
 export const WealthInsight = () => {
     const { data: holdings, isLoading } = useCustomerHoldings({ includeMarketData: true });
