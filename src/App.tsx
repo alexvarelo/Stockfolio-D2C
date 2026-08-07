@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "sonner";
 import PostNotifications from "./components/notifications/PostNotifications";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import Dashboard from "./pages/Dashboard";
@@ -11,6 +11,8 @@ import Portfolios from "./pages/Portfolios";
 import { PortfolioDetail } from "./pages/PortfolioDetail";
 import { InstrumentPage } from "./pages/InstrumentPage";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
+import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
 import { Navbar } from "@/components/navigation/Navbar";
 import { ThemeProvider } from "@/contexts/ThemeContext";
@@ -45,14 +47,19 @@ const queryClient = new QueryClient({
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, userProfile, profileLoading } = useAuth();
+  const location = useLocation();
 
-  if (loading) {
+  if (loading || (user && profileLoading)) {
     return <DashboardSkeleton />;
   }
 
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  if (!userProfile && location.pathname !== "/onboarding") {
+    return <Navigate to="/onboarding" replace />;
   }
 
   return <>{children}</>;
@@ -108,6 +115,15 @@ const App = () => (
             <BrowserRouter>
               <Routes>
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route
+                  path="/onboarding"
+                  element={
+                    <ProtectedRoute>
+                      <Onboarding />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route
                   path="/"
                   element={<Navigate to="/dashboard" replace />}

@@ -1,6 +1,5 @@
 import { motion, Variants } from "framer-motion";
 import { useAuth } from "@/lib/auth";
-import { UserOnboardingWizard } from "@/components/onboarding/UserOnboardingWizard";
 import { DashboardPosts } from "@/components/dashboard/DashboardPosts";
 import { CreatePost } from "@/components/social/CreatePost";
 import { useQueryClient } from "@tanstack/react-query";
@@ -90,8 +89,6 @@ const Dashboard = () => {
           </motion.div>
         </div>
       </div>
-
-      <UserOnboardingWizard />
     </motion.div>
   );
 };
