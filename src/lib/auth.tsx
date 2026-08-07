@@ -17,11 +17,15 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  profileLoading: boolean;
   userProfile: UserProfile | null;
-  signUp: (email: string, password: string, fullName: string, username: string) => Promise<{ error: any }>;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signUp: (_email: string, _password: string, _fullName: string, _username: string) => Promise<{ error: unknown }>;
+  signIn: (_email: string, _password: string) => Promise<{ error: unknown }>;
   signOut: () => Promise<void>;
   refetchUserProfile: () => Promise<void>;
+  resetPassword: (_email: string) => Promise<{ error: unknown }>;
+  updatePassword: (_newPassword: string) => Promise<{ error: unknown }>;
+  signInWithGoogle: () => Promise<{ error: unknown }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,11 +34,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(true);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const { toast } = useToast();
 
   // Fetch user profile from public.users
   const fetchUserProfile = async (userId: string) => {
+    setProfileLoading(true);
     const { data, error } = await supabase
       .from('users')
       .select('id, username, full_name, email, avatar_url, bio, website')
@@ -45,6 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } else {
       setUserProfile(null);
     }
+    setProfileLoading(false);
   };
 
   useEffect(() => {
@@ -57,6 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           fetchUserProfile(session.user.id);
         } else {
           setUserProfile(null);
+          setProfileLoading(false);
         }
         setLoading(false);
       }
@@ -70,6 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         fetchUserProfile(session.user.id);
       } else {
         setUserProfile(null);
+        setProfileLoading(false);
       }
       setLoading(false);
     });
@@ -144,7 +153,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       return { data, error: null };
-    } catch (error: any) {
+    } catch (error) {
       console.error('Unexpected error during signup:', error);
       toast({
         title: 'Unexpected Error',
@@ -189,22 +198,76 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const resetPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+
+    if (error) {
+      toast({
+        title: "Couldn't send reset email",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+
+    return { error };
+  };
+
+  const updatePassword = async (newPassword: string) => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+
+    if (error) {
+      toast({
+        title: "Couldn't update password",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+
+    return { error };
+  };
+
+  const signInWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin,
+      },
+    });
+
+    if (error) {
+      toast({
+        title: "Couldn't sign in with Google",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+
+    return { error };
+  };
+
   return (
     <AuthContext.Provider value={{
       user,
       session,
       loading,
+      profileLoading,
       userProfile,
       signUp,
       signIn,
       signOut,
       refetchUserProfile,
+      resetPassword,
+      updatePassword,
+      signInWithGoogle,
     }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {

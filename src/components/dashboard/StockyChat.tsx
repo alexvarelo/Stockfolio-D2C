@@ -11,9 +11,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import {
     Loader2,
-    ChevronDown,
-    ChevronUp,
-    Terminal,
     Plus,
     PanelLeftClose,
     Copy,
@@ -29,6 +26,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import ReactMarkdown from "react-markdown";
 import { StockyLogo } from "@/components/brand/StockyLogo";
+import { useTheme } from "@/contexts/ThemeContext";
 import { StockCard } from "@/components/chat/visuals/StockCard";
 import { StockChart } from "@/components/chat/visuals/StockChart";
 import { VoiceInputButton } from "@/components/chat/VoiceInputButton";
@@ -108,8 +106,8 @@ function normalizeHistoryResult(result: HistoryResult): ChartSeries {
 // Skeleton shown while a visual block is still streaming or its data hasn't arrived
 function VisualPlaceholder({ label }: { label?: string }) {
     return (
-        <div className="w-full h-24 my-3 rounded-2xl border border-gray-100 bg-gradient-to-br from-gray-50 to-gray-100/60 animate-pulse flex items-center justify-center">
-            <span className="text-xs text-gray-400 font-medium">
+        <div className="w-full h-24 my-3 rounded-2xl border border-border bg-muted/50 animate-pulse flex items-center justify-center">
+            <span className="text-xs text-muted-foreground font-medium">
                 {label ? `Preparing ${label}…` : 'Preparing visual…'}
             </span>
         </div>
@@ -122,75 +120,6 @@ const PREDEFINED_PROMPTS = [
     { label: "Diversification ideas", icon: "lightbulb" },
     { label: "Market news summary", icon: "news" },
 ];
-
-function ToolResponse({ content, toolName }: { content: string; toolName?: string }) {
-    const [isExpanded, setIsExpanded] = React.useState(false);
-    const [copied, setCopied] = React.useState(false);
-
-    let jsonContent: unknown = null;
-    try {
-        jsonContent = JSON.parse(content);
-    } catch {
-        jsonContent = content;
-    }
-
-    const handleCopy = () => {
-        const text = typeof jsonContent === 'string' ? jsonContent : JSON.stringify(jsonContent, null, 2);
-        navigator.clipboard.writeText(text);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
-
-    return (
-        <div className="w-full bg-gray-50/80 border border-gray-100 rounded-2xl overflow-hidden">
-            <button
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-gray-100/50 transition-colors text-gray-500 group"
-            >
-                <div className="flex items-center gap-2">
-                    <Terminal className="w-3.5 h-3.5" />
-                    <span className="text-xs font-medium">
-                        {toolName?.replace(/_/g, ' ') || "Tool Output"}
-                    </span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                    <button
-                        className="h-6 w-6 flex items-center justify-center rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-200/50"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleCopy();
-                        }}
-                    >
-                        {copied ? (
-                            <CheckCircle className="w-3 h-3 text-emerald-500" />
-                        ) : (
-                            <Copy className="w-3 h-3" />
-                        )}
-                    </button>
-                    {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                </div>
-            </button>
-            <AnimatePresence>
-                {isExpanded && (
-                    <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
-                    >
-                        <div className="px-4 pb-3 border-t border-gray-100">
-                            <pre className="mt-2 text-[13px] font-mono leading-relaxed overflow-x-auto p-3 bg-gray-900 text-gray-100 rounded-xl max-h-[200px]">
-                                {typeof jsonContent === 'string'
-                                    ? jsonContent
-                                    : JSON.stringify(jsonContent, null, 2)}
-                            </pre>
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </div>
-    );
-}
 
 function MessageActions({
     message,
@@ -216,12 +145,12 @@ function MessageActions({
     return (
         <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity mt-1">
             <button
-                className="h-7 w-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                className="h-7 w-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                 onClick={handleCopy}
                 title="Copy"
             >
                 {copied ? (
-                    <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
+                    <CheckCircle className="w-3.5 h-3.5 text-success" />
                 ) : (
                     <Copy className="w-3.5 h-3.5" />
                 )}
@@ -249,6 +178,8 @@ function MessageActions({
 
 export function StockyChat({ open, onOpenChange }: StockyChatProps) {
     const { user } = useAuth();
+    const { resolvedTheme } = useTheme();
+    const isDark = resolvedTheme === "dark";
     const [input, setInput] = useState("");
     const [messages, setMessages] = useState<Message[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -577,31 +508,31 @@ export function StockyChat({ open, onOpenChange }: StockyChatProps) {
         <Sheet open={open} onOpenChange={onOpenChange}>
             <SheetContent
                 side="right"
-                className="w-full sm:max-w-2xl p-0 flex flex-col bg-[#f8f8f7] border-l border-gray-200/60"
+                className="w-full sm:max-w-2xl p-0 flex flex-col bg-background border-l border-border"
             >
                 {/* Header */}
-                <SheetHeader className="px-5 py-4 border-b border-gray-200/60 shrink-0 bg-white">
+                <SheetHeader className="px-5 py-4 border-b border-border shrink-0 bg-card">
                     <div className="flex items-center justify-between w-full">
                         <div className="flex items-center gap-2.5">
                             <button
                                 onClick={() => setIsHistoryOpen(!isHistoryOpen)}
-                                className="h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+                                className="h-8 w-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                             >
                                 {isHistoryOpen ? <PanelLeftClose className="w-4 h-4" /> : <History className="w-4 h-4" />}
                             </button>
-                            <StockyLogo variant="ink" size={32} className="shadow-sm rounded-lg" />
+                            <StockyLogo variant={isDark ? "paper" : "ink"} size={32} className="shadow-sm rounded-lg" />
                             <div>
-                                <SheetTitle className="text-[16px] font-semibold text-gray-900 leading-tight">
+                                <SheetTitle className="text-[16px] font-semibold text-foreground leading-tight">
                                     Stocky
                                 </SheetTitle>
-                                <SheetDescription className="text-[13px] text-gray-400 leading-tight">
+                                <SheetDescription className="text-[13px] text-muted-foreground leading-tight">
                                     Financial Assistant
                                 </SheetDescription>
                             </div>
                         </div>
                         <button
                             onClick={startNewChat}
-                            className="h-8 px-3 mr-6 flex items-center gap-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 bg-gray-50 hover:bg-gray-100 hover:text-gray-800 transition-colors"
+                            className="h-8 px-3 mr-6 flex items-center gap-1.5 rounded-lg border border-border text-xs font-medium text-muted-foreground bg-muted hover:bg-muted/70 hover:text-foreground transition-colors"
                         >
                             <Plus className="w-3.5 h-3.5" />
                             New
@@ -618,13 +549,13 @@ export function StockyChat({ open, onOpenChange }: StockyChatProps) {
                                 animate={{ width: 240, opacity: 1 }}
                                 exit={{ width: 0, opacity: 0 }}
                                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                className="h-full border-r border-gray-200/60 bg-white flex flex-col shrink-0"
+                                className="h-full border-r border-border bg-card flex flex-col shrink-0"
                             >
                                 <div className="p-3 flex-1 overflow-y-auto">
                                     <div className="space-y-0.5">
-                                        <p className="text-[13px] font-semibold uppercase tracking-widest text-gray-300 px-2.5 mb-2">History</p>
+                                        <p className="text-[13px] font-semibold uppercase tracking-widest text-muted-foreground px-2.5 mb-2">History</p>
                                         {conversations.length === 0 ? (
-                                            <div className="px-3 py-8 text-center text-xs text-gray-400">
+                                            <div className="px-3 py-8 text-center text-xs text-muted-foreground">
                                                 No conversations yet
                                             </div>
                                         ) : (
@@ -635,14 +566,14 @@ export function StockyChat({ open, onOpenChange }: StockyChatProps) {
                                                     className={cn(
                                                         "w-full text-left px-2.5 py-2 rounded-xl text-[13px] transition-all",
                                                         conversationId === conv.id
-                                                            ? "bg-gray-100 text-gray-900 font-medium"
-                                                            : "text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                                                            ? "bg-muted text-foreground font-medium"
+                                                            : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                                                     )}
                                                 >
                                                     <span className="line-clamp-1 block">
                                                         {conv.title || "New Conversation"}
                                                     </span>
-                                                    <span className="text-[13px] text-gray-400 mt-0.5 block">
+                                                    <span className="text-[13px] text-muted-foreground mt-0.5 block">
                                                         {new Date(conv.updated_at || "").toLocaleDateString(undefined, {
                                                             month: 'short',
                                                             day: 'numeric',
@@ -665,8 +596,8 @@ export function StockyChat({ open, onOpenChange }: StockyChatProps) {
                                     /* Empty State */
                                     <div className="flex flex-col justify-end min-h-[calc(100vh-280px)]">
                                         <div className="space-y-6">
-                                            <div>
-                                                <h2 className="text-[32px] font-bold text-gray-900 leading-tight tracking-tight">
+            <div>
+                                                <h2 className="text-[32px] font-bold text-foreground leading-tight tracking-tight">
                                                     What do you<br />need?
                                                 </h2>
                                             </div>
@@ -675,7 +606,7 @@ export function StockyChat({ open, onOpenChange }: StockyChatProps) {
                                                     <button
                                                         key={prompt.label}
                                                         onClick={() => handleSend(prompt.label)}
-                                                        className="px-4 py-2.5 bg-white border border-gray-200/80 rounded-2xl text-[13px] text-gray-600 font-medium hover:bg-gray-50 hover:border-gray-300 transition-all hover:shadow-sm active:scale-[0.98]"
+                                                        className="px-4 py-2.5 bg-card border border-border rounded-2xl text-[13px] text-muted-foreground font-medium hover:bg-muted hover:border-border transition-all hover:shadow-sm active:scale-[0.98]"
                                                     >
                                                         {prompt.label}
                                                     </button>
@@ -686,7 +617,13 @@ export function StockyChat({ open, onOpenChange }: StockyChatProps) {
                                 ) : (
                                     /* Messages */
                                     <div className="space-y-4 pb-4">
-                                        {messages.map((message) => (
+                                        {messages
+                                            .filter((m) => m.role !== "tool")
+                                            // An assistant message starts as an empty "sending" placeholder
+                                            // until the first chunk arrives - render the loading indicator
+                                            // instead of an empty bubble for that gap.
+                                            .filter((m) => !(m.role === "assistant" && m.status === "sending" && !m.content))
+                                            .map((message) => (
                                             <motion.div
                                                 key={message.id}
                                                 initial={{ opacity: 0, y: 8 }}
@@ -699,19 +636,19 @@ export function StockyChat({ open, onOpenChange }: StockyChatProps) {
                                             >
                                                 {message.role === "user" ? (
                                                     <div className="max-w-[85%]">
-                                                        <div className="bg-gray-900 text-white px-4 py-2.5 rounded-2xl rounded-br-md text-[14px] leading-relaxed">
+                                                        <div className="bg-foreground text-background px-4 py-2.5 rounded-2xl rounded-br-md text-[14px] leading-relaxed">
                                                             {message.content}
                                                         </div>
                                                     </div>
                                                 ) : message.status === "error" ? (
                                                     <div className="w-full max-w-[90%]">
-                                                        <div className="bg-red-50 border border-red-100 rounded-2xl p-4">
+                                                        <div className="bg-danger-light border border-danger/20 rounded-2xl p-4">
                                                             <div className="flex gap-2.5">
-                                                                <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                                                                <AlertCircle className="w-4 h-4 text-danger shrink-0 mt-0.5" />
                                                                 <div className="flex-1">
-                                                                    <p className="text-[13px] text-red-600 mb-2">{message.error || message.content}</p>
+                                                                    <p className="text-[13px] text-danger mb-2">{message.error || message.content}</p>
                                                                     <button
-                                                                        className="text-[13px] font-medium text-red-500 hover:text-red-700 flex items-center gap-1 transition-colors"
+                                                                        className="text-[13px] font-medium text-danger hover:opacity-80 flex items-center gap-1 transition-opacity"
                                                                         onClick={() => handleRegenerate(message.id)}
                                                                         disabled={regeneratingId === message.id}
                                                                     >
@@ -725,27 +662,20 @@ export function StockyChat({ open, onOpenChange }: StockyChatProps) {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                ) : message.role === "tool" ? (
-                                                    <div className="w-full max-w-[90%]">
-                                                        <ToolResponse
-                                                            content={message.content}
-                                                            toolName={message.tool_name}
-                                                        />
-                                                    </div>
                                                 ) : (
                                                     /* Assistant message */
                                                     <div className="w-full max-w-[90%]">
-                                                        <div className="bg-white border border-gray-100 rounded-2xl rounded-bl-md px-4 py-3 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
-                                                            <div className="prose prose-sm max-w-none prose-headings:text-gray-900 prose-headings:font-semibold prose-p:text-gray-600 prose-p:leading-relaxed prose-li:text-gray-600 prose-strong:text-gray-900 prose-strong:font-semibold">
+                                                        <div className="bg-card border border-border rounded-2xl rounded-bl-md px-4 py-3 shadow-sm">
+                                                            <div className="prose prose-sm max-w-none prose-headings:text-foreground prose-headings:font-semibold prose-p:text-muted-foreground prose-p:leading-relaxed prose-li:text-muted-foreground prose-strong:text-foreground prose-strong:font-semibold">
                                                                 <ReactMarkdown
                                                                     components={{
-                                                                        h1: ({ ...props }) => <h1 className="text-lg font-bold mt-4 mb-2 text-gray-900" {...props} />,
-                                                                        h2: ({ ...props }) => <h2 className="text-base font-bold mt-3 mb-1.5 text-gray-900" {...props} />,
-                                                                        h3: ({ ...props }) => <h3 className="text-sm font-bold mt-2.5 mb-1 text-gray-900" {...props} />,
-                                                                        p: ({ ...props }) => <p className="mb-2.5 text-[14px] text-gray-600 leading-relaxed last:mb-0" {...props} />,
+                                                                        h1: ({ ...props }) => <h1 className="text-lg font-bold mt-4 mb-2 text-foreground" {...props} />,
+                                                                        h2: ({ ...props }) => <h2 className="text-base font-bold mt-3 mb-1.5 text-foreground" {...props} />,
+                                                                        h3: ({ ...props }) => <h3 className="text-sm font-bold mt-2.5 mb-1 text-foreground" {...props} />,
+                                                                        p: ({ ...props }) => <p className="mb-2.5 text-[14px] text-muted-foreground leading-relaxed last:mb-0" {...props} />,
                                                                         ul: ({ ...props }) => <ul className="list-disc pl-4 mb-3 space-y-1" {...props} />,
                                                                         ol: ({ ...props }) => <ol className="list-decimal pl-4 mb-3 space-y-1" {...props} />,
-                                                                        li: ({ ...props }) => <li className="text-[14px] text-gray-600 leading-relaxed" {...props} />,
+                                                                        li: ({ ...props }) => <li className="text-[14px] text-muted-foreground leading-relaxed" {...props} />,
                                                                         code: ({ inline, className, children, ...props }: { inline?: boolean; className?: string; children?: React.ReactNode }) => {
                                                                             // [\w-] so hyphenated languages like stock-chart match
                                                                             const match = /language-([\w-]+)/.exec(className || '');
@@ -793,42 +723,42 @@ export function StockyChat({ open, onOpenChange }: StockyChatProps) {
                                                                             }
 
                                                                             return inline ? (
-                                                                                <code className="bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded-md text-[13px] font-mono" {...props}>
+                                                                                <code className="bg-muted text-foreground px-1.5 py-0.5 rounded-md text-[13px] font-mono" {...props}>
                                                                                     {children}
                                                                                 </code>
                                                                             ) : (
-                                                                                <pre className="bg-gray-900 text-gray-100 p-4 rounded-xl overflow-x-auto my-3 whitespace-pre-wrap font-mono text-[13px] leading-relaxed">
+                                                                                <pre className="bg-foreground text-background p-4 rounded-xl overflow-x-auto my-3 whitespace-pre-wrap font-mono text-[13px] leading-relaxed">
                                                                                     <code className={className} {...props}>
                                                                                         {children}
                                                                                     </code>
                                                                                 </pre>
                                                                             );
                                                                         },
-                                                                        blockquote: ({ ...props }) => <blockquote className="border-l-2 border-gray-200 pl-3 my-3 text-gray-500 italic" {...props} />,
-                                                                        hr: ({ ...props }) => <hr className="my-4 border-gray-100" {...props} />,
+                                                                        blockquote: ({ ...props }) => <blockquote className="border-l-2 border-border pl-3 my-3 text-muted-foreground italic" {...props} />,
+                                                                        hr: ({ ...props }) => <hr className="my-4 border-border" {...props} />,
                                                                         a: ({ ...props }) => (
-                                                                            <a className="text-indigo-600 hover:text-indigo-800 no-underline hover:underline transition-colors inline-flex items-center gap-0.5" {...props}>
+                                                                            <a className="text-[#376cd5] hover:text-[#3a40c4] no-underline hover:underline transition-colors inline-flex items-center gap-0.5" {...props}>
                                                                                 {props.children}
                                                                                 <ArrowUpRight className="w-3 h-3 inline" />
                                                                             </a>
                                                                         ),
                                                                         table: ({ ...props }) => (
-                                                                            <div className="w-full overflow-hidden rounded-xl border border-gray-100 my-3">
+                                                                            <div className="w-full overflow-hidden rounded-xl border border-border my-3">
                                                                                 <div className="overflow-x-auto">
-                                                                                    <table className="w-full text-[13px] text-left text-gray-600" {...props} />
+                                                                                    <table className="w-full text-[13px] text-left text-muted-foreground" {...props} />
                                                                                 </div>
                                                                             </div>
                                                                         ),
-                                                                        thead: ({ ...props }) => <thead className="text-[13px] text-gray-400 uppercase bg-gray-50/80" {...props} />,
-                                                                        tbody: ({ ...props }) => <tbody className="divide-y divide-gray-50" {...props} />,
-                                                                        th: ({ ...props }) => <th className="px-3 py-2 font-medium text-gray-500 whitespace-nowrap" {...props} />,
+                                                                        thead: ({ ...props }) => <thead className="text-[13px] text-muted-foreground uppercase bg-muted/50" {...props} />,
+                                                                        tbody: ({ ...props }) => <tbody className="divide-y divide-border" {...props} />,
+                                                                        th: ({ ...props }) => <th className="px-3 py-2 font-medium text-muted-foreground whitespace-nowrap" {...props} />,
                                                                         td: ({ ...props }) => <td className="px-3 py-2" {...props} />,
                                                                     }}
                                                                 >
                                                                     {message.content}
                                                                 </ReactMarkdown>
                                                                 {message.status === "sending" && (
-                                                                    <span className="inline-block w-1.5 h-4 bg-indigo-400 rounded-full animate-pulse ml-0.5 -mb-0.5" />
+                                                                    <span className="inline-block w-1.5 h-4 bg-primary rounded-full animate-pulse ml-0.5 -mb-0.5" />
                                                                 )}
                                                             </div>
                                                         </div>
@@ -849,19 +779,19 @@ export function StockyChat({ open, onOpenChange }: StockyChatProps) {
                                                 initial={{ opacity: 0, y: 8 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                             >
-                                                <div className="bg-gradient-to-br from-blue-50 via-indigo-50/50 to-sky-50 border border-blue-100/50 rounded-2xl rounded-bl-md px-5 py-4 max-w-[85%] shadow-sm">
+                                                <div className="bg-primary/5 border border-primary/15 rounded-2xl rounded-bl-md px-5 py-4 max-w-[85%] shadow-sm">
                                                     <div className="flex items-center gap-2.5">
                                                         {streamingToolName ? (
                                                             <>
-                                                                <Wrench className="w-4 h-4 text-indigo-400 animate-[spin_2s_linear_infinite]" />
-                                                                <span className="text-[13px] text-indigo-500 font-medium">
+                                                                <Wrench className="w-4 h-4 text-primary animate-[spin_2s_linear_infinite]" />
+                                                                <span className="text-[13px] text-primary font-medium">
                                                                     {streamingToolName.replace(/_/g, ' ')}...
                                                                 </span>
                                                             </>
                                                         ) : (
                                                             <>
-                                                                <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
-                                                                <span className="text-[13px] text-indigo-400 font-medium">Working...</span>
+                                                                <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                                                                <span className="text-[13px] text-primary font-medium">Working...</span>
                                                             </>
                                                         )}
                                                     </div>
@@ -880,7 +810,7 @@ export function StockyChat({ open, onOpenChange }: StockyChatProps) {
                                 onSubmit={(e) => { e.preventDefault(); handleSend(); }}
                                 className="relative"
                             >
-                                <div className="bg-white border border-gray-200/80 rounded-2xl shadow-sm transition-all focus-within:border-gray-300 focus-within:shadow-md">
+                                <div className="bg-card border border-border rounded-2xl shadow-sm transition-all focus-within:border-ring focus-within:shadow-md">
                                     <textarea
                                         ref={inputRef}
                                         placeholder="Ask for anything..."
@@ -893,7 +823,7 @@ export function StockyChat({ open, onOpenChange }: StockyChatProps) {
                                             }
                                         }}
                                         disabled={isLoading}
-                                        className="w-full bg-transparent border-none focus:ring-0 text-[14px] text-gray-800 placeholder:text-gray-400 px-4 pt-3.5 pb-12 min-h-[52px] resize-none max-h-[160px] outline-none"
+                                        className="w-full bg-transparent border-none focus:ring-0 text-[14px] text-foreground placeholder:text-muted-foreground px-4 pt-3.5 pb-12 min-h-[52px] resize-none max-h-[160px] outline-none"
                                         rows={1}
                                     />
                                     <div className="absolute bottom-2.5 right-2.5 flex items-center gap-1">
@@ -908,8 +838,8 @@ export function StockyChat({ open, onOpenChange }: StockyChatProps) {
                                             className={cn(
                                                 "h-9 w-9 rounded-xl flex items-center justify-center transition-all",
                                                 input.trim() && !isLoading
-                                                    ? "bg-gray-900 text-white hover:bg-gray-800 shadow-sm active:scale-95"
-                                                    : "bg-gray-100 text-gray-400"
+                                                    ? "bg-foreground text-background hover:opacity-90 shadow-sm active:scale-95"
+                                                    : "bg-muted text-muted-foreground"
                                             )}
                                         >
                                             {isLoading ? (

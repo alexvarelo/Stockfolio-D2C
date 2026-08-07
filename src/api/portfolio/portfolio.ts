@@ -432,11 +432,16 @@ const updatePortfolioHoldings = async (
   }
 
   if (existingHolding) {
-    // Update existing holding
+    // Update existing holding - whitelist columns explicitly (mirrors the
+    // insert branch below) so a caller can never pass through a stray field
+    // (e.g. a joined/computed value like current_price) that isn't a real
+    // column on this table.
     const { data, error } = await supabase
       .from("holdings")
       .update({
-        ...updates,
+        quantity: updates.quantity || 0,
+        total_invested: updates.total_invested || 0,
+        average_price: updates.average_price || 0,
         updated_at: new Date().toISOString(),
       })
       .eq("id", existingHolding.id)

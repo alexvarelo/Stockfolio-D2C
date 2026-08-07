@@ -182,16 +182,30 @@ export const Navbar = () => {
         <SearchButtonWithDialog />
         <ThemeToggle />
         {userProfile?.id && (
-          <button onClick={() => navigate(`/user/${userProfile.id}`)}>
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={userProfile.avatar_url} alt={userProfile.full_name || 'User'} />
-              <AvatarFallback className="text-xs">
-                {userProfile.full_name
-                  ? userProfile.full_name.charAt(0).toUpperCase()
-                  : userProfile.email?.charAt(0).toUpperCase() || 'U'}
-              </AvatarFallback>
-            </Avatar>
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button>
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={userProfile.avatar_url} alt={userProfile.full_name || 'User'} />
+                  <AvatarFallback className="text-xs">
+                    {userProfile.full_name
+                      ? userProfile.full_name.charAt(0).toUpperCase()
+                      : userProfile.email?.charAt(0).toUpperCase() || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={() => navigate(`/user/${userProfile.id}`)}>
+                <User className="mr-2 h-4 w-4" />
+                <span>My Profile</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleSignOut}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Sign out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
       </header>
     </>
