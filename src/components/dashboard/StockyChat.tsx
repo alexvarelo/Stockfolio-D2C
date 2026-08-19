@@ -20,7 +20,8 @@ import {
     CheckCircle,
     Wrench,
     ArrowUpRight,
-    History
+    History,
+    X
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -508,20 +509,21 @@ export function StockyChat({ open, onOpenChange }: StockyChatProps) {
         <Sheet open={open} onOpenChange={onOpenChange}>
             <SheetContent
                 side="right"
+                hideCloseButton
                 className="w-full sm:max-w-2xl p-0 flex flex-col bg-background border-l border-border"
             >
                 {/* Header */}
                 <SheetHeader className="px-5 py-4 border-b border-border shrink-0 bg-card">
-                    <div className="flex items-center justify-between w-full">
-                        <div className="flex items-center gap-2.5">
+                    <div className="flex items-center justify-between w-full gap-2">
+                        <div className="flex items-center gap-2.5 min-w-0">
                             <button
                                 onClick={() => setIsHistoryOpen(!isHistoryOpen)}
-                                className="h-8 w-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                                className="h-8 w-8 shrink-0 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                             >
                                 {isHistoryOpen ? <PanelLeftClose className="w-4 h-4" /> : <History className="w-4 h-4" />}
                             </button>
-                            <StockyLogo variant={isDark ? "paper" : "ink"} size={32} className="shadow-sm rounded-lg" />
-                            <div>
+                            <StockyLogo variant={isDark ? "paper" : "ink"} size={32} className="shadow-sm rounded-lg shrink-0" />
+                            <div className="min-w-0">
                                 <SheetTitle className="text-[16px] font-semibold text-foreground leading-tight">
                                     Stocky
                                 </SheetTitle>
@@ -530,13 +532,22 @@ export function StockyChat({ open, onOpenChange }: StockyChatProps) {
                                 </SheetDescription>
                             </div>
                         </div>
-                        <button
-                            onClick={startNewChat}
-                            className="h-8 px-3 mr-6 flex items-center gap-1.5 rounded-lg border border-border text-xs font-medium text-muted-foreground bg-muted hover:bg-muted/70 hover:text-foreground transition-colors"
-                        >
-                            <Plus className="w-3.5 h-3.5" />
-                            New
-                        </button>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                                onClick={startNewChat}
+                                className="h-8 px-3 flex items-center gap-1.5 rounded-lg border border-border text-xs font-medium text-muted-foreground bg-muted hover:bg-muted/70 hover:text-foreground transition-colors"
+                            >
+                                <Plus className="w-3.5 h-3.5" />
+                                New
+                            </button>
+                            <button
+                                onClick={() => onOpenChange(false)}
+                                className="h-8 w-8 shrink-0 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                            >
+                                <X className="w-4 h-4" />
+                                <span className="sr-only">Close</span>
+                            </button>
+                        </div>
                     </div>
                 </SheetHeader>
 

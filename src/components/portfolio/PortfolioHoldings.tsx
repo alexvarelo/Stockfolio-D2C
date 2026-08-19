@@ -194,6 +194,92 @@ const HoldingRow = ({
   );
 };
 
+const HoldingCard = ({
+  row,
+  isLive,
+  isLoadingPrices,
+}: {
+  row: Row;
+  isLive: boolean;
+  isLoadingPrices: boolean;
+}) => {
+  const { holding, marketValue, pnl, pnlPercentage, todayChangePercent, allocation } = row;
+  const flash = usePriceFlash(isLive ? holding.current_price : undefined);
+  const isTodayPositive = todayChangePercent >= 0;
+  const isReturnPositive = pnl >= 0;
+
+  return (
+    <Link
+      to={`/instrument/${holding.ticker}`}
+      className="block rounded-2xl border border-border/50 bg-card/50 p-4 active:bg-muted/40 transition-colors"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <CompanyLogo ticker={holding.ticker} size={32} />
+          <div className="flex flex-col min-w-0">
+            <span className="font-semibold text-sm">{holding.ticker}</span>
+            <span className="text-xs text-muted-foreground">
+              {holding.quantity.toLocaleString()} shares
+            </span>
+          </div>
+        </div>
+        <div className="flex flex-col items-end shrink-0">
+          {isLoadingPrices ? (
+            <Skeleton className="h-4 w-20" />
+          ) : (
+            <span className="font-semibold text-sm">{formatCurrency(marketValue, holding.currency)}</span>
+          )}
+          <span className={`text-xs font-medium ${isTodayPositive ? "text-success" : "text-danger"}`}>
+            {isTodayPositive ? "+" : ""}{formatPercentage(todayChangePercent)} today
+          </span>
+        </div>
+      </div>
+
+      <div className="mt-3 flex items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-1.5">
+          {isLoadingPrices ? (
+            <Skeleton className="h-3.5 w-16" />
+          ) : (
+            <>
+              <span className={`rounded px-1 -mx-1 transition-colors duration-700 ${priceFlashClass(flash)}`}>
+                {holding.current_price ? formatCurrency(holding.current_price, holding.currency) : "N/A"}
+              </span>
+              {isLive && (
+                <span className="relative flex h-1.5 w-1.5" title="Live price">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+                </span>
+              )}
+              <span className="text-muted-foreground">
+                avg {formatCurrency(holding.average_price, holding.currency)}
+              </span>
+            </>
+          )}
+        </div>
+        {isLoadingPrices ? (
+          <Skeleton className="h-3.5 w-14" />
+        ) : (
+          <span className={`font-medium ${isReturnPositive ? "text-success" : "text-danger"}`}>
+            {isReturnPositive ? "+" : ""}{formatCurrency(pnl, holding.currency)} ({formatPercentage(pnlPercentage)})
+          </span>
+        )}
+      </div>
+
+      <div className="mt-3 flex items-center gap-2">
+        <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+          <div
+            className="h-full bg-primary rounded-full"
+            style={{ width: `${Math.min(100, allocation)}%` }}
+          />
+        </div>
+        <span className="text-muted-foreground text-xs font-medium">
+          {Math.round(allocation)}% of portfolio
+        </span>
+      </div>
+    </Link>
+  );
+};
+
 const HoldingsSkeleton = () => (
   <Card className="flex flex-col border-none shadow-none bg-transparent">
     <CardHeader className="pb-2 px-0">
@@ -203,7 +289,27 @@ const HoldingsSkeleton = () => (
       </div>
     </CardHeader>
     <CardContent className="p-0">
-      <div className="rounded-3xl border border-border/50 bg-card/50 overflow-hidden shadow-sm">
+      {/* Mobile skeleton: stacked cards */}
+      <div className="flex flex-col gap-2.5 md:hidden">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="rounded-2xl border border-border/50 bg-card/50 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-3 w-20" />
+              </div>
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-3 w-14" />
+              </div>
+            </div>
+            <Skeleton className="h-1.5 w-full rounded-full mt-4" />
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop skeleton: table */}
+      <div className="hidden md:block rounded-3xl border border-border/50 bg-card/50 overflow-hidden shadow-sm">
         <Table>
           <TableHeader className="bg-muted/30">
             <TableRow className="hover:bg-transparent border-b border-border/50">
@@ -378,7 +484,23 @@ export const PortfolioHoldings = ({
         </div>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="rounded-3xl border border-border/50 bg-card/50 overflow-hidden shadow-sm">
+        {/* Mobile: stacked cards, no horizontal scroll */}
+        <div className="flex flex-col gap-2.5 md:hidden">
+          {sortedRows.map((row) => {
+            const isLive = !!livePrices[row.holding.ticker.toUpperCase()];
+            return (
+              <HoldingCard
+                key={row.holding.ticker}
+                row={row}
+                isLive={isLive}
+                isLoadingPrices={isLoadingPrices}
+              />
+            );
+          })}
+        </div>
+
+        {/* Desktop: sortable table */}
+        <div className="hidden md:block rounded-3xl border border-border/50 bg-card/50 overflow-hidden shadow-sm">
           <Table>
             <TableHeader className="bg-muted/30">
               <TableRow className="hover:bg-transparent border-b border-border/50">

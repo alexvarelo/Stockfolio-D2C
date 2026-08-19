@@ -15,7 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { format } from "date-fns";
-import { ArrowUpRight, ArrowDownRight, Loader2 } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
 import { CompanyLogo } from "@/components/stock/CompanyLogo";
@@ -26,6 +26,45 @@ interface TransactionsCardProps {
   isLoading?: boolean;
   showHeader?: boolean;
 }
+
+const TransactionCard = ({ transaction }: { transaction: Transaction }) => (
+  <div className="rounded-2xl border border-border/50 bg-card/50 p-4">
+    <div className="flex items-center justify-between gap-3">
+      <Link
+        to={`/instrument/${transaction.ticker}`}
+        className="flex items-center gap-2.5 min-w-0"
+      >
+        <CompanyLogo ticker={transaction.ticker} size={30} />
+        <div className="flex flex-col min-w-0">
+          <span className="font-semibold text-sm">{transaction.ticker}</span>
+          <span className="text-xs text-muted-foreground">
+            {format(new Date(transaction.transaction_date), "MM/dd/yyyy")}
+          </span>
+        </div>
+      </Link>
+      <div className={`shrink-0 inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium ${transaction.transaction_type === "BUY"
+        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+        : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
+        }`}>
+        {transaction.transaction_type === "BUY" ? (
+          <ArrowDownRight className="h-3 w-3" />
+        ) : (
+          <ArrowUpRight className="h-3 w-3" />
+        )}
+        <span className="capitalize">{transaction.transaction_type.toLowerCase()}</span>
+      </div>
+    </div>
+
+    <div className="mt-3 flex items-center justify-between text-xs">
+      <span className="text-muted-foreground">
+        {transaction.quantity.toLocaleString()} shares @ ${transaction.price_per_share.toFixed(2)}
+      </span>
+      <span className="font-semibold text-sm text-foreground">
+        ${(transaction.quantity * transaction.price_per_share).toFixed(2)}
+      </span>
+    </div>
+  </div>
+);
 
 const TransactionRowSkeleton = () => (
   <TableRow className="hover:bg-transparent border-b border-border/50 last:border-0">
@@ -68,7 +107,30 @@ export function TransactionsCard({
           </CardHeader>
         )}
         <CardContent className="p-0">
-          <div className="rounded-3xl border border-border/50 bg-card/50 overflow-hidden shadow-sm">
+          {/* Mobile skeleton: stacked cards */}
+          <div className="flex flex-col gap-2.5 md:hidden">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="rounded-2xl border border-border/50 bg-card/50 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <Skeleton className="h-[30px] w-[30px] rounded-full" />
+                    <div className="space-y-1.5">
+                      <Skeleton className="h-4 w-14" />
+                      <Skeleton className="h-3 w-16" />
+                    </div>
+                  </div>
+                  <Skeleton className="h-6 w-14 rounded-full" />
+                </div>
+                <div className="mt-3 flex items-center justify-between">
+                  <Skeleton className="h-3.5 w-28" />
+                  <Skeleton className="h-4 w-16" />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop skeleton: table */}
+          <div className="hidden md:block rounded-3xl border border-border/50 bg-card/50 overflow-hidden shadow-sm">
             <Table>
               <TableHeader className="bg-muted/30">
                 <TableRow className="hover:bg-transparent border-b border-border/50">
@@ -123,7 +185,15 @@ export function TransactionsCard({
         </CardHeader>
       )}
       <CardContent className="p-0">
-        <div className="bg-card/50 border border-border/50 rounded-3xl overflow-hidden shadow-sm">
+        {/* Mobile: stacked cards, no horizontal scroll */}
+        <div className="flex flex-col gap-2.5 md:hidden">
+          {transactions.map((transaction) => (
+            <TransactionCard key={transaction.id} transaction={transaction} />
+          ))}
+        </div>
+
+        {/* Desktop: table */}
+        <div className="hidden md:block bg-card/50 border border-border/50 rounded-3xl overflow-hidden shadow-sm">
           <Table>
             <TableHeader className="bg-muted/30">
               <TableRow className="hover:bg-transparent border-b border-border/50">
