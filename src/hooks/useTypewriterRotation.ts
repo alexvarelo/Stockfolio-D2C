@@ -60,5 +60,5 @@ export function useTypewriterRotation(
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [phraseIndex, phrases.length, holdMs, typeSpeedMs, reduced]);
 
-    return { text: displayed, isTyping };
+    return { text: displayed, isTyping, phraseIndex };
 }

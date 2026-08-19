@@ -126,20 +126,20 @@ export const PortfolioHero = ({
                 <div className="absolute bottom-0 right-0 w-2/3 h-2/3 bg-gradient-to-tl from-blue-500/20 via-transparent to-transparent blur-3xl" />
             </div>
 
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-4 md:gap-6">
                 {/* Top Navigation Bar */}
                 <div className="flex items-center justify-between">
                     <Button
                         variant="ghost"
-                        size="sm"
+                        size="icon"
                         onClick={onBack}
-                        className="text-muted-foreground hover:text-foreground transition-colors -ml-2"
+                        className="h-8 w-8 -ml-2 text-muted-foreground hover:text-foreground transition-colors sm:h-9 sm:w-auto sm:px-3"
                     >
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back
+                        <ArrowLeft className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Back</span>
                     </Button>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
                         {!isOwner && onToggleFollow && (
                             <Button
                                 variant={isFollowing ? "outline" : "default"}
@@ -176,7 +176,7 @@ export const PortfolioHero = ({
                         {isOwner && (
                             <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
                                         <MoreHorizontal className="h-4 w-4" />
                                     </Button>
                                 </DropdownMenuTrigger>
